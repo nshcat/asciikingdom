@@ -151,7 +151,7 @@ namespace Engine.Rendering
 				// This allows us to use screen-like coordinates (with the origin being
 				// the top left corner of the screen, and the y-axis growing downwards)
 				// in world space.
-				gl_Position = proj_mat * vec4(t_tl, 0.f, 1.f);
+				gl_Position = projection * vec4(t_tl, 0.f, 1.f);
 			}
 
 			void emit_fog_factor(uvec4 low)

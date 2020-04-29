@@ -1,7 +1,11 @@
+using System;
 using Engine.Core;
 using Engine.Rendering;
 using Engine.Resources;
-using OpenToolkit.Graphics.OpenGL4;
+using OpenToolkit.Graphics.OpenGL;
+using GL = OpenToolkit.Graphics.OpenGL4.GL;
+using PrimitiveType = OpenToolkit.Graphics.OpenGL4.PrimitiveType;
+using TextureUnit = OpenToolkit.Graphics.OpenGL4.TextureUnit;
 
 namespace Engine.Graphics
 {
@@ -70,6 +74,12 @@ namespace Engine.Graphics
         protected BufferTexture BufferTexture { get; set; }
         
         /// <summary>
+        /// Empty VAO and VBO used to work around bugs on some GPUs that cause
+        /// the no-geometry rendering of surfaces to not work
+        /// </summary>
+        protected EmptyBuffers EmptyBuffers { get; set; } = new EmptyBuffers();
+        
+        /// <summary>
         /// The actual screen data.
         /// </summary>
         protected int[] Data { get; set; }
@@ -78,15 +88,44 @@ namespace Engine.Graphics
         /// The material used to render this surface
         /// </summary>
         protected AsciiMaterial Material { get; set; } = new AsciiMaterial();
+        
+        /// <summary>
+        /// The tileset texture
+        /// </summary>
+        protected Texture2D TilesetTexture { get; set; }
+        
+        /// <summary>
+        /// The shadow texture
+        /// </summary>
+        protected Texture2D ShadowTexture { get; set; }
 
+        #endregion
+        
+        #region Offsets
+
+        /// <summary>
+        /// Enumeration containing the offsets into the screen buffer data packets
+        /// </summary>
+        protected enum Offset
+        {
+            FrontRed = 0,
+            FrontGreen = 1,
+            FrontBlue = 2,
+            Glyph = 3,
+            BackRed = 4,
+            BackGreen = 5,
+            BackBlue = 6,
+            Data = 7
+        }
+        
         #endregion
 
         /// <summary>
         /// Create a new surface.
         /// </summary>
-        /// <param name="topLeft"></param>
-        /// <param name="dimensions"></param>
-        /// <param name="tileset"></param>
+        /// <param name="topLeft">Absolute screen position of the top left corner, in pixels</param>
+        /// <param name="dimensions">Dimensions of the surface, in glyphs</param>
+        /// <param name="tileset">Tileset to use</param>
         public Surface(
             Position topLeft,
             Size dimensions,
@@ -103,9 +142,81 @@ namespace Engine.Graphics
             this.BufferSize = this.Dimensions.Height * this.Dimensions.Width * 2 * 4;
             this.BufferTexture = new BufferTexture(this.BufferSize);
             this.Data = new int[this.BufferSize];
+            
+            this.TilesetTexture = new Texture2D(this.Tileset.Image);
+            this.ShadowTexture = new Texture2D(this.Tileset.Shadows);
         }
 
         #region Modification Methods
+
+        /// <summary>
+        /// Set transparency flag for surface tile at given position.
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="isTransparent">Transparency flag</param>
+        public void SetTransparent(Position position, bool isTransparent)
+        {
+            this.IsDirty = true;
+            var bit = isTransparent ? 0x1 : 0x0;
+            var offset = this.OffsetOf(position, Offset.Data);
+
+            this.Data[offset] = (this.Data[offset] & 0xFF7F) | (bit << 7);
+        }
+
+        /// <summary>
+        /// Set foreground color at given position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="color">New foreground</param>
+        public void SetForeground(Position position, Color color)
+        {
+            this.Data[this.OffsetOf(position, Offset.FrontRed)] = color.R;
+            this.Data[this.OffsetOf(position, Offset.FrontGreen)] = color.G;
+            this.Data[this.OffsetOf(position, Offset.FrontBlue)] = color.B;
+            this.IsDirty = true;
+            this.SetTransparent(position, false);
+        }
+        
+        /// <summary>
+        /// Set background color at given position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="color">New background color</param>
+        public void SetBackground(Position position, Color color)
+        {
+            this.Data[this.OffsetOf(position, Offset.BackRed)] = color.R;
+            this.Data[this.OffsetOf(position, Offset.BackGreen)] = color.G;
+            this.Data[this.OffsetOf(position, Offset.BackBlue)] = color.B;
+            this.IsDirty = true;
+            this.SetTransparent(position, false);
+        }
+
+        /// <summary>
+        /// Set glyph at given position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="glyph">New glyph ID</param>
+        public void SetGlyph(Position position, int glyph)
+        {
+            if (glyph < 0 || glyph > 255)
+                throw new ArgumentException("Glyph ID out of range");
+
+            this.Data[this.OffsetOf(position, Offset.Glyph)] = glyph;
+            this.IsDirty = true;
+            this.SetTransparent(position, false);
+        }
+        
+        /// <summary>
+        /// Set tile at given position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="tile">New tile data</param>
+        public void SetTile(Position position, Tile tile)
+        {
+            this.SetGlyph(position, tile.Glyph);
+            this.SetForeground(position, tile.Front);
+            this.SetBackground(position, tile.Back);
+        }
 
         /// <summary>
         /// Clears the surface. Depending on the <see cref="IsTransparent"/> property, this will either
@@ -113,7 +224,19 @@ namespace Engine.Graphics
         /// </summary>
         public void Clear()
         {
-            
+            Array.Fill(this.Data, 0);
+            this.IsDirty = true;
+
+            if (this.IsTransparent)
+            {
+                for (int ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    for (int iy = 0; iy < this.Dimensions.Height; ++iy)
+                    {
+                        this.SetTransparent(new Position(ix, iy), true);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -121,6 +244,8 @@ namespace Engine.Graphics
         /// </summary>
         public void Destroy()
         {
+            this.TilesetTexture.Destroy();
+            this.ShadowTexture.Destroy();
             this.BufferTexture.Destroy();
         }
 
@@ -143,12 +268,38 @@ namespace Engine.Graphics
                 this.BufferTexture.Upload(this.Data);
             }
             
+            // Activate empty buffers
+            this.EmptyBuffers.Use();
+            
             // Activate all textures
-            // TODO other textures
+            this.TilesetTexture.Use(TextureUnit.Texture0);
+            this.ShadowTexture.Use(TextureUnit.Texture1);
             this.BufferTexture.Use(TextureUnit.Texture2);
             
             // Render instanced quad for each tile on the surface
             GL.DrawArraysInstanced(PrimitiveType.Triangles, 0, 6, this.Dimensions.Width * this.Dimensions.Height);
+        }
+
+        /// <summary>
+        /// Determine the linear offset into the data buffer for given tile position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <returns>Linear tile offset into data buffer</returns>
+        protected int OffsetOf(Position position)
+        {
+            return (2 * 4) * ((this.Dimensions.Width * position.Y) + position.X);
+        }
+        
+        /// <summary>
+        /// Determine the linear offset into the data buffer for given tile position and internal
+        /// offset
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="type">Offset type inside the tile data packet</param>
+        /// <returns>Linear tile offset into data buffer</returns>
+        protected int OffsetOf(Position position, Offset type)
+        {
+            return this.OffsetOf(position) + (int) type;
         }
     }
 }

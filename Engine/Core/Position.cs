@@ -26,7 +26,7 @@ namespace Engine.Core
         /// <summary>
         /// The origin position, with both coordinates set to zero.
         /// </summary>
-        public Position Origin => new Position(0, 0);
+        public static Position Origin => new Position(0, 0);
 
         /// <summary>
         /// Construct a position with given coordinates.

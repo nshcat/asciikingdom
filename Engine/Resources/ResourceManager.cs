@@ -1,6 +1,7 @@
 using System.IO;
 using Engine.Graphics;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Engine.Resources
 {
@@ -64,10 +65,10 @@ namespace Engine.Resources
         /// </summary>
         /// <param name="name">Name of texture to retrieve</param>
         /// <returns>Texture instance</returns>
-        public Image GetTexture(string name)
+        public Image<Rgba32> GetTexture(string name)
         {
             var path = this.BuildPath("textures", name);
-            return Image.Load(Configuration.Default, path);
+            return (Image<Rgba32>)Image.Load(Configuration.Default, path);
         }
 
         /// <summary>

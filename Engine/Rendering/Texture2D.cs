@@ -1,8 +1,11 @@
+using System;
 using System.Runtime.InteropServices;
 using OpenToolkit.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Transforms;
 
 namespace Engine.Rendering
 {
@@ -23,9 +26,11 @@ namespace Engine.Rendering
             
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, this.Handle);
-
-            var pixelBytes = MemoryMarshal.AsBytes(source.GetPixelSpan()).ToArray();
             
+            source.Mutate(new FlipProcessor(FlipMode.Vertical));
+            
+            var pixelBytes = MemoryMarshal.AsBytes(source.GetPixelSpan()).ToArray();
+
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, source.Width, source.Height,
                 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixelBytes);
             

@@ -25,7 +25,7 @@ namespace Engine.Core
         /// <summary>
         /// Empty size, with all dimensions set to zero.
         /// </summary>
-        public Size Empty => new Size(0, 0);
+        public static Size Empty => new Size(0, 0);
 
         /// <summary>
         /// Create a new size instance with given dimension values.

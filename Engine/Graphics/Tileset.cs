@@ -1,5 +1,6 @@
 using Engine.Core;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Engine.Graphics
 {
@@ -11,12 +12,12 @@ namespace Engine.Graphics
         /// <summary>
         /// The tileset image.
         /// </summary>
-        public Image Image { get; protected set; }
+        public Image<Rgba32> Image { get; protected set; }
         
         /// <summary>
         /// The shadows texture image.
         /// </summary>
-        public Image Shadows { get; protected set; }
+        public Image<Rgba32> Shadows { get; protected set; }
         
         /// <summary>
         /// The tilesets properties, such as tile dimensions.
@@ -24,7 +25,7 @@ namespace Engine.Graphics
         public TilesetProperties Properties { get; protected set; }
         
         // Constructors! Determine properties automatically => just image and scaling factor
-        public Tileset(Image image, Image shadows, float scaleFactor)
+        public Tileset(Image<Rgba32> image, Image<Rgba32> shadows, float scaleFactor)
         {
             this.Image = image;
             this.Shadows = shadows;
