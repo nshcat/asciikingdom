@@ -12,6 +12,15 @@ namespace Engine.Graphics
     /// </summary>
     public static class SurfaceOperations
     {
+        /// <summary>
+        /// Draw string to surface at given position. Will automatically cut off the string if it would exceed surface
+        /// bounds.
+        /// </summary>
+        /// <param name="surface">Target surface</param>
+        /// <param name="position">Start position</param>
+        /// <param name="text">Text to draw</param>
+        /// <param name="front">Foreground color</param>
+        /// <param name="back">Background color</param>
         public static void DrawString(
             this Surface surface,
             Position position,
