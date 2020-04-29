@@ -75,5 +75,23 @@ namespace Engine.Core
         public static implicit operator Size(Position position) => new Size(position.X, position.Y);
 
         #endregion
+
+        #region Arithmetic Operators
+
+        /// <summary>
+        /// Scaling of a size by a decimal factor.
+        /// </summary>
+        /// <param name="lhs">Dimensions to scale</param>
+        /// <param name="rhs">Scaling factor</param>
+        /// <returns>New size instance scaled by given factor</returns>
+        public static Size operator *(Size lhs, float rhs)
+        {
+            var newWidth = (float) lhs.Width * rhs;
+            var newHeight = (float) lhs.Height * rhs;
+
+            return new Size((int) newWidth, (int) newHeight);
+        }
+
+        #endregion
     }
 }

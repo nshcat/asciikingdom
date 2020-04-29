@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using OpenToolkit.Mathematics;
 
 namespace Engine.Graphics
 {
@@ -22,6 +23,21 @@ namespace Engine.Graphics
         /// The blue color channel.
         /// </summary>
         public int B { get; set; }
+
+        /// <summary>
+        /// Convert integral color instance to floating point RGBA color tuple.
+        /// The alpha value will always be set to 1.0f.
+        /// </summary>
+        /// <returns>Floating point RGBA color tuple corresponding to instance</returns>
+        public Vector4 ToVector4F()
+        {
+            return new Vector4(
+                (float)this.R / 255.0f,
+                (float)this.G / 255.0f,
+                (float)this.B / 255.0f,
+                1.0f
+            );
+        }
 
         /// <summary>
         /// Construct new color instance from given integral color channel values in range [0, 255].
