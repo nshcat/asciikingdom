@@ -34,6 +34,16 @@ namespace Engine.Graphics
         /// The dimensions of the surface, in tiles
         /// </summary>
         public Size Dimensions { get; protected set; }
+        
+        /// <summary>
+        /// Relative bounds of this surface for bounds checks of relative tile positions of the surface.
+        /// </summary>
+        public Rectangle Bounds => new Rectangle(Position.Origin, this.Dimensions);
+        
+        /// <summary>
+        /// Absolute bounds of this surface for bounds checks of global screen coordinates
+        /// </summary>
+        public Rectangle AbsoluteBounds => new Rectangle(this.TopLeft, this.Dimensions);
 
         /// <summary>
         /// The dimensions of the surface, in pixels. Derived from the <see cref="Dimensions"/> property.

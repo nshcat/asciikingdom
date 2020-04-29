@@ -34,7 +34,7 @@ namespace Game
             var tileset = this.Resources.GetTileset("default.png");
             
             // Create main surface
-            this.MainSurface = new Surface(Position.Origin, new Size(10, 10), tileset);
+            this.MainSurface = new Surface(Position.Origin, new Size(25, 10), tileset);
         }
 
         /// <summary>
@@ -45,8 +45,7 @@ namespace Game
         {
             this.MainSurface.Clear();
             
-            var tile = new Tile(1, DefaultColors.Red, DefaultColors.Green);
-            this.MainSurface.SetTile(Position.Origin, tile);
+            this.MainSurface.DrawString(Position.Origin, "Hello, World! OwO", DefaultColors.White, DefaultColors.Black);
             
             this.MainSurface.Render(renderParams);
         }
