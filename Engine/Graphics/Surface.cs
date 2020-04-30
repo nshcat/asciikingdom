@@ -157,6 +157,15 @@ namespace Engine.Graphics
             this.ShadowTexture = new Texture2D(this.Tileset.Shadows);
         }
 
+        /// <summary>
+        /// Create new surface using a surface builder.
+        /// </summary>
+        /// <returns>New surface builder instance</returns>
+        public static SurfaceBuilder New()
+        {
+            return new SurfaceBuilder();
+        }
+
         #region Modification Methods
 
         /// <summary>

@@ -138,7 +138,7 @@ namespace Engine.Rendering
 			    );
 
 				// Calculate absolute (in world space) top left coordinates of this cell
-				vec2 t_tl = surface_coords * vec2(float(glyph_width), float(glyph_height));
+				vec2 t_tl = surface_coords * vec2(float(glyph_width * glyph_scaling_factor), float(glyph_height * glyph_scaling_factor));
 
 				// Add offset for vertices that are not the top left one
 				t_tl += vertex_offset[gl_VertexID] * vec2(float(glyph_width) * glyph_scaling_factor, float(glyph_height) * glyph_scaling_factor);

@@ -1,6 +1,6 @@
-using System;
 using Engine.Core;
 using Engine.Graphics;
+using Engine.Input;
 using Engine.Rendering;
 using Engine.Resources;
 using OpenToolkit;
@@ -23,6 +23,11 @@ namespace Engine
         /// The title of the game
         /// </summary>
         public string GameTitle { get; protected set; }
+        
+        /// <summary>
+        /// Input manager for this window
+        /// </summary>
+        public InputManager Input { get; protected set; }
         
         /// <summary>
         /// The resource manager
@@ -51,6 +56,7 @@ namespace Engine
             )
         {
             this.GameTitle = gameTitle;
+            this.Input = new InputManager(this);
         }
 
 
@@ -73,6 +79,7 @@ namespace Engine
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
+            this.Input.Update();
             this.OnLogic(args.Time);
         }
 
