@@ -81,10 +81,7 @@ namespace Engine.Input
             this.Window.KeyDown += args =>
             {
                 this._activeState[args.Key] = true;
-
-                if (args.Modifiers != 0)
-                    this._currentState[args.Key] = false;
-
+                
                 // Check all modifiers
                 foreach (var (mod, key) in this.Modifiers)
                 {

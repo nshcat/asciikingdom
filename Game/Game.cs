@@ -58,10 +58,20 @@ namespace Game
         /// </summary>
         protected override void OnSetup()
         {
-            // Create main surface
+            
+        }
+
+        /// <summary>
+        /// React to window size change
+        /// </summary>
+        /// <param name="newDimensions"></param>
+        protected override void OnReshape(Size newDimensions)
+        {
+            this.MainSurface?.Destroy();
+            
             this.MainSurface = Surface.New()
                 .Tileset(this.Resources, "default.png")
-                .TileDimensions(25, 10)
+                .PixelDimensions(this.WindowDimensions)
                 .Build();
         }
 
@@ -73,7 +83,21 @@ namespace Game
         {
             this.MainSurface.Clear();
             
-            this.MainSurface.DrawString(Position.Origin, this._lastAction, DefaultColors.White, DefaultColors.Black);
+            this.MainSurface.DrawString(new Position(2, 2), this._lastAction, DefaultColors.White, DefaultColors.Black);
+
+            var tile = new Tile('X', DefaultColors.White, DefaultColors.Black);
+            
+            for (int ix = 0; ix < this.MainSurface.Dimensions.Width; ++ix)
+            {
+                for (int iy = 0; iy < this.MainSurface.Dimensions.Height; ++iy)
+                {
+                    if ((iy == 0 || iy == this.MainSurface.Dimensions.Height - 1) ||
+                        (ix == 0 || ix == this.MainSurface.Dimensions.Width - 1))
+                    {
+                        this.MainSurface.SetTile(new Position(ix, iy), tile);
+                    }
+                }
+            }
             
             this.MainSurface.Render(renderParams);
         }

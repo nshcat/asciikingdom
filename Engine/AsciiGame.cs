@@ -23,6 +23,11 @@ namespace Engine
         /// The title of the game
         /// </summary>
         public string GameTitle { get; protected set; }
+
+        /// <summary>
+        /// The current window dimensions
+        /// </summary>
+        public Size WindowDimensions => new Size(this.Size.X, this.Size.Y);
         
         /// <summary>
         /// Input manager for this window
