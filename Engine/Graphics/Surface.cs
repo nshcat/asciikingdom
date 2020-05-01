@@ -57,11 +57,11 @@ namespace Engine.Graphics
         /// Whether this surfaces background is transparent by default.
         /// </summary>
         public bool IsTransparent { get; set; }
-        
+
         /// <summary>
         /// Whether this surface is enabled. This controls whether it is drawn or not.
         /// </summary>
-        public bool IsEnabled { get; set; }
+        public bool IsEnabled { get; set; } = true;
         
         #endregion
 
@@ -276,6 +276,10 @@ namespace Engine.Graphics
         /// <param name="rp">Rendering parameters to use</param>
         public void Render(RenderParams rp)
         {
+            // Only render if surface is enabled
+            if (!this.IsEnabled)
+                return;
+            
             // Activate material
             this.Material.Use();
             this.Material.ApplyParameters(rp);
