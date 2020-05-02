@@ -64,6 +64,13 @@ namespace Game.Core
                 {
                     // Push new scenes onto the scene stack
                     this.Scenes.Push(op.NewScene);
+                },
+                op =>
+                {
+                    if (this.Scenes.Count > 0)
+                        this.Scenes.Pop();
+                    
+                    this.Scenes.Push(op.NewScene);
                 }
             );
             

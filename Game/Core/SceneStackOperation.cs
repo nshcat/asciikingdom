@@ -46,12 +46,30 @@ namespace Game.Core
                 this.NewScene = newScene;
             }
         }
+        
+        /// <summary>
+        /// Replace active scene with new scene
+        /// </summary>
+        public class ReplaceScene : SceneStackOperation
+        {
+            /// <summary>
+            /// New scene to push onto the scene stack.
+            /// </summary>
+            public Scene NewScene { get; protected set; }
+            
+            public ReplaceScene(Scene newScene)
+            {
+                this.NewScene = newScene;
+            }
+        }
 
         public void Visit(Action<SceneStackOperation.PopScene> popFunc,
-            Action<SceneStackOperation.PushScene> pushFunc)
+            Action<SceneStackOperation.PushScene> pushFunc,
+            Action<SceneStackOperation.ReplaceScene> replaceFunc)
         {
             if (this is SceneStackOperation.PopScene) popFunc(this as SceneStackOperation.PopScene);
             else if (this is SceneStackOperation.PushScene) pushFunc(this as SceneStackOperation.PushScene);
+            else if (this is SceneStackOperation.ReplaceScene) replaceFunc(this as SceneStackOperation.ReplaceScene);
         }
     }
 }
