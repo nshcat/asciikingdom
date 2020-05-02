@@ -1,4 +1,4 @@
-namespace Engine.World
+namespace Game.World
 {
     /// <summary>
     /// Describes the different types of terrain that can appear on the game map
