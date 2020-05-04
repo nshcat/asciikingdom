@@ -18,10 +18,15 @@ namespace Engine.Core
         public Size Size { get; set; }
         
         /// <summary>
+        /// The center of the rectangle.
+        /// </summary>
+        public Position Center => new Position(this.TopLeft.X + (this.Size.Width / 2), this.TopLeft.Y + (this.Size.Height / 2));
+
+        /// <summary>
         /// The position of the bottom right corner of the rectangle.
         /// This is derived from the <see cref="TopLeft"/> and <see cref="Size"/> properties.
         /// </summary>
-        public Position BottomRight => this.TopLeft + (this.Size - new Position(1, 1));
+        public Position BottomRight => (Size)this.TopLeft + (this.Size - new Size(1, 1));
 
         /// <summary>
         /// Construct rectangle from given top left corner and size.
@@ -32,6 +37,15 @@ namespace Engine.Core
         {
             this.TopLeft = topLeft;
             this.Size = size;
+        }
+
+        /// <summary>
+        /// Construct rectangle from given size. The top left corner is assumed to be at the origin.
+        /// </summary>
+        /// <param name="size">Width and height of the rectangle</param>
+        public Rectangle(Size size) : this(Position.Origin, size)
+        {
+            
         }
 
         /// <summary>

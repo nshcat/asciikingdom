@@ -92,6 +92,28 @@ namespace Engine.Core
             return new Size((int) newWidth, (int) newHeight);
         }
 
+        /// <summary>
+        /// Subtract two sizes from each other. This might result in negative components.
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
+        public static Size operator -(Size lhs, Size rhs)
+        {
+            return new Size(lhs.Width - rhs.Width, lhs.Height - rhs.Height);
+        }
+        
+        /// <summary>
+        /// Add two sizes together.
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
+        public static Size operator +(Size lhs, Size rhs)
+        {
+            return new Size(lhs.Width + rhs.Width, lhs.Height + rhs.Height);
+        }
+
         #endregion
     }
 }

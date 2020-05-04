@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Engine.Graphics;
 
-namespace Game.World
+namespace Game.Data
 {
     /// <summary>
     /// Represents a collection of information about a certain terrain type. Contains data such as a human-readable

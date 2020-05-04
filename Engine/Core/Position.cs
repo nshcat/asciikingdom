@@ -49,6 +49,19 @@ namespace Engine.Core
             return (this.X >= rectangle.TopLeft.X && this.X <= rectangle.BottomRight.X)
                    && (this.Y >= rectangle.TopLeft.Y && this.Y <= rectangle.BottomRight.Y);
         }
+        
+        /// <summary>
+        /// Check whether this position is inside the bounds described by given size.
+        /// </summary>
+        /// <param name="size">Size providing bounds to check against</param>
+        /// <returns>Flag indicating whether positions lies withing given bounds</returns>
+        public bool IsInBounds(Size size)
+        {
+            var rectangle = new Rectangle(size);
+            
+            return (this.X >= rectangle.TopLeft.X && this.X <= rectangle.BottomRight.X)
+                   && (this.Y >= rectangle.TopLeft.Y && this.Y <= rectangle.BottomRight.Y);
+        }
 
         #region Equality Implementation
         public bool Equals(Position other)

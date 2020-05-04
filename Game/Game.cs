@@ -34,7 +34,7 @@ namespace Game
         /// </summary>
         protected override void OnSetup()
         {
-            var initialScene = new TestScene(this.SceneStack, this.Input, this.Resources);
+            var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
             this.SceneStack.AddInitialScene(initialScene);
         }
 
