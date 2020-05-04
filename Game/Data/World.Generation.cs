@@ -7,11 +7,13 @@ using System.Xml.Schema;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
+using OpenToolkit.Graphics.OpenGL;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Models;
 using SharpNoise.Models;
 using SharpNoise.Modules;
+using Range = Game.Maths.Range;
 using Size = Engine.Core.Size;
 
 namespace Game.Data
@@ -25,27 +27,74 @@ namespace Game.Data
         {
             var world = new World(dimensions);
 
+            //var bounds = new System.Drawing.RectangleF(6, 1, 4, 4); default
+            //var bounds = new System.Drawing.RectangleF(6, 1, 6, 6); very nice
+            var bounds = new System.Drawing.RectangleF(6, 1, 3, 3);
+
+            var heightMap = GenerateHeightmap(dimensions, seed, bounds);
+            var tempMap = GenerateTemperatureMap(dimensions, seed + 512, bounds);
+            var rainMap = GenerateRainfallMap(dimensions);
+            
+            GenerateDetailed(world, rainMap, seed);
+
+            GenerateOverview(world, seed);
+            
+            return world;
+        }
+
+        /// <summary>
+        /// Generate the terrain height map
+        /// </summary>
+        private static NoiseMap GenerateHeightmap(Size dimensions, int seed, System.Drawing.RectangleF bounds)
+        {
             var noiseModule = BuildModuleTree(seed);
+            return GenerateNoisemap(dimensions, noiseModule, bounds);
+        }
+        
+        /// <summary>
+        /// Generate the temperature map
+        /// </summary>
+        private static NoiseMap GenerateTemperatureMap(Size dimensions, int seed, System.Drawing.RectangleF bounds)
+        {
+            var noiseModule = BuildTemperatureModuleTree(seed);
+            var tempMap = GenerateNoisemap(dimensions, noiseModule, bounds);
+            
+            // Apply general temperature gradient (makes north and south pole very cold)
+            for (var iy = 0; iy < dimensions.Height; ++iy)
+            {
+                var x = MathUtil.Map(iy, new Range(0.0f, dimensions.Height - 1), new Range(0.0f, 1.0f));
+                
+                // Black magic
+                var factor = (float)Math.Pow((-0.43 * Math.Pow(3.0*x - 1.5, 2.0) + 1.0), 1/1.3);
+
+                for (var ix = 0; ix < dimensions.Width; ++ix)
+                {
+                    tempMap[ix, iy] *= factor;
+                }
+            }
+
+            return tempMap;
+        }
+
+        /// <summary>
+        /// Uses given noise module tree to generate a noise map
+        /// </summary>
+        private static NoiseMap GenerateNoisemap(Size dimensions, Module rootModule, System.Drawing.RectangleF bounds)
+        {
             var noiseMap = new NoiseMap();
             var builder = new PlaneNoiseMapBuilder()
             {
                 DestNoiseMap = noiseMap,
-                SourceModule = noiseModule
+                SourceModule = rootModule
             };
             builder.SetDestSize(dimensions.Width, dimensions.Height);
             
-            //var bounds = new System.Drawing.RectangleF(6, 1, 4, 4);
-            var bounds = new System.Drawing.RectangleF(6, 1, 6, 6);
             builder.SetBounds(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
             builder.Build();
             
             Normalize(noiseMap);
 
-            GenerateDetailed(world, noiseMap, seed);
-
-            GenerateOverview(world, seed);
-            
-            return world;
+            return noiseMap;
         }
 
         /// <summary>
@@ -69,76 +118,11 @@ namespace Game.Data
                     var tile2 = new Tile(0, DefaultColors.Black, grayScale);
                     
                     world.DetailMap[ix, iy] = terrainType;
-                    world.DetailMapTiles[ix, iy] = tile;
+                    world.DetailMapTiles[ix, iy] = tile2;
                 }
             }
         }
         
-
-        /// <summary>
-        /// Build the noise module tree
-        /// </summary>
-        private static Module BuildModuleTree(int seed)
-        {
-            var mountainTerrain = new RidgedMulti()
-            {
-                Seed = seed
-            };
-
-            var baseFlatTerrain = new Billow()
-            {
-                Seed = seed,
-                Frequency = 2
-            };
-
-            var flatTerrain = new ScaleBias()
-            {
-                Source0 = baseFlatTerrain,
-                Scale = 0.125,
-                Bias = -0.75
-            };
-
-            var terrainType1 = new Perlin()
-            {
-                Frequency = 0.5,
-                Persistence = 0.25,
-                Seed = seed
-            };
-            
-            var terrainType2 = new Perlin()
-            {
-                Frequency = 0.5,
-                Persistence = 0.25,
-                Seed = seed + 1337
-            };
-
-            var terrainType = new Multiply()
-            {
-                Source0 = terrainType1,
-                Source1 = terrainType2
-            };
-
-            var terrainSelector = new Select()
-            {
-                Source0 = flatTerrain,
-                Source1 = mountainTerrain,
-                Control = terrainType,
-                LowerBound = 0,
-                UpperBound = 1000,
-                EdgeFalloff = 0.125
-            };
-
-            var finalTerrain = new Turbulence()
-            {
-                Source0 = terrainSelector,
-                Frequency = 4,
-                Power = 0.125,
-                Seed = seed
-            };
-
-            return finalTerrain;
-        }
-
         /// <summary>
         /// Normalize the values contained within given noise map to be inside the range [0, 1].
         /// </summary>
@@ -177,18 +161,47 @@ namespace Game.Data
         }
 
         /// <summary>
+        /// Generates the rainfall map
+        /// </summary>
+        private static NoiseMap GenerateRainfallMap(Size dimensions)
+        {
+            var map = new NoiseMap(dimensions.Width, dimensions.Height);
+
+            for (var iy = 0; iy < dimensions.Height; ++iy)
+            {
+                var y = MathUtil.Map(iy, new Range(0.0f, dimensions.Height - 1), new Range(0.0f, 1.0f));
+
+                var rainfall =
+                    0.03023253
+                    + 8.248102 * y
+                    - 42.08078 * Math.Pow(y, 2.0)
+                    + 73.53609 * Math.Pow(y, 3.0)
+                    - 42.44075 * Math.Pow(y, 4.0)
+                    + 2.850729 * Math.Pow(y, 5.0);
+
+                for (var ix = 0; ix < dimensions.Width; ++ix)
+                {
+                    map[ix, iy] = (float)Math.Clamp(rainfall, 0.0, 1.0);
+                }
+            }
+
+            return map;
+        }
+
+        /// <summary>
         /// Generate the overview map for given world
         /// </summary>
         private static void GenerateOverview(World world, int seed)
         {
             var random = new Random(seed);
             var terrainTypes = new List<TerrainType>();
+            var scaleFactor = (int)(1.0f / world.OverviewScale);
             
             for (var ix = 0; ix < world.OverviewDimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < world.OverviewDimensions.Height; ++iy)
                 {
-                    var topLeft = new Position(ix * 5, iy * 5);
+                    var topLeft = new Position(ix * scaleFactor, iy * scaleFactor);
                     var bottomRight = new Position(topLeft.X + 4, topLeft.Y + 4);
 
                     terrainTypes.Clear();

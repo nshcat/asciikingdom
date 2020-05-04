@@ -55,7 +55,7 @@ namespace Engine
                 GameWindowSettings.Default,
                 new NativeWindowSettings
                 {
-                    Location = new Vector2i(windowDimensions.Width, windowDimensions.Height),
+                    Size = new Vector2i(windowDimensions.Width, windowDimensions.Height),
                     Title =  gameTitle
                 }
             )

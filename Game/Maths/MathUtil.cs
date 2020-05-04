@@ -1,3 +1,5 @@
+using System;
+
 namespace Game.Maths
 {
     /// <summary>
@@ -16,6 +18,14 @@ namespace Game.Maths
         {
             return (value - inputRange.Minimum) * (outputRange.Maximum - outputRange.Minimum)
                 / (inputRange.Maximum - inputRange.Minimum) + outputRange.Minimum;
+        }
+
+        /// <summary>
+        /// Clamp value to range.
+        /// </summary>
+        public static int Clamp(int value, int minimum, int maximum)
+        {
+            return Math.Max(minimum, Math.Min(maximum, value));
         }
     }
 }

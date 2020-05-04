@@ -81,7 +81,7 @@ namespace Game.Scenes
 
         private void DrawMap()
         {
-            this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed})", DefaultColors.White, DefaultColors.Black);
+            this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed}) Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}", DefaultColors.White, DefaultColors.Black);
             
             this._detailedView.Render(this._surface);
         }
@@ -102,13 +102,16 @@ namespace Game.Scenes
                     this._seed = this._random.Next();
                     
                     this._world = World.GenerateWorld(new Size(1024, 1024), this._seed);
-                    
+                    this._detailedView.MapData = this._world.DetailMapTiles;
+                    this._detailedView.Recenter();
+                    this._overviewView.MapData = this._world.OverviewMapTiles;
+                    this._overviewView.Recenter();
+
                     break;
                 }
                 case MapViewerAction.MoveDown:
                 {
                     this._detailedView.Down();
-                    Console.WriteLine($"Moved Down! {this._detailedView.Center.X} {this._detailedView.Center.Y}");
                     break;
                 }
                 case MapViewerAction.MoveUp:
@@ -124,6 +127,26 @@ namespace Game.Scenes
                 case MapViewerAction.MoveRight:
                 {
                     this._detailedView.Right();
+                    break;
+                }
+                case MapViewerAction.MoveDownFast:
+                {
+                    this._detailedView.Down(5);
+                    break;
+                }
+                case MapViewerAction.MoveUpFast:
+                {
+                    this._detailedView.Up(5);
+                    break;
+                }
+                case MapViewerAction.MoveLeftFast:
+                {
+                    this._detailedView.Left(5);
+                    break;
+                }
+                case MapViewerAction.MoveRightFast:
+                {
+                    this._detailedView.Right(5);
                     break;
                 }
             }
@@ -146,7 +169,9 @@ namespace Game.Scenes
             {
                 this.HandleInput(this._actionMapper.TriggeredAction);
                 
-                this._overviewView.Center = new Position((int)(this._detailedView.Center.X * 0.05), (int)(this._detailedView.Center.Y * 0.05));
+                this._overviewView.CursorPosition = new Position(
+                    (int)(this._detailedView.CursorPosition.X * this._world.OverviewScale),
+                    (int)(this._detailedView.CursorPosition.Y * this._world.OverviewScale));
             }
         }
 
