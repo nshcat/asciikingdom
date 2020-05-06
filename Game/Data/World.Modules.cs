@@ -9,20 +9,78 @@ namespace Game.Data
     public partial class World
     {
         /// <summary>
+        /// Build the noise module tree used for rainfall map generation
+        /// </summary>
+        private static Module BuildRainfallModuleTree(int seed)
+        {
+            /*var ridged = new RidgedMulti()
+            {
+                Seed = seed,
+                Frequency = 0.4
+            };*/
+            var ridged = new Perlin()
+            {
+                Seed = seed,
+                Persistence = 0.4,
+                Frequency = 0.2,
+                Lacunarity = 0.4,
+                OctaveCount = 8
+            };
+            var scaled = new ScaleBias()
+            {
+                Source0 = ridged,
+                Bias = 0.5,
+                Scale = 1.1
+            };
+            
+            var final = new Turbulence()
+            {
+                Source0 = scaled,
+                Seed = seed,
+                Frequency = 8,
+                Power = 1.9
+            };
+
+            return final;
+        }
+        
+        /// <summary>
         /// Build the noise module tree used for temperature map generation
         /// </summary>
         private static Module BuildTemperatureModuleTree(int seed)
         {
-            var terrainType1 = new Perlin()
+            var perlin = new Perlin()
             {
-                Frequency = 0.6,
+                Frequency = 0.9,
                 Persistence = 0.8,
                 Lacunarity = 2.5,
-                OctaveCount = 4,
+                OctaveCount = 5,
                 Seed = seed
             };
 
-            return terrainType1;
+            var turb = new Turbulence()
+            {
+                Source0 = perlin,
+                Frequency = 6,
+                Power = 1.5,
+                Seed = seed
+            };
+
+            /*var clamped = new Clamp()
+            {
+                Source0 = turb,
+                LowerBound = 0.0,
+                UpperBound = 1.0
+            };*/
+
+            var final = new ScaleBias()
+            {
+                Source0 = turb,
+                Bias = 7,
+                Scale = 1.0
+            };
+            
+            return final;
         }
 
         /// <summary>

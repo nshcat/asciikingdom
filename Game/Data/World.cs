@@ -43,6 +43,16 @@ namespace Game.Data
         /// Rendering of the overview map
         /// </summary>
         public Tile[,] OverviewMapTiles { get; }
+        
+        /// <summary>
+        /// Rendering of the temperature map, for debugging purposes
+        /// </summary>
+        public Tile[,] TemperatureMapTiles { get; }
+        
+        /// <summary>
+        /// Rendering of the rainfall map, for debugging purposes
+        /// </summary>
+        public Tile[,] RainfallMapTiles { get; }
 
         /// <summary>
         /// Internal constructor
@@ -55,6 +65,17 @@ namespace Game.Data
             this.DetailMapTiles = new Tile[this.Dimensions.Width, this.Dimensions.Height];
             this.OverviewMap = new TerrainType[this.OverviewDimensions.Width, this.OverviewDimensions.Height];
             this.OverviewMapTiles = new Tile[this.OverviewDimensions.Width, this.OverviewDimensions.Height];
+
+            this.TemperatureMapTiles = new Tile[this.Dimensions.Width, this.Dimensions.Height];
+            this.RainfallMapTiles = new Tile[this.Dimensions.Width, this.Dimensions.Height];
+        }
+
+        /// <summary>
+        /// Retrieves the terrain type at given position
+        /// </summary>
+        public TerrainType GetTerrainType(Position position)
+        {
+            return this.DetailMap[position.X, position.Y];
         }
     }
 }

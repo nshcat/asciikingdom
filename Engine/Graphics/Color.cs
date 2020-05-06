@@ -65,6 +65,17 @@ namespace Engine.Graphics
         }
 
         /// <summary>
+        /// Create color instance with given grayscale value
+        /// </summary>
+        /// <param name="value">Grayscale value to use, in [0, 1]</param>
+        public static Color FromGrayscale(float value)
+        {
+            var scaled = (int) (value * 255.0f);
+
+            return new Color(scaled, scaled, scaled);
+        }
+
+        /// <summary>
         /// Create color instance from given packed RGB value. 
         /// </summary>
         /// <param name="rgb"></param>

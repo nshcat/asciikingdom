@@ -33,9 +33,9 @@ namespace Game.Data
 
             var heightMap = GenerateHeightmap(dimensions, seed, bounds);
             var tempMap = GenerateTemperatureMap(dimensions, seed + 512, bounds);
-            var rainMap = GenerateRainfallMap(dimensions);
+            var rainMap = GenerateRainfallMap(heightMap, dimensions, seed + 1024, bounds);
             
-            GenerateDetailed(world, rainMap, seed);
+            GenerateDetailed(world, heightMap, tempMap, rainMap, seed);
 
             GenerateOverview(world, seed);
             
@@ -65,11 +65,11 @@ namespace Game.Data
                 var x = MathUtil.Map(iy, new Range(0.0f, dimensions.Height - 1), new Range(0.0f, 1.0f));
                 
                 // Black magic
-                var factor = (float)Math.Pow((-0.43 * Math.Pow(3.0*x - 1.5, 2.0) + 1.0), 1/1.3);
+                var factor = (float)Math.Pow((-0.43 * Math.Pow(3.0*x - 1.5, 2.0) + 1.0), 1/1);
 
                 for (var ix = 0; ix < dimensions.Width; ++ix)
                 {
-                    tempMap[ix, iy] *= factor;
+                    tempMap[ix, iy] = (tempMap[ix, iy] + 0.15f) * factor;
                 }
             }
 
@@ -100,7 +100,7 @@ namespace Game.Data
         /// <summary>
         /// Generate detailed map from given noise map
         /// </summary>
-        private static void GenerateDetailed(World world, NoiseMap noiseMap, int seed)
+        private static void GenerateDetailed(World world, NoiseMap noiseMap, NoiseMap temperatureMap, NoiseMap rainfallMap, int seed)
         {
             var random = new Random(seed);
 
@@ -109,16 +109,19 @@ namespace Game.Data
                 for (var iy = 0; iy < noiseMap.Height; ++iy)
                 {
                     var height = noiseMap[ix, iy];
-                    var terrainType = DetermineTerrain(height, 0.0f, 0.0f);
+                    var temperature = temperatureMap[ix, iy];
+                    var rainfall = rainfallMap[ix, iy];
+                    var terrainType = DetermineTerrain(height, temperature, rainfall);
                     var terrainInfo = TerrainTypeData.GetInfo(terrainType);
                     var tile = (random.NextDouble() > 0.5) ? terrainInfo.Primary : terrainInfo.Secondary;
-
-                    var color = (int) (height * 255);
-                    var grayScale = new Color(color, color, color);
-                    var tile2 = new Tile(0, DefaultColors.Black, grayScale);
+                    
+                    var temperatureTile = new Tile(0, DefaultColors.Black, Color.FromGrayscale(temperature));
+                    var rainTile = new Tile(0, DefaultColors.Black, Color.FromGrayscale(rainfall));
                     
                     world.DetailMap[ix, iy] = terrainType;
-                    world.DetailMapTiles[ix, iy] = tile2;
+                    world.DetailMapTiles[ix, iy] = tile;
+                    world.RainfallMapTiles[ix, iy] = rainTile;
+                    world.TemperatureMapTiles[ix, iy] = temperatureTile;
                 }
             }
         }
@@ -144,28 +147,96 @@ namespace Game.Data
         /// </summary>
         private static TerrainType DetermineTerrain(float height, float temperature, float rain)
         {
-            if (height <= 0.45f)
-                return TerrainType.Ocean;
-            else if (height <= 0.70)
-                return TerrainType.Grassland;
-            else if (height <= 0.80)
-                return TerrainType.Hills;
-            else if (height <= 0.85f)
-                return TerrainType.MountainsLow;
-            else if (height <= 0.90f)
-                return TerrainType.MountainsMed;
-            else if (height <= 0.95f)
-                return TerrainType.MountainsHigh;
+            if (height <= 0.45f) // Generally ocean, but maybe glacier
+            {
+                if (temperature <= 0.04f)
+                    return TerrainType.Glacier;
+                else if (temperature <= 0.06f)
+                    return TerrainType.SeaIce;
+                else
+                    return TerrainType.Ocean;
+            }
             else
-                return TerrainType.MountainPeak;
+            {    
+                // In very cold places, even land gets replaced with glacier
+                if (temperature < 0.03f)
+                    return TerrainType.Glacier;
+
+                if (temperature < 0.2f)
+                    return TerrainType.Tundra;
+
+                if (InRange(temperature, 0.2f, 0.6f) && InRange(rain, 0.0f, 0.2f))
+                    return TerrainType.GrasslandDry;
+
+                if (InRange(temperature, 0.6f, 0.7f) && InRange(rain, 0.0f, 0.2f))
+                    return TerrainType.ShrublandDry;
+
+                if (InRange(temperature, 0.7f, 0.8f) && InRange(rain, 0.0f, 0.2f))
+                    return TerrainType.RockyWasteland;
+
+                if (InRange(temperature, 0.8f, 1.0f) && InRange(rain, 0.0f, 0.2f))
+                    return TerrainType.SandDesert;
+                
+                if (InRange(temperature, 0.2f, 0.4f) && InRange(rain, 0.2f, 0.4f))
+                    return TerrainType.Grassland;
+                
+                if (InRange(temperature, 0.4f, 0.6f) && InRange(rain, 0.2f, 0.5f))
+                    return TerrainType.Grassland;
+
+                if (InRange(temperature, 0.6f, 0.8f) && InRange(rain, 0.2f, 0.3f))
+                    return TerrainType.Shrubland;
+
+                if (InRange(temperature, 0.8f, 1.0f) && InRange(rain, 0.2f, 0.3f))
+                    return TerrainType.RockyWasteland;
+
+                if (InRange(temperature, 0.6f, 0.8f) && InRange(rain, 0.3f, 0.4f))
+                    return TerrainType.GrasslandDry;
+
+                if (InRange(temperature, 0.8f, 1.0f) && InRange(rain, 0.3f, 0.4f))
+                    return TerrainType.SavannaDry;
+
+                if (InRange(temperature, 0.6f, 0.8f) && InRange(rain, 0.4f, 0.5f))
+                    return TerrainType.Grassland;
+
+                if (InRange(temperature, 0.6f, 0.8f) && InRange(rain, 0.5f, 0.9f))
+                    return TerrainType.TemperateBroadleafForest;
+                
+                if (InRange(temperature, 0.4f, 0.6f) && InRange(rain, 0.5f, 0.9f))
+                    return TerrainType.TemperateBroadleafForest;
+
+                if (InRange(temperature, 0.8f, 1.0f) && InRange(rain, 0.4f, 0.7f))
+                    return TerrainType.Savanna;
+
+                if (InRange(temperature, 0.8f, 1.0f) && InRange(rain, 0.7f, 1.0f))
+                    return TerrainType.TropicalBroadleafForest;
+
+                if (InRange(temperature, 0.6f, 0.8f) && InRange(rain, 0.9f, 1.0f))
+                    return TerrainType.Swamp;
+                
+                if (InRange(temperature, 0.2f, 0.6f) && InRange(rain, 0.9f, 1.0f))
+                    return TerrainType.Marsh;
+
+                if (InRange(temperature, 0.2f, 0.4f) && InRange(rain, 0.4f, 0.9f))
+                    return TerrainType.ConiferousForest;
+
+                return TerrainType.Unknown;
+            }
+        }
+
+        /// <summary>
+        /// Check whether value lies inside the given range.
+        /// </summary>
+        private static bool InRange(float x, float min, float max)
+        {
+            return x >= min && x <= max;
         }
 
         /// <summary>
         /// Generates the rainfall map
         /// </summary>
-        private static NoiseMap GenerateRainfallMap(Size dimensions)
+        private static NoiseMap GenerateRainfallMap(NoiseMap heightMap, Size dimensions, int seed, System.Drawing.RectangleF bounds)
         {
-            var map = new NoiseMap(dimensions.Width, dimensions.Height);
+            var map = GenerateNoisemap(dimensions, BuildRainfallModuleTree(seed), bounds);
 
             for (var iy = 0; iy < dimensions.Height; ++iy)
             {
@@ -181,7 +252,7 @@ namespace Game.Data
 
                 for (var ix = 0; ix < dimensions.Width; ++ix)
                 {
-                    map[ix, iy] = (float)Math.Clamp(rainfall, 0.0, 1.0);
+                   // map[ix, iy] *= (float)Math.Clamp(rainfall, 0.0, 1.0);
                 }
             }
 

@@ -140,6 +140,11 @@ namespace Game.Data
                     new Tile(176, Color.FromHex("#00FFFF")),
                     new Tile(176, DefaultColors.Black, Color.FromHex("#00FFFF"))
                 ),
+                [TerrainType.SeaIce] = new TerrainTypeInfo(
+                    "Sea Ice",
+                    new Tile(176, Color.FromHex("#00FFFF")),
+                    new Tile(247, Color.FromHex("#005BD8"))
+                ),
                 [TerrainType.ConiferousForest] = new TerrainTypeInfo(
                     "Coniferous Forest",
                     new Tile(24, Color.FromHex("#008000")),

@@ -25,7 +25,10 @@ namespace Game.Scenes
             MoveDownFast,
             MoveRightFast,
             MoveLeftFast,
-            RegenerateMap
+            RegenerateMap,
+            ShowMap,
+            ShowRainfaill,
+            ShowTemperature
         }
 
         private World _world;
@@ -75,13 +78,19 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.MoveDownFast, KeyPressType.Down, Key.Down, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveLeftFast, KeyPressType.Down, Key.Left, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveRightFast, KeyPressType.Down, Key.Right, Key.ShiftLeft),
-                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Down, Key.R)
+                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Down, Key.R),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowMap, KeyPressType.Pressed, Key.M),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowRainfaill, KeyPressType.Pressed, Key.F),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T)
             );
         }
 
         private void DrawMap()
         {
-            this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed}) Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}", DefaultColors.White, DefaultColors.Black);
+            this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed})" +
+                                                         $" Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}" +
+                                                         $" {TerrainTypeData.GetInfo(this._world.GetTerrainType(this._detailedView.CursorPosition)).Name}",
+                DefaultColors.White, DefaultColors.Black);
             
             this._detailedView.Render(this._surface);
         }
@@ -147,6 +156,21 @@ namespace Game.Scenes
                 case MapViewerAction.MoveRightFast:
                 {
                     this._detailedView.Right(5);
+                    break;
+                }
+                case MapViewerAction.ShowMap:
+                {
+                    this._detailedView.MapData = this._world.DetailMapTiles;
+                    break;
+                }
+                case MapViewerAction.ShowRainfaill:
+                {
+                    this._detailedView.MapData = this._world.RainfallMapTiles;
+                    break;
+                }
+                case MapViewerAction.ShowTemperature:
+                {
+                    this._detailedView.MapData = this._world.TemperatureMapTiles;
                     break;
                 }
             }

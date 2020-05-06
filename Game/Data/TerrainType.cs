@@ -5,6 +5,7 @@ namespace Game.Data
     /// </summary>
     public enum TerrainType
     {
+        Unknown,
         Ocean,
         Lake,
         MountainsLow,
@@ -23,6 +24,7 @@ namespace Game.Data
         Marsh,
         Tundra,
         Glacier,
+        SeaIce,
         TemperateBroadleafForest,
         TropicalBroadleafForest,
         ConiferousForest,
