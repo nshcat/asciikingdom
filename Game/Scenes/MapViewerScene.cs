@@ -1,5 +1,4 @@
 using System;
-using System.Reflection.Metadata;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -27,7 +26,7 @@ namespace Game.Scenes
             MoveLeftFast,
             RegenerateMap,
             ShowMap,
-            ShowRainfaill,
+            ShowRainfall,
             ShowTemperature
         }
 
@@ -78,9 +77,9 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.MoveDownFast, KeyPressType.Down, Key.Down, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveLeftFast, KeyPressType.Down, Key.Left, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveRightFast, KeyPressType.Down, Key.Right, Key.ShiftLeft),
-                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Down, Key.R),
+                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Pressed, Key.R),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowMap, KeyPressType.Pressed, Key.M),
-                new InputAction<MapViewerAction>(MapViewerAction.ShowRainfaill, KeyPressType.Pressed, Key.F),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowRainfall, KeyPressType.Pressed, Key.F),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T)
             );
         }
@@ -163,7 +162,7 @@ namespace Game.Scenes
                     this._detailedView.MapData = this._world.DetailMapTiles;
                     break;
                 }
-                case MapViewerAction.ShowRainfaill:
+                case MapViewerAction.ShowRainfall:
                 {
                     this._detailedView.MapData = this._world.RainfallMapTiles;
                     break;

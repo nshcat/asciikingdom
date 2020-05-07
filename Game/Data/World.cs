@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
 
@@ -22,6 +25,11 @@ namespace Game.Data
         /// The relative scale of the overview map in relation to the detailed map
         /// </summary>
         public float OverviewScale { get; }
+        
+        /// <summary>
+        /// The seed used to generate the current map
+        /// </summary>
+        public int Seed { get; }
         
         /// <summary>
         /// The map the game is played on, full resolution.
@@ -57,8 +65,9 @@ namespace Game.Data
         /// <summary>
         /// Internal constructor
         /// </summary>
-        private World(Size dimensions, float overviewScale = 0.05f)
+        private World(Size dimensions, int seed, float overviewScale = 0.05f)
         {
+            this.Seed = seed;
             this.OverviewScale = overviewScale;
             this.Dimensions = dimensions;
             this.DetailMap = new TerrainType[this.Dimensions.Width, this.Dimensions.Height];
@@ -76,6 +85,87 @@ namespace Game.Data
         public TerrainType GetTerrainType(Position position)
         {
             return this.DetailMap[position.X, position.Y];
+        }
+
+        /// <summary>
+        /// Retrieves the terrain type info at given position
+        /// </summary>
+        public TerrainTypeInfo GetTerrainInfo(Position position)
+        {
+            return TerrainTypeData.GetInfo(this.GetTerrainType(position));
+        }
+
+        /// <summary>
+        /// Update the stored tiles to be up-to-date with the current terrain type map
+        /// </summary>
+        public void UpdateTiles()
+        {
+            this.UpdateDetailed();
+            this.UpdateOverview();
+        }
+
+        /// <summary>
+        /// Update tiles for detailed map
+        /// </summary>
+        private void UpdateDetailed()
+        {
+            var random = new Random(this.Seed);
+
+            for (var ix = 0; ix < Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < Dimensions.Height; ++iy)
+                {
+                    var info = this.GetTerrainInfo(new Position(ix, iy));
+                    var tile = (random.NextDouble() > 0.5) ? info.Primary : info.Secondary;
+                    this.DetailMapTiles[ix, iy] = tile;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Update the overview map tiles and terrain types based on the current detailed map
+        /// </summary>
+        private void UpdateOverview()
+        {
+            var random = new Random(this.Seed);
+            var terrainTypes = new List<TerrainType>();
+            var scaleFactor = (int)(1.0f / this.OverviewScale);
+            
+            for (var ix = 0; ix < this.OverviewDimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.OverviewDimensions.Height; ++iy)
+                {
+                    var topLeft = new Position(ix * scaleFactor, iy * scaleFactor);
+                    var bottomRight = new Position(topLeft.X + 4, topLeft.Y + 4);
+
+                    terrainTypes.Clear();
+                    
+                    for (var iix = topLeft.X; iix <= bottomRight.X; ++iix)
+                    {
+                        for (var iiy = topLeft.Y; iiy <= bottomRight.Y; ++iiy)
+                        {
+                            terrainTypes.Add(this.DetailMap[iix, iiy]);
+                        }
+                    }
+                    
+                    var average = terrainTypes
+                        .GroupBy(x => x)
+                        .Select(x => new
+                        {
+                            Count = x.Count(),
+                            Type = x.Key
+                        })
+                        .OrderByDescending(x => x.Count)
+                        .Select(x => x.Type)
+                        .First();
+
+                    this.OverviewMap[ix, iy] = average;
+
+                    var terrainInfo = TerrainTypeData.GetInfo(average);
+                    this.OverviewMapTiles[ix, iy] =
+                        (random.NextDouble() > 0.5) ? terrainInfo.Primary : terrainInfo.Secondary;
+                }
+            }
         }
     }
 }

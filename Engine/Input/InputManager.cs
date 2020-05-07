@@ -51,6 +51,8 @@ namespace Engine.Input
         
         private KeyboardState _currentState = new KeyboardState();
 
+        private KeyboardState _newKeysUse, _newKeys;
+
         /// <summary>
         /// The previous keyboard input state
         /// </summary>
@@ -81,6 +83,7 @@ namespace Engine.Input
             this.Window.KeyDown += args =>
             {
                 this._activeState[args.Key] = true;
+                this._newKeys[args.Key] = true;
                 
                 // Check all modifiers
                 foreach (var (mod, key) in this.Modifiers)
@@ -88,6 +91,7 @@ namespace Engine.Input
                     if (args.Modifiers.HasFlag(mod))
                     {
                         this._activeState[key] = true;
+                        this._newKeys[key] = true;
                     }
                 }
             };
@@ -122,6 +126,8 @@ namespace Engine.Input
         {
             this.PreviousState = this.CurrentState;
             this._currentState = this._activeState;
+            this._newKeysUse = this._newKeys;
+            this._newKeys = new KeyboardState();
         }
 
         /// <summary>
@@ -132,16 +138,16 @@ namespace Engine.Input
         /// <returns>Whether the given key is pressed according to the given key detection type</returns>
         public bool IsKeyDown(KeyPressType type, Key key)
         {
-            if (this.ModifierKeys.Contains(key))
+            /*if (this.ModifierKeys.Contains(key))
             {
                 return (type == KeyPressType.Released) ? !this.CurrentState[key] : this.CurrentState[key];
             }
             else
-            {
+            {*/
                 switch (type)
                 {
                     case KeyPressType.Down:
-                        return this.CurrentState[key];
+                        return this._newKeysUse[key];
 
                     case KeyPressType.Pressed:
                         return this.CurrentState[key] && !this.PreviousState[key];
@@ -150,7 +156,7 @@ namespace Engine.Input
                     default:
                         return !this.CurrentState[key] && this.PreviousState[key];
                 }
-            }
+           // }
         }
 
         /// <summary>

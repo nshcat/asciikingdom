@@ -25,7 +25,7 @@ namespace Game.Data
         /// </summary>
         public static World GenerateWorld(Size dimensions, int seed)
         {
-            var world = new World(dimensions);
+            var world = new World(dimensions, seed);
 
             //var bounds = new System.Drawing.RectangleF(6, 1, 4, 4); default
             //var bounds = new System.Drawing.RectangleF(6, 1, 6, 6); very nice
@@ -37,7 +37,7 @@ namespace Game.Data
             
             GenerateDetailed(world, heightMap, tempMap, rainMap, seed);
 
-            GenerateOverview(world, seed);
+            world.UpdateTiles();
             
             return world;
         }
@@ -112,14 +112,11 @@ namespace Game.Data
                     var temperature = temperatureMap[ix, iy];
                     var rainfall = rainfallMap[ix, iy];
                     var terrainType = DetermineTerrain(height, temperature, rainfall);
-                    var terrainInfo = TerrainTypeData.GetInfo(terrainType);
-                    var tile = (random.NextDouble() > 0.5) ? terrainInfo.Primary : terrainInfo.Secondary;
-                    
+
                     var temperatureTile = new Tile(0, DefaultColors.Black, Color.FromGrayscale(temperature));
                     var rainTile = new Tile(0, DefaultColors.Black, Color.FromGrayscale(rainfall));
                     
                     world.DetailMap[ix, iy] = terrainType;
-                    world.DetailMapTiles[ix, iy] = tile;
                     world.RainfallMapTiles[ix, iy] = rainTile;
                     world.TemperatureMapTiles[ix, iy] = temperatureTile;
                 }
@@ -257,52 +254,6 @@ namespace Game.Data
             }
 
             return map;
-        }
-
-        /// <summary>
-        /// Generate the overview map for given world
-        /// </summary>
-        private static void GenerateOverview(World world, int seed)
-        {
-            var random = new Random(seed);
-            var terrainTypes = new List<TerrainType>();
-            var scaleFactor = (int)(1.0f / world.OverviewScale);
-            
-            for (var ix = 0; ix < world.OverviewDimensions.Width; ++ix)
-            {
-                for (var iy = 0; iy < world.OverviewDimensions.Height; ++iy)
-                {
-                    var topLeft = new Position(ix * scaleFactor, iy * scaleFactor);
-                    var bottomRight = new Position(topLeft.X + 4, topLeft.Y + 4);
-
-                    terrainTypes.Clear();
-                    
-                    for (var iix = topLeft.X; iix <= bottomRight.X; ++iix)
-                    {
-                        for (var iiy = topLeft.Y; iiy <= bottomRight.Y; ++iiy)
-                        {
-                            terrainTypes.Add(world.DetailMap[iix, iiy]);
-                        }
-                    }
-                    
-                    var average = terrainTypes
-                        .GroupBy(x => x)
-                        .Select(x => new
-                        {
-                            Count = x.Count(),
-                            Type = x.Key
-                        })
-                        .OrderByDescending(x => x.Count)
-                        .Select(x => x.Type)
-                        .First();
-
-                    world.OverviewMap[ix, iy] = average;
-
-                    var terrainInfo = TerrainTypeData.GetInfo(average);
-                    world.OverviewMapTiles[ix, iy] =
-                        (random.NextDouble() > 0.5) ? terrainInfo.Primary : terrainInfo.Secondary;
-                }
-            }
         }
     }
 }
