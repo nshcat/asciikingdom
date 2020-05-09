@@ -27,6 +27,16 @@ namespace Engine.Core
         /// This is derived from the <see cref="TopLeft"/> and <see cref="Size"/> properties.
         /// </summary>
         public Position BottomRight => (Size)this.TopLeft + (this.Size - new Size(1, 1));
+        
+        /// <summary>
+        /// The position of the bottom right corner of the rectangle.
+        /// </summary>
+        public Position BottomLeft => new Position(this.TopLeft.X, this.BottomRight.Y);
+
+        /// <summary>
+        /// The position of the top right corner of the rectangle.
+        /// </summary>
+        public Position TopRight => new Position(this.BottomRight.X, this.TopLeft.Y);
 
         /// <summary>
         /// Construct rectangle from given top left corner and size.

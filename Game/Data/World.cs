@@ -61,7 +61,17 @@ namespace Game.Data
         /// Rendering of the rainfall map, for debugging purposes
         /// </summary>
         public Tile[,] RainfallMapTiles { get; }
-
+        
+        /// <summary>
+        /// Overview rendering of the rainfall map
+        /// </summary>
+        public Tile[,] RainfallOverviewTiles { get; }
+        
+        /// <summary>
+        /// Overview rendering of the temperature
+        /// </summary>
+        public Tile[,] TemperatureOverviewTiles { get; }
+        
         /// <summary>
         /// Internal constructor
         /// </summary>
@@ -77,6 +87,9 @@ namespace Game.Data
 
             this.TemperatureMapTiles = new Tile[this.Dimensions.Width, this.Dimensions.Height];
             this.RainfallMapTiles = new Tile[this.Dimensions.Width, this.Dimensions.Height];
+            
+            this.RainfallOverviewTiles = new Tile[this.OverviewDimensions.Width, this.OverviewDimensions.Height];
+            this.TemperatureOverviewTiles = new Tile[this.OverviewDimensions.Width, this.OverviewDimensions.Height];
         }
 
         /// <summary>

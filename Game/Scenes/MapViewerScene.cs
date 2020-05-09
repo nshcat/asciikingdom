@@ -160,16 +160,19 @@ namespace Game.Scenes
                 case MapViewerAction.ShowMap:
                 {
                     this._detailedView.MapData = this._world.DetailMapTiles;
+                    this._overviewView.MapData = this._world.OverviewMapTiles;
                     break;
                 }
                 case MapViewerAction.ShowRainfall:
                 {
                     this._detailedView.MapData = this._world.RainfallMapTiles;
+                    this._overviewView.MapData = this._world.RainfallOverviewTiles;
                     break;
                 }
                 case MapViewerAction.ShowTemperature:
                 {
                     this._detailedView.MapData = this._world.TemperatureMapTiles;
+                    this._overviewView.MapData = this._world.TemperatureOverviewTiles;
                     break;
                 }
             }
@@ -181,6 +184,7 @@ namespace Game.Scenes
             this._surface.Clear();
             this.DrawMap();
             this.DrawOverview();
+
             this._surface.Render(rp);
         }
 

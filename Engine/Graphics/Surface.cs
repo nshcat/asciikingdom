@@ -226,12 +226,15 @@ namespace Engine.Graphics
         }
         
         /// <summary>
-        /// Set tile at given position
+        /// Set tile at given position. Will do nothing if the position is out of bounds.
         /// </summary>
         /// <param name="position">Tile position on surface</param>
         /// <param name="tile">New tile data</param>
         public void SetTile(Position position, Tile tile)
         {
+            if (!position.IsInBounds(this.Bounds))
+                return;
+
             this.SetGlyph(position, tile.Glyph);
             this.SetForeground(position, tile.Front);
             this.SetBackground(position, tile.Back);
