@@ -68,6 +68,23 @@ namespace Engine.Core
             this.TopLeft = topLeft;
             this.Size = (bottomRight - topLeft) + new Position(1, 1);
         }
+
+        /// <summary>
+        /// Create rectangle of given size, centered inside this rectangle.
+        /// </summary>
+        public Rectangle Centered(Size size)
+        {
+            // Find middle of this rectangle
+            var middleOffset = this.Size * 0.5f;
+            var middle = this.TopLeft + (Position)middleOffset;
+
+            var halfSize = size * 0.5f;
+
+            var topLeft = middle - (Position)halfSize;
+            var bottomRight = middle + (Position)halfSize;
+
+            return new Rectangle(topLeft, bottomRight);
+        }
         
         #region Equality Implementation
 

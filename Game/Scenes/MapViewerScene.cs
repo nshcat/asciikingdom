@@ -178,12 +178,14 @@ namespace Game.Scenes
             }
         }
         
-        
         public override void Render(RenderParams rp)
         {
             this._surface.Clear();
             this.DrawMap();
             this.DrawOverview();
+            
+            this._surface.DrawWindow(this._surface.Bounds.Centered(new Size(25, 12)), "Meow",
+                DefaultColors.White, DefaultColors.Black, DefaultColors.White, DefaultColors.Black);
 
             this._surface.Render(rp);
         }
@@ -209,7 +211,7 @@ namespace Game.Scenes
             this._surface?.Destroy();
             
             this._surface = Surface.New()
-                .Tileset(this.Resources, "default.png")
+                .Tileset(this.Resources, "square.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             

@@ -1,8 +1,10 @@
 using System;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Engine.Core;
 using Engine.Graphics;
+using Rectangle = Engine.Core.Rectangle;
 
 namespace Engine.Graphics
 {
@@ -111,11 +113,49 @@ namespace Engine.Graphics
         {
             for (var ix = area.TopLeft.X; ix <= area.BottomRight.X; ++ix)
             {
-                for (var iy = area.TopLeft.Y; iy <= area.BottomRight.Y; ++ix)
+                for (var iy = area.TopLeft.Y; iy <= area.BottomRight.Y; ++iy)
                 {
                     surface.SetTile(new Position(ix, iy), tile);
                 }
             }
+        }
+
+        /// <summary>
+        /// Draw a window consisting of a border and a title.
+        /// </summary>
+        /// <param name="surface">Target surface</param>
+        /// <param name="bounds">Position and dimensions of the window</param>
+        /// <param name="title">Window title</param>
+        /// <param name="borderFront">Border foreground color</param>
+        /// <param name="borderBack">Border background color</param>
+        /// <param name="titleFront">Tittle foreground color</param>
+        /// <param name="fillBack">The color used to fill the inner parts of the window</param>
+        public static void DrawWindow(
+            this Surface surface,
+            Rectangle bounds,
+            string title,
+            Color borderFront,
+            Color borderBack,
+            Color titleFront,
+            Color fillBack
+        )
+        {
+            if(string.IsNullOrEmpty(title))
+                throw new ArgumentException("DrawWindow: Title can't be empty");
+
+            var maxLength = bounds.Size.Width - 4;
+            var truncatedTitle = (title.Length <= maxLength) ? title : title.Substring(0, maxLength);
+            
+            surface.FillArea(bounds, new Tile(0, DefaultColors.Black, fillBack));
+            surface.DrawBorder(bounds, borderFront, borderBack);
+            var centerX = bounds.TopLeft.X + (bounds.Size.Width / 2);
+            surface.DrawStringCentered(new Position(centerX, bounds.TopLeft.Y), truncatedTitle, titleFront, borderBack);
+
+            var beforeTitleX = centerX - ((truncatedTitle.Length / 2) + 1);
+            var afterTitleX = centerX + (truncatedTitle.Length / 2);
+            
+            surface.SetTile(new Position(beforeTitleX, bounds.TopLeft.Y), new Tile((int)BoxCharacters.VerticalLeft, borderFront, borderBack));
+            surface.SetTile(new Position(afterTitleX, bounds.TopLeft.Y), new Tile((int)BoxCharacters.VerticalRight, borderFront, borderBack));
         }
 
         /// <summary>
