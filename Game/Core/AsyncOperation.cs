@@ -66,6 +66,18 @@ namespace Game.Core
         }
 
         /// <summary>
+        /// Construct new async operation, creating a new callback receiver.
+        /// </summary>
+        /// <remarks>
+        /// This constructor is especially useful if the derived class would contain a callback receiver anyways,
+        /// for example in order to convert signals from the async operation into events inside the game thread.
+        /// </remarks>
+        protected AsyncOperation()
+        {
+            this.CallbackReceiver = new AsyncCallbackReceiver();
+        }
+
+        /// <summary>
         /// Execute the asynchronous operation.
         /// </summary>
         public void Run()

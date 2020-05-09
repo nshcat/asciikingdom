@@ -44,7 +44,7 @@ namespace Game.Simulation
         /// <summary>
         /// Internal constructor
         /// </summary>
-        private World(Size dimensions, int seed, float overviewScale = 0.05f)
+        public World(Size dimensions, int seed, float overviewScale = 0.05f)
         {
             this.Seed = seed;
             this.OverviewScale = overviewScale;
@@ -75,8 +75,7 @@ namespace Game.Simulation
             this.BuildOverviewRainfall();
             this.BuildOverviewTemperature();
         }
-
-
+        
         /// <summary>
         /// Build overview map terrain based on the detailed map
         /// </summary>
