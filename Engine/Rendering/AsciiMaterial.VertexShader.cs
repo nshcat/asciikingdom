@@ -23,17 +23,21 @@ namespace Engine.Rendering
 			#define SHADOW_BR 	0x1U << 15U
 
 			// Depth bit mask
-			#define DEPTH_MASK  0x7FU
+			#define DEPTH_MASK  0x3FU
 
 			// Transparency bit mask and shift
 			#define TRANS_MASK 0x80U
+
+			// UI shadow bit mask and shift
+			#define UI_SHADOW_MASK 0x40U
 
 
 			// fr, fg, fb, glyph
 			// br, bg, bb, data
 			//
 			// data format:
-			// lower 7 bits of lower byte sets the depth of the cell
+			// lower 6 bits of lower byte sets the depth of the cell
+			// seventh bit of lower byte is the dark shadow bit (for UI)
 			// eighth bit of lower byte is transparency flag
 			// next byte is a flag field, where each bit
 			// represents a drop shadow
@@ -97,6 +101,7 @@ namespace Engine.Rendering
 			flat out float fog_factor;
 			flat out uint shadows[8];
 			flat out uint is_transparent; // Whether this glyph cell is completely transparent
+			flat out uint is_ui_shadow;
 
 
 			// Retrieve drop shadow orientations
@@ -167,6 +172,12 @@ namespace Engine.Rendering
 			{
 			    uint data = low.a;
 			    is_transparent = data & TRANS_MASK;
+			}
+
+			void emit_ui_shadow(uvec4 low)
+			{
+				uint data = low.a;
+				is_ui_shadow = data & UI_SHADOW_MASK;
 			}
 
 			void emit_color(uvec4 high, uvec4 low)
@@ -251,6 +262,8 @@ namespace Engine.Rendering
    				emit_tex_coords(t_high, t_low);
 
 				emit_transparency(t_low);
+
+				emit_ui_shadow(t_low);
 
    				emit_shadows(t_low);
 

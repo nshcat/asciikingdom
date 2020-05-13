@@ -195,14 +195,30 @@ namespace Engine.Graphics
             if (!position.IsInBounds(this.Bounds))
                 return;
 
-            if (depth < 0 || depth > 63)
-                throw new ArgumentException("Depth value needs to bin range [0, 64)");
+            if (depth < 0 || depth > 31)
+                throw new ArgumentException("Depth value needs to bin range [0, 32)");
 
-            var maskedDepth = depth & 0x7F;
+            var maskedDepth = depth & 0x3F;
             var offset = this.OffsetOf(position, Offset.Data);
-            this.Data[offset] = (this.Data[offset] & 0xFF80) | maskedDepth;
+            this.Data[offset] = (this.Data[offset] & 0xFFC0) | maskedDepth;
             
             this.IsDirty = true;
+        }
+
+        /// <summary>
+        /// Set whether given tile has an UI shadow on it
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        public void SetUiShadow(Position position, bool flag)
+        {
+            if (!position.IsInBounds(this.Bounds))
+                return;
+            
+            this.IsDirty = true;
+            var bit = flag ? 0x1 : 0x0;
+            var offset = this.OffsetOf(position, Offset.Data);
+
+            this.Data[offset] = (this.Data[offset] & 0xFFBF) | (bit << 6);
         }
 
         /// <summary>

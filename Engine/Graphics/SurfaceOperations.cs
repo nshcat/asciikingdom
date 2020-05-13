@@ -161,13 +161,13 @@ namespace Engine.Graphics
             for (var ix = 0; ix < bounds.Size.Width; ++ix)
             {
                 var position = new Position(bounds.TopLeft.X + 1 + ix, bounds.BottomRight.Y + 1);
-                surface.SetDepth(position, 6);
+                surface.SetUiShadow(position, true);
             }
             
             for (var iy = 0; iy < bounds.Size.Height; ++iy)
             {
                 var position = new Position(bounds.TopRight.X + 1, bounds.TopLeft.Y + 1 + iy);
-                surface.SetDepth(position, 6);
+                surface.SetUiShadow(position, true);
             }
         }
 
