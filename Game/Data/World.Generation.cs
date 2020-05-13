@@ -59,7 +59,7 @@
 //
 //             //var bounds = new System.Drawing.RectangleF(6, 1, 4, 4); default
 //             //var bounds = new System.Drawing.RectangleF(6, 1, 6, 6); very nice
-//             var bounds = new System.Drawing.RectangleF(6, 1, 3, 3);
+//             
 //
 //             var heightMap = GenerateHeightmap(dimensions, seed, bounds);
 //             var tempMap = GenerateTemperatureMap(dimensions, heightMap, seed);

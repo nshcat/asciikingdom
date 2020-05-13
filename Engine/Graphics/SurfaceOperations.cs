@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml;
 using Engine.Core;
 using Engine.Graphics;
 using Rectangle = Engine.Core.Rectangle;
@@ -156,6 +157,18 @@ namespace Engine.Graphics
             
             surface.SetTile(new Position(beforeTitleX, bounds.TopLeft.Y), new Tile((int)BoxCharacters.VerticalLeft, borderFront, borderBack));
             surface.SetTile(new Position(afterTitleX, bounds.TopLeft.Y), new Tile((int)BoxCharacters.VerticalRight, borderFront, borderBack));
+
+            for (var ix = 0; ix < bounds.Size.Width; ++ix)
+            {
+                var position = new Position(bounds.TopLeft.X + 1 + ix, bounds.BottomRight.Y + 1);
+                surface.SetDepth(position, 6);
+            }
+            
+            for (var iy = 0; iy < bounds.Size.Height; ++iy)
+            {
+                var position = new Position(bounds.TopRight.X + 1, bounds.TopLeft.Y + 1 + iy);
+                surface.SetDepth(position, 6);
+            }
         }
 
         /// <summary>

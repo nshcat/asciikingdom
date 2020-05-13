@@ -231,7 +231,7 @@ namespace Game.Scenes
         {
             if (this._isGeneratingMap)
             {
-                var windowBounds = this._surface.Bounds.Centered(new Size(29, 7));
+                var windowBounds = this._surface.Bounds.Centered(new Size(35, 7));
 
                 this._surface.DrawWindow(windowBounds, "Generating World",
                     UiColors.BorderFront, UiColors.BorderBack, UiColors.BorderTitle, DefaultColors.Black);

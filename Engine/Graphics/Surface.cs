@@ -175,11 +175,34 @@ namespace Engine.Graphics
         /// <param name="isTransparent">Transparency flag</param>
         public void SetTransparent(Position position, bool isTransparent)
         {
+            if (!position.IsInBounds(this.Bounds))
+                return;
+            
             this.IsDirty = true;
             var bit = isTransparent ? 0x1 : 0x0;
             var offset = this.OffsetOf(position, Offset.Data);
 
             this.Data[offset] = (this.Data[offset] & 0xFF7F) | (bit << 7);
+        }
+
+        /// <summary>
+        /// Set depth value for surface tile at given position
+        /// </summary>
+        /// <param name="position">Tile position on surface</param>
+        /// <param name="depth">Depth value</param>
+        public void SetDepth(Position position, int depth)
+        {
+            if (!position.IsInBounds(this.Bounds))
+                return;
+
+            if (depth < 0 || depth > 63)
+                throw new ArgumentException("Depth value needs to bin range [0, 64)");
+
+            var maskedDepth = depth & 0x7F;
+            var offset = this.OffsetOf(position, Offset.Data);
+            this.Data[offset] = (this.Data[offset] & 0xFF80) | maskedDepth;
+            
+            this.IsDirty = true;
         }
 
         /// <summary>
