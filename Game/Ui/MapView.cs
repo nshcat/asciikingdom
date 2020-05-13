@@ -2,23 +2,44 @@ using System;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
+using Game.Simulation;
 
 namespace Game.Ui
 {
+    /// <summary>
+    /// Represents the different map components a map view can display
+    /// </summary>
+    public enum MapViewMode
+    {
+        Terrain,
+        Temperature,
+        Rainfall
+    }
+    
     /// <summary>
     /// A scene component that allows rendering of a world map.
     /// </summary>
     public class MapView : SceneComponent
     {
         /// <summary>
-        /// The map data to draw.
+        /// The map to draw
         /// </summary>
-        public Tile[,] MapData { get; set; }
-        
+        public Map Map { get; set; }
+
+        /// <summary>
+        /// What map component to display
+        /// </summary>
+        public MapViewMode DisplayMode { get; set; } = MapViewMode.Terrain;
+
+        /// <summary>
+        /// Whether this view currently is associated with any map data.
+        /// </summary>
+        public bool HasMapData => this.Map != null;
+
         /// <summary>
         /// The dimensions of the map to draw, in tiles.
         /// </summary>
-        public Size MapDimensions => new Size(this.MapData.GetLength(0), this.MapData.GetLength(1));
+        public Size MapDimensions => this.Map.Dimensions;
 
         /// <summary>
         /// The map position the cursor is pointing on
@@ -34,14 +55,42 @@ namespace Game.Ui
         /// The tile to use to draw the cursor
         /// </summary>
         public Tile CursorTile { get; set; } = new Tile(88, DefaultColors.Yellow, DefaultColors.Black);
+
+        /// <summary>
+        /// The map data to visualize. This depends on the current <see cref="DisplayMode"/>.
+        /// </summary>
+        protected Tile[,] MapData
+        {
+            get
+            {
+                switch (this.DisplayMode)
+                {
+                    case MapViewMode.Terrain:
+                        return this.Map.Tiles;
+                    case MapViewMode.Temperature:
+                        return this.Map.Temperature;
+                    case MapViewMode.Rainfall:
+                        return this.Map.Rainfall;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
         
         /// <summary>
         /// Construct new map view instance.
         /// </summary>
-        public MapView(Position position, Size dimensions, Tile[,] mapData) : base(position, dimensions)
+        public MapView(Position position, Size dimensions, Map map) : base(position, dimensions)
         {
-            this.MapData = mapData;
+            this.Map = map;
             this.Recenter();
+        }
+        
+        /// <summary>
+        /// Construct new map view instance without any map data associated with it.
+        /// </summary>
+        public MapView(Position position, Size dimensions) : base(position, dimensions)
+        {
         }
 
         /// <summary>
@@ -50,6 +99,16 @@ namespace Game.Ui
         public void Recenter()
         {
             this.CursorPosition = new Rectangle(this.MapDimensions).Center;
+        }
+
+        /// <summary>
+        /// Replace map associated with this view, and reset the view state.
+        /// </summary>
+        public void ReplaceMap(Map map)
+        {
+            this.Map = map;
+            this.DisplayMode = MapViewMode.Terrain;
+            this.Recenter();
         }
 
         /// <summary>
@@ -113,6 +172,8 @@ namespace Game.Ui
                 Math.Max(0, Math.Min(this.MapDimensions.Width - 1 - this.Dimensions.Width, topLeft.X)),
                 Math.Max(0, Math.Min(this.MapDimensions.Height - 1 - this.Dimensions.Height, topLeft.Y))
             );
+
+            var mapData = this.MapData;
             
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
@@ -126,7 +187,7 @@ namespace Game.Ui
                         && (mapPosition.X >= 0 && mapPosition.Y >= 0) 
                         && screenPosition.IsInBounds(surface.Dimensions))
                     {
-                        surface.SetTile(screenPosition, this.MapData[mapPosition.X, mapPosition.Y]);
+                        surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
                     }
                 }
             }

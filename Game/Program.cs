@@ -1,11 +1,13 @@
 ﻿using System;
+using Game.Core;
 
 namespace Game
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
+            GameDirectories.EnsureDirectories();
             new Game().Run();
         }
     }

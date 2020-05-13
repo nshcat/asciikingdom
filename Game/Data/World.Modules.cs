@@ -6,7 +6,7 @@ using SharpNoise.Modules;
 
 namespace Game.Data
 {
-    public partial class World
+    public partial class WorldOld
     {
         /// <summary>
         /// Build the noise module tree used for rainfall map generation

@@ -6,13 +6,13 @@ using Game.Simulation;
 namespace Game.WorldGen
 {
     /// <summary>
-    /// Delegate used for event that is fired when map generation is finished
+    /// Delegate used for the event that is fired when map generation is finished
     /// </summary>
     /// <param name="world">World that was generated</param>
     public delegate void WorldGenerationFinishedHandler(World world);
 
     /// <summary>
-    /// Delegate used for event that is fired every time the map generator advances to
+    /// Delegate used for the event that is fired every time the map generator advances to
     /// the next generation stage
     /// </summary>
     /// <param name="statusText">Short text describing the new stage</param>
@@ -20,7 +20,7 @@ namespace Game.WorldGen
     public delegate void WorldGenerationStageHandler(string statusText, double progress);
     
     /// <summary>
-    /// Class implementing an async operation generation the game world
+    /// Class implementing an async operation generating the game world
     /// </summary>
     public partial class WorldGenerator : AsyncOperation
     {
