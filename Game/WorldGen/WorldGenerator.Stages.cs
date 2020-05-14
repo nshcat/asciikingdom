@@ -84,24 +84,34 @@ namespace Game.WorldGen
         /// </summary>
         private HeightLevel[,] DetermineHeightLevels(NoiseMap heightMap)
         {
+            // TODO: For drainage, we need the final elevation values in [0, 1]. Therefore,
+            // this function should be renamed into RefineHeightmap and return both the height levels
+            // as well as a 2D float array with remapped elevation values corresponding to the various
+            // height levels. Do we need to actually remap them? Or is it enough if the drainage generator
+            // knows the sea and low hill thresholds? That might be enough!
+            
             var levels = new HeightLevel[this.WorldDimensions.Width, this.WorldDimensions.Height];
             
             var lowMountainPercent =
                 this.Parameters.TreeLinePercentage + (1.0f - this.Parameters.TreeLinePercentage) / 2.0f;
             var medMountainPercent =
-                lowMountainPercent + (1.0f - lowMountainPercent) / 2.0f;
+                lowMountainPercent + (1.0f - lowMountainPercent) / 1.8f;
+            
+            var highMountainPercent =
+                medMountainPercent + (1.0f - medMountainPercent) / 1.006f;
             
             var seaThreshold = this.CalculateThreshold(heightMap, this.Parameters.UnderWaterPercentage);
             var treeLineThreshold = this.CalculateThreshold(heightMap, this.Parameters.TreeLinePercentage);
             var lowMountainThreshold = this.CalculateThreshold(heightMap, lowMountainPercent);
             var medMountainThreshold = this.CalculateThreshold(heightMap, medMountainPercent);
+            var highMountainThreshold = this.CalculateThreshold(heightMap, highMountainPercent);
             
             for (var ix = 0; ix < this.WorldDimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.WorldDimensions.Height; ++iy)
                 {
                     var heightValue = heightMap[ix, iy];
-                    var heightLevel = HeightLevel.HighMountain;
+                    var heightLevel = HeightLevel.MountainPeak;
 
                     if (heightValue <= seaThreshold)
                         heightLevel = HeightLevel.Sea;
@@ -111,6 +121,8 @@ namespace Game.WorldGen
                         heightLevel = HeightLevel.LowMountain;
                     else if (heightValue <= medMountainThreshold)
                         heightLevel = HeightLevel.MediumMountain;
+                    else if (heightValue <= highMountainThreshold)
+                        heightLevel = HeightLevel.HighMountain;
 
                     levels[ix, iy] = heightLevel;
                 }
@@ -237,11 +249,11 @@ namespace Game.WorldGen
                     
                     var level = TemperatureLevel.Warmest;
 
-                    if (value < 0.04f)
+                    if (value < 0.025f)
                         level = TemperatureLevel.Coldest;
-                    else if (value < 0.15f)
+                    else if (value < 0.10f)
                         level = TemperatureLevel.Colder;
-                    else if (value < 0.4f)
+                    else if (value < 0.35f)
                         level = TemperatureLevel.Cold;
                     else if (value < 0.6f)
                         level = TemperatureLevel.Warm;
