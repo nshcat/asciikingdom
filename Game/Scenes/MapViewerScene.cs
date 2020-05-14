@@ -63,7 +63,7 @@ namespace Game.Scenes
 
         private void RegenerateWorld(int seed)
         {
-            this._worldGen = new WorldGenerator(new Size(1024, 1024), seed);
+            this._worldGen = new WorldGenerator(new Size(460, 460), seed);
             
             this._worldGen.WorldGenerationStageChanged += (text, progress) =>
             {

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
@@ -75,6 +76,42 @@ namespace Game.WorldGen
             Normalize(noiseMap);
 
             return noiseMap;
+        }
+
+        /// <summary>
+        /// Accentuate mountain peaks by squaring all heightmap values
+        /// </summary>
+        private void AccentuatePeaks(float[] values)
+        {
+            for (var i = 0; i < values.Length; ++i)
+            {
+                values[i] = (float)Math.Pow(values[i], 2.0);
+            }
+        }
+
+        /// <summary>
+        /// Determine the thresholds for a height level based on the fact that <see cref="percentage"/> of
+        /// all height values have to be lower or equal than it.
+        /// <see cref="Parameters"/>
+        /// </summary>
+        private float CalculateThreshold(NoiseMap heightMap, float percentage)
+        {
+            var sorted = heightMap.Data.OrderBy(x => x).ToArray();
+
+            if (percentage >= 1.0f)
+                return 1.01f;
+
+            if (percentage <= 0.0f)
+                return -0.01f;
+
+            if (sorted.Length == 0)
+                return 0.0f;
+            else
+            {
+                var index = (int) ((float) sorted.Length * percentage);
+
+                return sorted[index];
+            }
         }
     }
 }

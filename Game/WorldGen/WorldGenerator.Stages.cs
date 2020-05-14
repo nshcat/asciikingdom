@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using Engine.Core;
 using Engine.Graphics;
@@ -25,12 +27,15 @@ namespace Game.WorldGen
             
             this.SignalNextStage("Generating height map..", 0.0);
             var heightMap = this.GenerateHeightmap();
-            
-            this.SignalNextStage("Generating temperature map..", 0.15);
+            this.AccentuatePeaks(heightMap.Data);
+            this.Normalize(heightMap);
+            var heightLevels = this.DetermineHeightLevels(heightMap);
+
+            this.SignalNextStage("Generating temperature map..", 0.25);
             var temperatureMap = this.GenerateTemperatureMap(heightMap);
             
             this.SignalNextStage("Generating terrain..", 0.40);
-            this.GenerateTerrain(world, heightMap, temperatureMap);
+            this.GenerateTerrain(world, heightLevels, temperatureMap);
             
             this.SignalNextStage("Rendering temperature map..", 0.60);
             this.RenderTemperatureMap(world, temperatureMap);
@@ -58,7 +63,7 @@ namespace Game.WorldGen
         /// <summary>
         /// Determine biomes and terrain features
         /// </summary>
-        private void GenerateTerrain(World world, NoiseMap heightMap, TemperatureLevel[,] temperatureLevels)
+        private void GenerateTerrain(World world, HeightLevel[,] heightMap, TemperatureLevel[,] temperatureLevels)
         {
             for (var ix = 0; ix < this.WorldDimensions.Width; ++ix)
             {
@@ -71,6 +76,47 @@ namespace Game.WorldGen
                     world.DetailedMap.Terrain[ix, iy] = terrainType;
                 }
             }
+        }
+        
+        /// <summary>
+        /// Determine the height levels based on the height map with values in [0, 1] and the
+        /// sea and tree level thresholds derived from the percentages given in <see cref="Parameters"/>
+        /// </summary>
+        private HeightLevel[,] DetermineHeightLevels(NoiseMap heightMap)
+        {
+            var levels = new HeightLevel[this.WorldDimensions.Width, this.WorldDimensions.Height];
+            
+            var lowMountainPercent =
+                this.Parameters.TreeLinePercentage + (1.0f - this.Parameters.TreeLinePercentage) / 2.0f;
+            var medMountainPercent =
+                lowMountainPercent + (1.0f - lowMountainPercent) / 2.0f;
+            
+            var seaThreshold = this.CalculateThreshold(heightMap, this.Parameters.UnderWaterPercentage);
+            var treeLineThreshold = this.CalculateThreshold(heightMap, this.Parameters.TreeLinePercentage);
+            var lowMountainThreshold = this.CalculateThreshold(heightMap, lowMountainPercent);
+            var medMountainThreshold = this.CalculateThreshold(heightMap, medMountainPercent);
+            
+            for (var ix = 0; ix < this.WorldDimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.WorldDimensions.Height; ++iy)
+                {
+                    var heightValue = heightMap[ix, iy];
+                    var heightLevel = HeightLevel.HighMountain;
+
+                    if (heightValue <= seaThreshold)
+                        heightLevel = HeightLevel.Sea;
+                    else if (heightValue <= treeLineThreshold)
+                        heightLevel = HeightLevel.Land;
+                    else if (heightValue <= lowMountainThreshold)
+                        heightLevel = HeightLevel.LowMountain;
+                    else if (heightValue <= medMountainThreshold)
+                        heightLevel = HeightLevel.MediumMountain;
+
+                    levels[ix, iy] = heightLevel;
+                }
+            }
+
+            return levels;
         }
         
         /// <summary>
@@ -91,22 +137,27 @@ namespace Game.WorldGen
         /// <summary>
         /// Determine terrain type given the map height, temperature and rain
         /// </summary>
-        private TerrainType DetermineTerrain(float height /*, float temperature, float rain*/)
+        private TerrainType DetermineTerrain(HeightLevel height/*, MoistureLevel rain, TemperatureLevel temperature*/)
         {
-            if (height <= 0.40f)
-                return TerrainType.Ocean;
-            else if (height <= 0.7f)
-                return TerrainType.Grassland;
-            else if (height <= 0.85)
-                return TerrainType.MountainsLow;
-            else if (height <= 0.88)
-                return TerrainType.MountainsMed;
-            else if (height <= 0.93)
-                return TerrainType.MountainsHigh;
-            else
-                return TerrainType.MountainPeak;
+            switch (height)
+            {
+                case HeightLevel.Sea:
+                    return TerrainType.Ocean;
+                case HeightLevel.Land:
+                    return TerrainType.Grassland;
+                case HeightLevel.LowMountain:
+                    return TerrainType.MountainsLow;
+                case HeightLevel.MediumMountain:
+                    return TerrainType.MountainsMed;
+                case HeightLevel.HighMountain:
+                    return TerrainType.MountainsHigh;
+                case HeightLevel.MountainPeak:
+                    return TerrainType.MountainPeak;
+                default:
+                    return TerrainType.Unknown;
+            }
         }
-        
+
         /// <summary>
         /// Generate the temperature map
         /// </summary>

@@ -45,6 +45,11 @@ namespace Game.WorldGen
         protected int Seed { get; }
         
         /// <summary>
+        /// World generator parameters to use
+        /// </summary>
+        public WorldParameters Parameters { get; set; } = new WorldParameters();
+        
+        /// <summary>
         /// Create anew world generator instance
         /// </summary>
         /// <param name="dimensions">Dimensions of the world to generate, in tiles</param>

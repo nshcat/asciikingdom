@@ -3,6 +3,19 @@ namespace Game.WorldGen
     public partial class WorldGenerator
     {
         /// <summary>
+        /// Represents the different height levels that can appear on the world map
+        /// </summary>
+        private enum HeightLevel
+        {
+            Sea,
+            Land,
+            LowMountain,
+            MediumMountain,
+            HighMountain,
+            MountainPeak
+        }
+        
+        /// <summary>
         /// Represents the different temperature levels that can appear
         /// on the world map
         /// </summary>
