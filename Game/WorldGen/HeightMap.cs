@@ -16,12 +16,31 @@ namespace Game.WorldGen
         /// Elevation of the map, in the form of height level values
         /// </summary>
         public HeightLevel[,] HeightLevels { get; protected set; }
+        
+        /// <summary>
+        /// Elevation value marking the sea level
+        /// </summary>
+        public float SeaThreshold { get; protected set; }
 
         /// <summary>
-        /// Index operator implementation, which just redirects to the internal
-        /// array
+        /// Elevation value marking the border between land and mountains
         /// </summary>
-        public float this[int x, int y] => this.Values[x, y];
+        public float LandThreshold { get; protected set; }
+
+        /// <summary>
+        /// Elevation value marking the border between low and medium sized mountains
+        /// </summary>
+        public float LowMountainThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Elevation value marking the border between medium and high sized mountains
+        /// </summary>
+        public float MediumMountainThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Elevation value marking the border between high sized mountains and mountain peaks
+        /// </summary>
+        public float HighMountainThreshold { get; protected set; }
 
         /// <summary>
         /// Create a new height map.
@@ -148,12 +167,6 @@ namespace Game.WorldGen
         /// </summary>
         private void DetermineHeightLevels()
         {
-            // TODO: For drainage, we need the final elevation values in [0, 1]. Therefore,
-            // this function should be renamed into RefineHeightmap and return both the height levels
-            // as well as a 2D float array with remapped elevation values corresponding to the various
-            // height levels. Do we need to actually remap them? Or is it enough if the drainage generator
-            // knows the sea and low hill thresholds? That might be enough!
-
             var lowMountainPercent =
                 this.Parameters.TreeLinePercentage + (1.0f - this.Parameters.TreeLinePercentage) / 2.0f;
             var medMountainPercent =
@@ -162,11 +175,11 @@ namespace Game.WorldGen
             var highMountainPercent =
                 medMountainPercent + (1.0f - medMountainPercent) / 1.006f;
             
-            var seaThreshold = this.CalculateThreshold(this.Parameters.UnderWaterPercentage);
-            var treeLineThreshold = this.CalculateThreshold(this.Parameters.TreeLinePercentage);
-            var lowMountainThreshold = this.CalculateThreshold(lowMountainPercent);
-            var medMountainThreshold = this.CalculateThreshold(medMountainPercent);
-            var highMountainThreshold = this.CalculateThreshold(highMountainPercent);
+            this.SeaThreshold = this.CalculateThreshold(this.Parameters.UnderWaterPercentage);
+            this.LandThreshold = this.CalculateThreshold(this.Parameters.TreeLinePercentage);
+            this.LowMountainThreshold = this.CalculateThreshold(lowMountainPercent);
+            this.MediumMountainThreshold = this.CalculateThreshold(medMountainPercent);
+            this.HighMountainThreshold = this.CalculateThreshold(highMountainPercent);
             
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
@@ -175,15 +188,15 @@ namespace Game.WorldGen
                     var heightValue = this.Values[ix, iy];
                     var heightLevel = HeightLevel.MountainPeak;
 
-                    if (heightValue <= seaThreshold)
+                    if (heightValue <= this.SeaThreshold)
                         heightLevel = HeightLevel.Sea;
-                    else if (heightValue <= treeLineThreshold)
+                    else if (heightValue <= this.LandThreshold)
                         heightLevel = HeightLevel.Land;
-                    else if (heightValue <= lowMountainThreshold)
+                    else if (heightValue <= this.LowMountainThreshold)
                         heightLevel = HeightLevel.LowMountain;
-                    else if (heightValue <= medMountainThreshold)
+                    else if (heightValue <= this.MediumMountainThreshold)
                         heightLevel = HeightLevel.MediumMountain;
-                    else if (heightValue <= highMountainThreshold)
+                    else if (heightValue <= this.HighMountainThreshold)
                         heightLevel = HeightLevel.HighMountain;
 
                     this.HeightLevels[ix, iy] = heightLevel;

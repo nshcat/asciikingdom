@@ -32,12 +32,12 @@ namespace Game.Simulation
         /// <summary>
         /// Rendering of the rainfall map
         /// </summary>
-        public Tile[,] Rainfall { get; }
+        public Tile[,] Rainfall { get; set; }
         
         /// <summary>
         /// Rendering of the temperature map
         /// </summary>
-        public Tile[,] Temperature { get; }
+        public Tile[,] Temperature { get; set; }
         
         /// <summary>
         /// The seed used to generate this map

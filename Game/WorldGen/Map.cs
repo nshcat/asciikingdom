@@ -30,6 +30,12 @@ namespace Game.WorldGen
         public int Seed { get; protected set; }
 
         /// <summary>
+        /// Index operator implementation, which just redirects to the internal
+        /// array
+        /// </summary>
+        public float this[int x, int y] => this.Values[x, y];
+        
+        /// <summary>
         /// Create a new, empty world layer instance.
         /// </summary>
         public Map(Size dimensions, int seed, WorldParameters parameters)
