@@ -30,10 +30,12 @@ namespace Game.WorldGen
 
             this.SignalNextStage("Generating temperature map..", 0.25);
             var temperatureMap = new TemperatureMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
-            world.DetailedMap.Temperature = temperatureMap.TemperatureTiles;
-            
+
             this.SignalNextStage("Generating terrain..", 0.40);
-            this.GenerateTerrain(world, heightMap.HeightLevels, temperatureMap.TemperatureLevels);
+            this.GenerateTerrain(world, heightMap, temperatureMap);
+            
+            this.SignalNextStage("Storing data..", 0.70);
+            world.DetailedMap.Temperature = temperatureMap.TemperatureTiles;
 
             this.SignalNextStage("Updating terrain tiles..", 0.75);
             world.UpdateTiles();
@@ -48,14 +50,14 @@ namespace Game.WorldGen
         /// <summary>
         /// Determine biomes and terrain features
         /// </summary>
-        private void GenerateTerrain(World world, HeightLevel[,] heightMap, TemperatureLevel[,] temperatureLevels)
+        private void GenerateTerrain(World world, HeightMap heightMap, TemperatureMap temperatureMap)
         {
             for (var ix = 0; ix < this.WorldDimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.WorldDimensions.Height; ++iy)
                 {
-                    var height = heightMap[ix, iy];
-                    var temperature = temperatureLevels[ix, iy];
+                    var height = heightMap.HeightLevels[ix, iy];
+                    var temperature = temperatureMap.TemperatureLevels[ix, iy];
                     var terrainType = this.DetermineTerrain(height);
 
                     world.DetailedMap.Terrain[ix, iy] = terrainType;
