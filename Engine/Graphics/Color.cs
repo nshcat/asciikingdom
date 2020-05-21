@@ -89,6 +89,27 @@ namespace Engine.Graphics
             return new Color(r, g, b);
         }
 
+        /// <summary>
+        /// Perform linear interpolation between two colors.
+        /// </summary>
+        /// <param name="value">Interpolation factor, in [0, 1]</param>
+        /// <param name="a">First color</param>
+        /// <param name="b">Second color</param>
+        public static Color Lerp(float value, Color a, Color b)
+        {
+            Func<float, int, int, int> lerpChannel = (float val, int a, int b) =>
+            {
+                var result = (1.0f - val) * (float) a + val * (float) b;
+                return (int) result;
+            };
+
+            return new Color(
+                lerpChannel(value, a.R, b.R),
+                lerpChannel(value, a.G, b.G),
+                lerpChannel(value, a.B, b.B)
+            );
+        }
+
         #region Equality Implementation
 
         public bool Equals(Color other)

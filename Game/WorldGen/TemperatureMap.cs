@@ -10,7 +10,9 @@ namespace Game.WorldGen
     /// <summary>
     /// Represents the temperature layer of a game world
     /// </summary>
-    internal class TemperatureMap : Map
+    /// TODO: Maybe also use percentages here to make fixed amount of glacier?
+    /// Own temperature type for glacier?
+    public class TemperatureMap : Map
     {
         /// <summary>
         /// The temperature layer in the form of temperature level values
@@ -52,8 +54,9 @@ namespace Game.WorldGen
                 BasisType.Simplex,
                 InterpolationType.Quintic)
             {
-                Frequency = 3.0,
-                Octaves = 4,
+                Frequency = 5.0,
+                Gain = 1.6,
+                Octaves = 5,
                 Seed = this.Seed
             };
 
@@ -66,9 +69,6 @@ namespace Game.WorldGen
             double y1 = 0, y2 = 2;
             var dx = x2 - x1;
             var dy = y2 - y1;
-
-            var min = float.MaxValue;
-            var max = float.MinValue;
 
             for (var ix = 0; ix < dimensions.Width; ++ix)
             {
@@ -89,13 +89,43 @@ namespace Game.WorldGen
                     var temperatureValue = (float) heatMap.Get(nx, ny, nz, nw);
 
                     this.Values[ix, iy] = temperatureValue;
+                }
+            }
+            
+            this.Normalize();
 
-                    if (temperatureValue < min) min = temperatureValue;
-                    if (temperatureValue > max) max = temperatureValue;
+            var coldestThreshold = this.CalculateThreshold(this.Parameters.ColdestPercentage);
+            var colderThreshold = this.CalculateThreshold(this.Parameters.ColderPercentage);
+            var coldThreshold = this.CalculateThreshold(this.Parameters.ColdPercentage);
+            var warmThreshold = this.CalculateThreshold(this.Parameters.WarmPercentage);
+            var warmerThreshold = this.CalculateThreshold(this.Parameters.WarmerPercentage);
+
+            for (var ix = 0; ix < dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < dimensions.Height; ++iy)
+                {
+                    var temperature = this.Values[ix, iy];
+                    
+                    var temperatureLevel = TemperatureLevel.Warmest;
+
+                    if (temperature <= coldestThreshold)
+                        temperatureLevel = TemperatureLevel.Coldest;
+                    else if (temperature <= colderThreshold)
+                        temperatureLevel = TemperatureLevel.Colder;
+                    else if (temperature <= coldThreshold)
+                        temperatureLevel = TemperatureLevel.Cold;
+                    else if (temperature <= warmThreshold)
+                        temperatureLevel = TemperatureLevel.Warm;
+                    else if (temperature <= warmerThreshold)
+                        temperatureLevel = TemperatureLevel.Warmer;
+
+                    this.TemperatureLevels[ix, iy] = temperatureLevel;
+                    var tile = new Tile(0, DefaultColors.Black, this.GetTemperatureColor(temperatureLevel));
+                    this.TemperatureTiles[ix, iy] = tile;
                 }
             }
 
-            var sourceRange = new Maths.Range(min, max);
+            /*var sourceRange = new Maths.Range(min, max);
             var destRange = new Maths.Range(0.0f, 1.0f);
             var heightSourceRange = new Range(0.4f, 1.0f);
 
@@ -112,28 +142,17 @@ namespace Game.WorldGen
                     {
                         var scaled = MathUtil.Map(height, heightSourceRange, destRange);
 
-                        value = Math.Clamp(value - (scaled * 0.35f /** 0.45f*//** 0.3f*/), 0.0f, 1.0f);
+                        value = Math.Clamp(value - (scaled * 0.35f /** 0.45f*/ /** 0.3f*/ /*), 0.0f, 1.0f);
                     }
                     
-                    var level = TemperatureLevel.Warmest;
-
-                    if (value < 0.025f)
-                        level = TemperatureLevel.Coldest;
-                    else if (value < 0.10f)
-                        level = TemperatureLevel.Colder;
-                    else if (value < 0.35f)
-                        level = TemperatureLevel.Cold;
-                    else if (value < 0.6f)
-                        level = TemperatureLevel.Warm;
-                    else if (value < 0.8f)
-                        level = TemperatureLevel.Warmer;
+                   
 
                     this.TemperatureLevels[ix, iy] = level;
                     
                     var tile = new Tile(0, DefaultColors.Black, this.GetTemperatureColor(level));
                     this.TemperatureTiles[ix, iy] = tile;
                 }
-            }
+            }*/
         }
         
         /// <summary>

@@ -63,6 +63,17 @@ namespace Engine.Core
                    && (this.Y >= rectangle.TopLeft.Y && this.Y <= rectangle.BottomRight.Y);
         }
 
+        /// <summary>
+        /// Calculate the distance between two points.
+        /// </summary>
+        public static float GetDistance(Position lhs, Position rhs)
+        {
+            return (float) Math.Sqrt(
+                Math.Pow(rhs.X - lhs.X, 2.0)
+                + Math.Pow(rhs.Y - lhs.Y, 2.0)
+            );
+        }
+
         #region Equality Implementation
         public bool Equals(Position other)
         {

@@ -30,12 +30,23 @@ namespace Game.WorldGen
 
             this.SignalNextStage("Generating temperature map..", 0.25);
             var temperatureMap = new TemperatureMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
-
-            this.SignalNextStage("Generating terrain..", 0.40);
-            this.GenerateTerrain(world, heightMap, temperatureMap);
             
+            this.SignalNextStage("Generating drainage map..", 0.30);
+            var drainageMap = new DrainageMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
+            
+            this.SignalNextStage("Generating rainfall map..", 0.45);
+            var rainfallMap = new RainfallMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
+            
+            // Generate rivers, readjust rainfall map and rebuild levels
+            
+            this.SignalNextStage("Generating biomes..", 0.60);
+            var biomeMapper = new BiomeMapper(this.WorldDimensions, heightMap, rainfallMap, drainageMap, temperatureMap);
+
             this.SignalNextStage("Storing data..", 0.70);
             world.DetailedMap.Temperature = temperatureMap.TemperatureTiles;
+            world.DetailedMap.Drainage = drainageMap.DrainageTiles;
+            world.DetailedMap.Rainfall = rainfallMap.RainfallTiles;
+            world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
 
             this.SignalNextStage("Updating terrain tiles..", 0.75);
             world.UpdateTiles();

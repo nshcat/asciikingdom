@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using OpenToolkit.Graphics.OpenGL;
 
 namespace Game.Core
 {
@@ -51,6 +52,11 @@ namespace Game.Core
         /// equaling to false does not necessarily mean that the operation was never started.
         /// </remarks>
         public bool WasStarted { get; protected set; }
+
+        /// <summary>
+        /// Whether abortion of the operation was requested
+        /// </summary>
+        public bool WasAborted => this.ShouldAbort;
         
         /// <summary>
         /// Thread executing the async operation

@@ -25,7 +25,7 @@ namespace Game
         /// Construct new game instance
         /// </summary>
         public Game()
-            : base(new Size(1024, 640), "AsciiKingdom")
+            : base(new Size(1400, 860), "AsciiKingdom")
         {
         }
 

@@ -4,7 +4,7 @@ namespace Game.WorldGen
     /// Represents the different temperature levels that can appear
     /// on the world map
     /// </summary>
-    internal enum TemperatureLevel
+    public enum TemperatureLevel
     {
         Coldest,
         Colder,

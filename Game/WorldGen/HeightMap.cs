@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using Engine.Core;
 using SharpNoise;
 using SharpNoise.Builders;
@@ -10,7 +9,7 @@ namespace Game.WorldGen
     /// <summary>
     /// Represents the elevation layer of the world.
     /// </summary>
-    internal class HeightMap: Map
+    public class HeightMap: Map
     {
         /// <summary>
         /// Elevation of the map, in the form of height level values
@@ -71,7 +70,9 @@ namespace Game.WorldGen
         /// </summary>
         private void Generate()
         {
-            var bounds = new System.Drawing.RectangleF(6, 1, 3, 3);
+            //var bounds = new System.Drawing.RectangleF(6, 1, 3, 3);
+            //var bounds = new System.Drawing.RectangleF(6, 1, 4, 4);
+            var bounds = new System.Drawing.RectangleF(6, 1, 5, 5);
             var noiseModule = this.BuildModuleTree();
             var noiseMap = new NoiseMap();
             var builder = new PlaneNoiseMapBuilder()
@@ -93,8 +94,8 @@ namespace Game.WorldGen
             }
             
             this.Normalize();
-            this.AccentuatePeaks();
-            this.Normalize();
+            //this.AccentuatePeaks();
+            //this.Normalize();
             this.DetermineHeightLevels();
         }
         
@@ -168,7 +169,7 @@ namespace Game.WorldGen
         private void DetermineHeightLevels()
         {
             var lowMountainPercent =
-                this.Parameters.TreeLinePercentage + (1.0f - this.Parameters.TreeLinePercentage) / 2.0f;
+                this.Parameters.TreeLinePercentage + (1.0f - this.Parameters.TreeLinePercentage) / 3.0f;
             var medMountainPercent =
                 lowMountainPercent + (1.0f - lowMountainPercent) / 1.8f;
             

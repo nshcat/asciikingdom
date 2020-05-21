@@ -1,6 +1,7 @@
 using System;
 using Engine.Core;
 using Engine.Graphics;
+using Game.Core;
 using Game.Maths;
 using Game.Simulation;
 
@@ -13,13 +14,14 @@ namespace Game.Ui
     {
         Terrain,
         Temperature,
-        Rainfall
+        Rainfall,
+        Drainage
     }
     
     /// <summary>
     /// A scene component that allows rendering of a world map.
     /// </summary>
-    public class MapView : SceneComponent
+    public class MapView : SceneComponent, ILogic
     {
         /// <summary>
         /// The map to draw
@@ -55,6 +57,11 @@ namespace Game.Ui
         /// The tile to use to draw the cursor
         /// </summary>
         public Tile CursorTile { get; set; } = new Tile(88, DefaultColors.Yellow, DefaultColors.Black);
+        
+        /// <summary>
+        /// Timer used to blink cursor
+        /// </summary>
+        protected ToggleTimer CursorTimer { get; set; } = new ToggleTimer(0.25, true);
 
         /// <summary>
         /// The map data to visualize. This depends on the current <see cref="DisplayMode"/>.
@@ -71,6 +78,8 @@ namespace Game.Ui
                         return this.Map.Temperature;
                     case MapViewMode.Rainfall:
                         return this.Map.Rainfall;
+                    case MapViewMode.Drainage:
+                        return this.Map.Drainage;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -192,7 +201,7 @@ namespace Game.Ui
                 }
             }
 
-            if (this.DrawCursor)
+            if (this.DrawCursor && this.CursorTimer.Flag)
             {
                 var x = this.Position.X + halfDimensions.X;
 
@@ -218,6 +227,14 @@ namespace Game.Ui
 
                 surface.SetTile(new Position(x, y), this.CursorTile);
             }
+        }
+
+        /// <summary>
+        /// Update logic
+        /// </summary>
+        public void Update(double deltaTime)
+        {
+            this.CursorTimer.Update(deltaTime);
         }
     }
 }

@@ -30,7 +30,8 @@ namespace Game.Scenes
             RegenerateMap,
             ShowMap,
             ShowRainfall,
-            ShowTemperature
+            ShowTemperature,
+            ShowDrainage
         }
 
         private World _world;
@@ -63,7 +64,7 @@ namespace Game.Scenes
 
         private void RegenerateWorld(int seed)
         {
-            this._worldGen = new WorldGenerator(new Size(460, 460), seed);
+            this._worldGen = new WorldGenerator(new Size(256, 256), seed); // 340, 340
             
             this._worldGen.WorldGenerationStageChanged += (text, progress) =>
             {
@@ -113,6 +114,7 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Pressed, Key.R),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowMap, KeyPressType.Pressed, Key.M),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowRainfall, KeyPressType.Pressed, Key.F),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowDrainage, KeyPressType.Pressed, Key.D),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T)
             );
         }
@@ -208,6 +210,12 @@ namespace Game.Scenes
                     this._overviewView.DisplayMode = MapViewMode.Rainfall;
                     break;
                 }
+                case MapViewerAction.ShowDrainage:
+                {
+                    this._detailedView.DisplayMode = MapViewMode.Drainage;
+                    this._overviewView.DisplayMode = MapViewMode.Drainage;
+                    break;
+                }
                 case MapViewerAction.ShowTemperature:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Temperature;
@@ -257,6 +265,9 @@ namespace Game.Scenes
                     (int)(this._detailedView.CursorPosition.X * this._world.OverviewScale),
                     (int)(this._detailedView.CursorPosition.Y * this._world.OverviewScale));
             }
+            
+            this._overviewView.Update(deltaTime);
+            this._detailedView.Update(deltaTime);
         }
 
         public override void Reshape(Size newSize)
@@ -266,14 +277,14 @@ namespace Game.Scenes
             this._surface?.Destroy();
             
             this._surface = Surface.New()
-                .Tileset(this.Resources, "square.png")
+                .Tileset(this.Resources, "myne.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             
             this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-2);
             
             this._overviewView.Position = new Position((int)(this._surface.Dimensions.Width * 0.7f) + 1, 1);
-            this._overviewView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.3f)-2, (int)(this._surface.Dimensions.Height * 0.5f));
+            this._overviewView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.3f)-2, (int)(this._surface.Dimensions.Height * 0.65f));
         }
     }
 }

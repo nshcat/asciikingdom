@@ -7,7 +7,7 @@ namespace Game.WorldGen
     /// <summary>
     /// Base class for a single layer of a world, like temperature, elevation or drainage.
     /// </summary>
-    internal abstract class Map
+    public abstract class Map
     {
         /// <summary>
         /// Dimensions of the layer, in tiles
@@ -33,8 +33,28 @@ namespace Game.WorldGen
         /// Index operator implementation, which just redirects to the internal
         /// array
         /// </summary>
-        public float this[int x, int y] => this.Values[x, y];
-        
+        public float this[int x, int y]
+        {
+            get => this.Values[x, y];
+            set
+            {
+                this.Values[x, y] = value;
+            }
+        }
+
+        /// <summary>
+        /// Index operator implementation, which just redirects to the internal
+        /// array
+        /// </summary>
+        public float this[Position position]
+        {
+            get => this.Values[position.X, position.Y];
+            set
+            {
+                this.Values[position.X, position.Y] = value;
+            }
+        }
+             
         /// <summary>
         /// Create a new, empty world layer instance.
         /// </summary>
@@ -47,9 +67,17 @@ namespace Game.WorldGen
         }
 
         /// <summary>
-        /// Normalize the raw value array to [0, 1].
+        /// Normalize the value array <see cref="Values"/>
         /// </summary>
         protected void Normalize()
+        {
+            this.Normalize(this.Values);
+        }
+        
+        /// <summary>
+        /// Normalize the given array of values to [0, 1].
+        /// </summary>
+        protected void Normalize(float[,] values)
         {
             var max = float.MinValue;
             var min = float.MaxValue;
@@ -58,7 +86,7 @@ namespace Game.WorldGen
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
-                    var value = this.Values[ix, iy];
+                    var value = values[ix, iy];
 
                     if (value < min)
                         min = value;
@@ -75,19 +103,31 @@ namespace Game.WorldGen
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
-                    var oldValue = this.Values[ix, iy];
-                    this.Values[ix, iy] = MathUtil.Map(oldValue, inputRange, outputRange);
+                    var oldValue = values[ix, iy];
+                    values[ix, iy] = MathUtil.Map(oldValue, inputRange, outputRange);
                 }
             }
+        }
+
+        /// <summary>
+        /// Determine the thresholds for a value level based on the fact that <see cref="percentage"/> of
+        /// all values have to be lower or equal than it.
+        /// </summary>
+        protected float CalculateThreshold(float percentage, bool ignoreZeroes = false)
+        {
+            return this.CalculateThreshold(this.Values, percentage, ignoreZeroes);
         }
         
         /// <summary>
         /// Determine the thresholds for a value level based on the fact that <see cref="percentage"/> of
         /// all values have to be lower or equal than it.
         /// </summary>
-        protected float CalculateThreshold(float percentage)
+        protected float CalculateThreshold(float[,] values, float percentage, bool ignoreZeroes = false)
         {
-            var sorted = this.Values.Cast<float>().OrderBy(x => x).ToArray();
+            var sorted = values.Cast<float>().OrderBy(x => x).ToArray();
+
+            if (ignoreZeroes)
+                sorted = sorted.Where(x => x != 0.0f).ToArray();
 
             if (percentage >= 1.0f)
                 return 1.01f;

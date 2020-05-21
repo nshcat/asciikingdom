@@ -22,7 +22,7 @@ namespace Game.Simulation
         /// <summary>
         /// The terrain type array
         /// </summary>
-        public TerrainType[,] Terrain { get; }
+        public TerrainType[,] Terrain { get; set; }
         
         /// <summary>
         /// Rendering of the map
@@ -40,6 +40,11 @@ namespace Game.Simulation
         public Tile[,] Temperature { get; set; }
         
         /// <summary>
+        /// Rendering of the drainage map
+        /// </summary>
+        public Tile[,] Drainage { get; set; }
+        
+        /// <summary>
         /// The seed used to generate this map
         /// </summary>
         public int Seed { get; }
@@ -51,10 +56,13 @@ namespace Game.Simulation
         {
             this.Dimensions = dimensions;
             this.Seed = seed;
+            
+            // TODO are these allocations needed? Doesn't the world generator just overwrite them?
             this.Terrain = new TerrainType[dimensions.Width, dimensions.Height];
             this.Tiles = new Tile[dimensions.Width, dimensions.Height];
             this.Rainfall = new Tile[dimensions.Width, dimensions.Height];
             this.Temperature = new Tile[dimensions.Width, dimensions.Height];
+            this.Drainage = new Tile[dimensions.Width, dimensions.Height];
         }
         
         /// <summary>

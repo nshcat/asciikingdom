@@ -44,7 +44,7 @@ namespace Game.Simulation
         /// <summary>
         /// Internal constructor
         /// </summary>
-        public World(Size dimensions, int seed, float overviewScale = 0.05f)
+        public World(Size dimensions, int seed, float overviewScale = 0.1250f)
         {
             this.Seed = seed;
             this.OverviewScale = overviewScale;
@@ -74,6 +74,7 @@ namespace Game.Simulation
             this.BuildOverviewTerrain();
             this.BuildOverviewRainfall();
             this.BuildOverviewTemperature();
+            this.BuildOverviewDrainage();
         }
         
         /// <summary>
@@ -93,6 +94,14 @@ namespace Game.Simulation
         protected void BuildOverviewRainfall()
         {
             this.BuildOverviewHelper(this.DetailedMap.Rainfall, this.OverviewMap.Rainfall);
+        }
+        
+        /// <summary>
+        /// Build overview map drainage map based on the detailed map
+        /// </summary>
+        protected void BuildOverviewDrainage()
+        {
+            this.BuildOverviewHelper(this.DetailedMap.Drainage, this.OverviewMap.Drainage);
         }
         
         /// <summary>

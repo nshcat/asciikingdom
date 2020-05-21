@@ -28,6 +28,7 @@ namespace Game.Data
         TemperateBroadleafForest,
         TropicalBroadleafForest,
         ConiferousForest,
+        BadLands,
         
         // Not sure if these will be used
         Hills,
