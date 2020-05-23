@@ -4,9 +4,12 @@ using System.Net.WebSockets;
 using System.Numerics;
 using Engine.Core;
 using Engine.Graphics;
+using Game.Maths;
+using OpenToolkit.Graphics.ES11;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
+using Range = Game.Maths.Range;
 
 namespace Game.WorldGen
 {
@@ -19,7 +22,7 @@ namespace Game.WorldGen
         /// The elevation layer
         /// </summary>
         protected HeightMap Elevation { get; set; }
-        
+
         /// <summary>
         /// Rainfall layer rendered as tiles
         /// </summary>
@@ -43,28 +46,58 @@ namespace Game.WorldGen
         /// <summary>
         /// How strongly the noise is weighted when combining it with the rainfall
         /// </summary>
-        protected float NoiseWeight { get; } = 0.20f;
+        protected float NoiseWeight { get; } = 0.085f;//0.20f;
         
         /// <summary>
-        /// All clouds used in the rainfall generation
+        /// The rain shadow values
         /// </summary>
-        protected List<Cloud> Clouds { get; } = new List<Cloud>();
+        protected float[,] RainShadow { get; }
 
         /// <summary>
-        /// How many different cross wind angles will be used
+        /// With how much rain the clouds start with
         /// </summary>
-        protected int CrossWindCount { get; } = 10;
+        protected float InitialRainAmount { get; } = 0.60f;
 
         /// <summary>
-        /// The angle cone where all cross winds are contained within
+        /// The maximum rain amount a cloud can carry
         /// </summary>
-        protected float CrossWindCone { get; } = (float)Math.PI; // * 13.0f / 20.0f;
+        protected float MaxRainAmount { get; } = 1.0f;
 
         /// <summary>
-        /// Initial wind angle
+        /// Minimum amount of rain possible
         /// </summary>
-        protected float WindAngle { get; } = 0.0f;
+        protected float MinRainAmount { get; } = 0.15f;
+
+        /// <summary>
+        /// The max rain loss rate (at peak elevation)
+        /// </summary>
+        protected float MaxRainLoss { get; } = 0.2f;//0.25f;
         
+        /// <summary>
+        /// The min rain loss rate (at sea level)
+        /// </summary>
+        protected float MinRainLoss { get; } = 0.15f;
+
+        /// <summary>
+        /// Rain loss over mountains
+        /// </summary>
+        protected float MountainRainLoss { get; } = 0.30f;
+
+        /// <summary>
+        /// How much rain to accumulate over water. Will be multiplied onto the current rain amount.
+        /// </summary>
+        protected float RainGain { get; } = 1.15f; // 15% increase per tile
+
+        /// <summary>
+        /// A flat amount of rain clouds accumulate every time they are over normal land
+        /// </summary>
+        protected float FlatRainGain { get; } = 0.2f;
+
+        /// <summary>
+        /// Weight of the rain shadow in the final rainfall map
+        /// </summary>
+        protected float RainShadowWeight { get; } = 0.85f;
+
         /// <summary>
         /// Threshold under which the world is very dry
         /// </summary>
@@ -88,6 +121,7 @@ namespace Game.WorldGen
         {
             this.Elevation = elevation;
             this.RainfallTiles = new Tile[dimensions.Width, dimensions.Height];
+            this.RainShadow = new float[dimensions.Width, dimensions.Height];
             this.NoiseValues = new float[dimensions.Width, dimensions.Height];
             this.Generate();
         }
@@ -111,9 +145,9 @@ namespace Game.WorldGen
             var module = new Perlin()
             {
                 Seed = this.Seed + 44122,
-                Frequency = 1.4,
-                Lacunarity = 1.75,
-                Persistence = 0.5,
+                Frequency = 0.5,
+                Lacunarity = 2.75,
+                Persistence = 1.0,
                 OctaveCount = 6
             };
             
@@ -145,40 +179,61 @@ namespace Game.WorldGen
         /// </summary>
         protected void GenerateShadow()
         {
-            for (var i = 0; i < this.CrossWindCount; ++i)
+            for (var iy = 0; iy < this.Dimensions.Height; ++iy)
             {
-                var angle = this.WindAngle - this.CrossWindCone +
-                         (float) i * (2.0f * this.CrossWindCone / (float) this.CrossWindCount);
-
-                var rainWeight = (this.CrossWindCone - Math.Abs(this.WindAngle - angle)) / this.CrossWindCone;
-                
-                if(rainWeight == 0.0f)
-                    continue;
-                
-                this.SetupClouds(angle);
-                var direction = this.VectorFromAngle(angle);
-
-                while (this.Clouds.Count > 0)
-                {
-                    for (var j = 0; j < this.Clouds.Count; ++j)
-                    {
-                        var cloud = this.Clouds[j];
-                        cloud.Move(direction);
-
-                        if (cloud.X < 0.0f || cloud.X >= this.Dimensions.Width ||
-                            cloud.Y < 0.0f || cloud.Y >= this.Dimensions.Height)
-                        {
-                            this.Clouds.RemoveAt(j);
-                        }
-                        else
-                        {
-                            cloud.DropRain(rainWeight);
-                        }
-                    }
-                }
+                   this.GenerateShadowLine(iy);
             }
             
             this.Normalize(this.Values);
+        }
+
+        /// <summary>
+        /// Generate rain shadow for given latitude line
+        /// </summary>
+        protected void GenerateShadowLine(int y)
+        {
+            var currentRain = this.InitialRainAmount;
+            var sourceRange = new Range(this.Elevation.SeaThreshold, this.Elevation.LandThreshold);
+            var destRange = new Range(this.MinRainLoss, this.MaxRainLoss);
+
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                // Retrieve elevation
+                var elevation = this.Elevation[ix, y];
+                
+                // Are we over water?
+                if (elevation < this.Elevation.SeaThreshold)
+                {
+                    // Accumulate more rain by evaporation of ocean water
+                    currentRain *= this.RainGain;
+                    currentRain = Math.Clamp(currentRain, this.MinRainAmount, this.MaxRainAmount);
+                }
+                else if (elevation <= this.Elevation.LandThreshold) // Are we over land?
+                {
+                    // Percentage of how much water is lost from the cloud and rained down
+                    var factor = MathUtil.Map(elevation, sourceRange, destRange);
+                    var loss = currentRain * factor;
+                    currentRain *= 1.0f - factor;
+                    this.RainShadow[ix, y] = loss;
+                    
+                    // This isnt realistic, but to make maps less weird looking we add a fixed amount of water to the cloud
+                    // each tile it travels.
+                    currentRain += this.FlatRainGain; 
+                    
+                    if (currentRain < this.MinRainAmount)
+                        currentRain = this.MinRainAmount;
+                }
+                else
+                {
+                    // Loose rain at max rate
+                    var loss = currentRain * this.MountainRainLoss;
+                    currentRain *= 1.0f - this.MountainRainLoss;
+                    this.RainShadow[ix, y] = loss; // DEBUG remove this, because it skews the threshold calculations
+                    
+                    if (currentRain < this.MinRainAmount)
+                        currentRain = this.MinRainAmount;
+                }
+            }
         }
         
         /// <summary>
@@ -190,11 +245,11 @@ namespace Game.WorldGen
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
-                    if (this.Elevation[ix, iy] <= this.Elevation.SeaThreshold)
+                    if (this.Elevation[ix, iy] < this.Elevation.SeaThreshold)
                         this.Values[ix, iy] = 0.0f;
                     else
                     {
-                        var rainfall = this.Values[ix, iy]
+                        var rainfall = this.RainShadowWeight * this.RainShadow[ix, iy]
                                        + this.NoiseWeight * this.NoiseValues[ix, iy];
 
                         this.Values[ix, iy] = rainfall;
@@ -239,55 +294,6 @@ namespace Game.WorldGen
                     this.RainfallTiles[ix, iy] = tile;
                 }
             }
-        }
-
-        /// <summary>
-        /// Set up all clouds for given wind angle
-        /// </summary>
-        /// <param name="angle"></param>
-        protected void SetupClouds(float angle)
-        {
-            this.Clouds.Clear();
-            
-            var direction = this.VectorFromAngle(angle);
-            var v1 = (direction.X < 0.0f) ? this.Dimensions.Width - 1 : 0;
-            var v2 = (direction.Y < 0.0f) ? this.Dimensions.Height - 1 : 0;
-
-            var v3 = Math.Abs(direction.X / direction.Y);
-            var v4 = Math.Abs(direction.Y / direction.X);
-
-            if (float.IsNaN(v3) || v3 > (float) this.Dimensions.Width)
-                v3 = (float) this.Dimensions.Width + 1.0f;
-            else if (v3 < 1.0f)
-                v3 = 1.0f;
-
-            if (float.IsNaN(v4) || v4 > (float) this.Dimensions.Height)
-                v4 = (float) this.Dimensions.Height + 1.0f;
-            else if (v4 < 1.0f)
-                v4 = 1.0f;
-
-            var v5 = (int) v3;
-            var v6 = (int) v4;
-
-            for (var ix = v5 - 1; ix < this.Dimensions.Width; ix += v5)
-            {
-                this.Clouds.Add(new Cloud(this.Elevation, this, new Position(ix, v2)));
-            }
-
-            for (var iy = v6; iy < this.Dimensions.Height - 1; iy += v6)
-            {
-                this.Clouds.Add(new Cloud(this.Elevation, this, new Position(v1, iy)));
-            }
-        }
-
-        /// <summary>
-        /// Get unit vector based on given angle
-        /// </summary>
-        protected Vector2 VectorFromAngle(float angle)
-        {
-            var x = (float)-Math.Cos(angle + Math.PI / 2.0);
-            var y = (float)-Math.Cos(angle);
-            return new Vector2(x, y);
         }
     }
 }
