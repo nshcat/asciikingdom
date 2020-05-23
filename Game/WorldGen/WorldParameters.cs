@@ -60,12 +60,12 @@ namespace Game.WorldGen
         /// <summary>
         /// Percentage of temperatures up to coldest 
         /// </summary>
-        public float ColdestPercentage { get; set; } = 0.17f;
+        public float ColdestPercentage { get; set; } = 0.10f;
 
         /// <summary>
         /// Percentage of temperatures up to colder 
         /// </summary>
-        public float ColderPercentage { get; set; } = 0.25f;
+        public float ColderPercentage { get; set; } = 0.15f;
         
         /// <summary>
         /// Percentage of temperatures up to cold

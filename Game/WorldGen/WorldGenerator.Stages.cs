@@ -10,7 +10,6 @@ using Game.Simulation;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
-using TinkerWorX.AccidentalNoiseLibrary;
 using Range = Game.Maths.Range;
 
 namespace Game.WorldGen

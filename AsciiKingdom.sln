@@ -4,8 +4,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game", "Game\Game.csproj", "{35915DEA-8936-4182-8562-3F499276EDA5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccidentalNoise", "AccidentalNoise\AccidentalNoise.csproj", "{67874315-1A83-44A2-9578-00EE1266C0CF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,9 +18,5 @@ Global
 		{35915DEA-8936-4182-8562-3F499276EDA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35915DEA-8936-4182-8562-3F499276EDA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35915DEA-8936-4182-8562-3F499276EDA5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{67874315-1A83-44A2-9578-00EE1266C0CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{67874315-1A83-44A2-9578-00EE1266C0CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{67874315-1A83-44A2-9578-00EE1266C0CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{67874315-1A83-44A2-9578-00EE1266C0CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

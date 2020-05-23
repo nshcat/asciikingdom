@@ -2,7 +2,9 @@ using System;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
-using TinkerWorX.AccidentalNoiseLibrary;
+using SharpNoise;
+using SharpNoise.Builders;
+using SharpNoise.Modules;
 using Range = Game.Maths.Range;
 
 namespace Game.WorldGen
@@ -28,6 +30,26 @@ namespace Game.WorldGen
         /// The height map of the world
         /// </summary>
         protected HeightMap Elevation { get; set; }
+        
+        /// <summary>
+        /// The temperature gradient based on longitude
+        /// </summary>
+        protected float[,] Gradient { get; }
+
+        /// <summary>
+        /// Weight of the gradient in the final temperature map
+        /// </summary>
+        protected float GradientWeight { get; } = 1.0f;
+        
+        /// <summary>
+        /// Noise values used to distort the temperature gradient
+        /// </summary>
+        protected float[,] NoiseValues { get; }
+
+        /// <summary>
+        /// Weight of the noise in the final temperature map
+        /// </summary>
+        protected float NoiseWeight { get; } = 0.25f;
 
         /// <summary>
         /// Create new temperature map
@@ -37,9 +59,62 @@ namespace Game.WorldGen
         {
             this.TemperatureLevels = new TemperatureLevel[dimensions.Width, dimensions.Height];
             this.TemperatureTiles = new Tile[dimensions.Width, dimensions.Height];
+            this.NoiseValues = new float[dimensions.Width, dimensions.Height];
+            this.Gradient = new float[dimensions.Width, dimensions.Height];
             this.Elevation = elevation;
             
             this.Generate();
+        }
+
+        /// <summary>
+        /// Generate the gradient based on longitude
+        /// </summary>
+        private void GenerateGradient()
+        {
+            for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+            {
+                var temperature = ((float) iy) / this.Dimensions.Height;
+
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    this.Gradient[ix, iy] = temperature;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generate the noise values
+        /// </summary>
+        private void GenerateNoise()
+        {
+            var module = new Perlin()
+            {
+                Seed = this.Seed + 333211,
+                Frequency = 20.0,
+                OctaveCount = 2
+            };
+            
+            var bounds = new System.Drawing.RectangleF(4, 1, 1, 1);
+            var noiseMap = new NoiseMap();
+            var builder = new PlaneNoiseMapBuilder()
+            {
+                DestNoiseMap = noiseMap,
+                SourceModule = module
+            };
+            builder.SetDestSize(this.Dimensions.Width, this.Dimensions.Height);
+
+            builder.SetBounds(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
+            builder.Build();
+            
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                {
+                    this.NoiseValues[ix, iy] = noiseMap[ix, iy];
+                }
+            }
+            
+            this.Normalize(this.NoiseValues);
         }
 
         /// <summary>
@@ -47,48 +122,14 @@ namespace Game.WorldGen
         /// </summary>
         private void Generate()
         {
-            var dimensions = this.Dimensions;
-            var gradient = new ImplicitGradient(1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+            this.GenerateGradient();
+            this.GenerateNoise();
 
-            var heatFractal = new ImplicitFractal(FractalType.Multi,
-                BasisType.Simplex,
-                InterpolationType.Quintic)
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
-                Frequency = 5.0,
-                Gain = 1.6,
-                Octaves = 5,
-                Seed = this.Seed
-            };
-
-            var heatMap = new ImplicitCombiner(CombinerType.Multiply);
-            heatMap.AddSource(gradient);
-            heatMap.AddSource(heatFractal);
-
-            // Noise range
-            double x1 = 0, x2 = 2;
-            double y1 = 0, y2 = 2;
-            var dx = x2 - x1;
-            var dy = y2 - y1;
-
-            for (var ix = 0; ix < dimensions.Width; ++ix)
-            {
-                for (var iy = 0; iy < dimensions.Height; ++iy)
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
-                    double u = ix / (float) dimensions.Width;
-                    double v = iy / (float) dimensions.Height;
-
-                    /*var nx = (float) (x1 + (u * dx));
-                    var ny = (float) (y1 + (v * dy));
-                    var temperatureValue = (float) heatMap.Get(nx, ny);*/
-                    
-                    var nx = (float) (x1 + Math.Cos(u * 2 * Math.PI) * dx / (2 * Math.PI));
-                    var ny = (float) (y1 + Math.Cos(v * 2 * Math.PI) * dy / (2 * Math.PI));
-                    var nz = (float) (x1 + Math.Sin(u * 2 * Math.PI) * dx / (2 * Math.PI));
-                    var nw = (float) (y1 + Math.Sin(v * 2 * Math.PI) * dy / (2 * Math.PI));
-
-                    var temperatureValue = (float) heatMap.Get(nx, ny, nz, nw);
-
-                    this.Values[ix, iy] = temperatureValue;
+                    this.Values[ix, iy] = this.GradientWeight * this.Gradient[ix, iy] + this.NoiseWeight * this.NoiseValues[ix, iy];
                 }
             }
             
@@ -100,9 +141,9 @@ namespace Game.WorldGen
             var warmThreshold = this.CalculateThreshold(this.Parameters.WarmPercentage);
             var warmerThreshold = this.CalculateThreshold(this.Parameters.WarmerPercentage);
 
-            for (var ix = 0; ix < dimensions.Width; ++ix)
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
-                for (var iy = 0; iy < dimensions.Height; ++iy)
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
                     var temperature = this.Values[ix, iy];
                     
@@ -124,35 +165,6 @@ namespace Game.WorldGen
                     this.TemperatureTiles[ix, iy] = tile;
                 }
             }
-
-            /*var sourceRange = new Maths.Range(min, max);
-            var destRange = new Maths.Range(0.0f, 1.0f);
-            var heightSourceRange = new Range(0.4f, 1.0f);
-
-            for (var ix = 0; ix < dimensions.Width; ++ix)
-            {
-                for (var iy = 0; iy < dimensions.Height; ++iy)
-                {
-                    var value = MathUtil.Map(this.Values[ix, iy], sourceRange, destRange);
-                    
-                    // Factor in height
-                    var height = this.Elevation[ix, iy];
-
-                    if (height > 0.4f)
-                    {
-                        var scaled = MathUtil.Map(height, heightSourceRange, destRange);
-
-                        value = Math.Clamp(value - (scaled * 0.35f /** 0.45f*/ /** 0.3f*/ /*), 0.0f, 1.0f);
-                    }
-                    
-                   
-
-                    this.TemperatureLevels[ix, iy] = level;
-                    
-                    var tile = new Tile(0, DefaultColors.Black, this.GetTemperatureColor(level));
-                    this.TemperatureTiles[ix, iy] = tile;
-                }
-            }*/
         }
         
         /// <summary>
