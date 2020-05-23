@@ -132,6 +132,14 @@ namespace Game.Data
                     "Ocean",
                     new Tile(247, Color.FromHex("#005BD8"))
                 ),
+                [TerrainType.River] = new TerrainTypeInfo(
+                    "River",
+                    new Tile(197, Color.FromHex("#005BD8"))
+                ),
+                [TerrainType.Lake] = new TerrainTypeInfo(
+                    "Lake",
+                    new Tile(126, Color.FromHex("#005BD8"))
+                ),
                 [TerrainType.Lake] = new TerrainTypeInfo(
                     "Lake",
                     new Tile(126, Color.FromHex("#458DF1"))

@@ -10,6 +10,12 @@ namespace Game.WorldGen
         /// steeper.
         /// </summary>
         public bool AccentuateHills { get; set; } = false;
+
+        /// <summary>
+        /// Whether the map generator should force ocean to be present at both the west and east sides of the map.
+        /// This will stop land from generating right at the map border.
+        /// </summary>
+        public bool ForceOceanSides { get; set; } = true;
         
         /// <summary>
         /// The percentage amount of terrain that is supposed to be underwater, in percent

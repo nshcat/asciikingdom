@@ -15,7 +15,12 @@ namespace Game.WorldGen
         /// Elevation of the map, in the form of height level values
         /// </summary>
         public HeightLevel[,] HeightLevels { get; protected set; }
-        
+
+        /// <summary>
+        /// Percentage of map that is masked off at both the western and eastern ends of the map
+        /// </summary>
+        protected float MaskPercentage { get; } = 0.08f;
+
         /// <summary>
         /// Elevation value marking the sea level
         /// </summary>
@@ -66,6 +71,33 @@ namespace Game.WorldGen
         }
 
         /// <summary>
+        /// Mask off eastern and western sides of the map to stop land from generating there
+        /// </summary>
+        private void MaskSides()
+        {
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                var fx = (float) ix / this.Dimensions.Width;
+                var weight = 1.0f;
+
+                if (fx <= this.MaskPercentage)
+                {
+                    weight = fx / this.MaskPercentage;
+                }
+                else if (fx >= 1.0f - this.MaskPercentage)
+                {
+                    weight = 1.0f - ((fx - (1.0f - this.MaskPercentage)) / this.MaskPercentage);
+                }
+
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                {
+                    this.Values[ix, iy] *= weight;
+                }
+            }
+        }
+        
+
+        /// <summary>
         /// Generate the height map
         /// </summary>
         private void Generate()
@@ -94,6 +126,11 @@ namespace Game.WorldGen
             }
             
             this.Normalize();
+
+            if (this.Parameters.ForceOceanSides)
+            {
+                this.MaskSides();
+            }
 
             if (this.Parameters.AccentuateHills)
             {
