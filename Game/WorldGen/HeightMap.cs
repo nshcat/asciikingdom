@@ -94,8 +94,13 @@ namespace Game.WorldGen
             }
             
             this.Normalize();
-            //this.AccentuatePeaks();
-            //this.Normalize();
+
+            if (this.Parameters.AccentuateHills)
+            {
+                this.AccentuatePeaks();
+                this.Normalize();
+            }
+            
             this.DetermineHeightLevels();
         }
         

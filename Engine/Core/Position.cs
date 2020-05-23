@@ -57,10 +57,8 @@ namespace Engine.Core
         /// <returns>Flag indicating whether positions lies withing given bounds</returns>
         public bool IsInBounds(Size size)
         {
-            var rectangle = new Rectangle(size);
-            
-            return (this.X >= rectangle.TopLeft.X && this.X <= rectangle.BottomRight.X)
-                   && (this.Y >= rectangle.TopLeft.Y && this.Y <= rectangle.BottomRight.Y);
+            return (this.X >= 0 && this.X < size.Width)
+                   && (this.Y >= 0 && this.Y < size.Height);
         }
 
         /// <summary>

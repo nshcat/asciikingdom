@@ -6,6 +6,12 @@ namespace Game.WorldGen
     public class WorldParameters
     {
         /// <summary>
+        /// Whether the whole height map should be multiplied with itself. Makes hills
+        /// steeper.
+        /// </summary>
+        public bool AccentuateHills { get; set; } = false;
+        
+        /// <summary>
         /// The percentage amount of terrain that is supposed to be underwater, in percent
         /// </summary>
         /// <remarks>
