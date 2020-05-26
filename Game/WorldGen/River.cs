@@ -258,15 +258,21 @@ namespace Game.WorldGen
             }
             else
             {
-                for (var ix = 1; ix < this.Path.Count - 1; ++ix)
+                for (var ix = 1; ix < this.Path.Count; ++ix)
                 {
                     var previous = this.Path[ix - 1];
                     var current = this.Path[ix];
-                    var next = this.Path[ix + 1];
+                    var direction = this.FindDirection(current.Position, previous.Position);
 
-                    var directionPrev = this.FindDirection(current.Position, previous.Position);
-                    var directionNext = this.FindDirection(current.Position, next.Position);
-                    var index = (int) (directionPrev | directionNext);
+                    if (ix < this.Path.Count - 1)
+                    {
+                        var next = this.Path[ix + 1];
+                        direction |= this.FindDirection(current.Position, next.Position);
+                    }
+                    else if (this.HasEndMarker) // Handle end marker for last river segment
+                    {
+                        direction |= this.FindDirection(current.Position, this.EndMarker.Value);
+                    }
                     
                     // Check if there is a join
                     if (this.JoinedRivers.ContainsKey(current.Position))
@@ -276,42 +282,14 @@ namespace Game.WorldGen
                         foreach (var end in riverEnds)
                         {
                             var directionJoin = this.FindDirection(current.Position, end);
-                            index |= (int) directionJoin;
+                            direction |= directionJoin;
                         }
                     }
-                    
                     riverTileInfos[current.Position] = new RiverTileInfo(
-                        _riverTileLookupTable[index],
+                        _riverTileLookupTable[(int)direction],
                         current.Size
                     );
                 }
-                
-                // Last one
-                var last = this.Path[^1];
-                var penultimate = this.Path[^2];
-                var direction = this.FindDirection(last.Position, penultimate.Position);
-
-                // Check if there is a join
-                if (this.JoinedRivers.ContainsKey(last.Position))
-                {
-                    var riverEnds = this.JoinedRivers[last.Position];
-
-                    foreach (var end in riverEnds)
-                    {
-                        var directionJoin = this.FindDirection(last.Position, end);
-                        direction |= directionJoin;
-                    }
-                }
-                
-                if (this.HasEndMarker)
-                {
-                    direction |= this.FindDirection(last.Position, this.EndMarker.Value);
-                }
-
-                riverTileInfos[last.Position] = new RiverTileInfo(
-                    _riverTileLookupTable[(int) direction],
-                    last.Size
-                );
             }
         }
 
