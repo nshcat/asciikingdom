@@ -1,5 +1,6 @@
 using System;
 using Engine.Core;
+using OpenToolkit.Graphics.ES20;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
@@ -71,6 +72,85 @@ namespace Game.WorldGen
         }
 
         /// <summary>
+        /// Fill all sinks in the map using a depression filling algorithm.
+        /// This causes each map tile to have at least one neighbouring cell with a
+        /// lower elevation.
+        /// </summary>
+        private void FillSinks()
+        {
+            var directions = new[]
+            {
+                Position.East,
+                Position.North, 
+                Position.South,
+                Position.West
+            };
+
+            var newValues = new float[this.Dimensions.Width, this.Dimensions.Height];
+            var epsilon = 1e-5f;
+            var infinity = 999999.0f;
+
+            Func<int, int, bool> isNearEdge = (x, y) =>
+                (x == 0 || x == this.Dimensions.Width - 1) ||
+                (y == 0 || y == this.Dimensions.Height - 1);
+
+            // Set initial values
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                {
+                    newValues[ix, iy] = isNearEdge(ix, iy) ? this.Values[ix, iy] : infinity;
+                }
+            }
+            
+            // Perform iteration
+            while (true)
+            {
+                var wasChanged = false;
+
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                    {
+                        if(this.Values[ix, iy] == newValues[ix, iy])
+                            continue;
+
+                        var position = new Position(ix, iy);
+                        
+                        // Check all neighbours
+                        foreach (var direction in directions)
+                        {
+                            var neighbour = position + direction;
+
+                            if (this.Values[ix, iy] >=
+                                newValues[neighbour.X, neighbour.Y] + epsilon)
+                            {
+                                newValues[ix, iy] = this.Values[ix, iy];
+                                wasChanged = true;
+                                break;
+                            }
+
+                            var oh = newValues[neighbour.X, neighbour.Y] + epsilon;
+
+                            if ((newValues[ix, iy] > oh) && (oh > this.Values[ix, iy]))
+                            {
+                                newValues[ix, iy] = oh;
+                                wasChanged = true;
+                            }
+                        }
+                    }
+                }
+
+                // The algorithm terminates when no changes were made
+                if (!wasChanged)
+                    break;
+            }
+
+            this.Values = newValues;
+            this.Normalize();
+        }
+
+        /// <summary>
         /// Mask off eastern and western sides of the map to stop land from generating there
         /// </summary>
         private void MaskSides()
@@ -137,6 +217,8 @@ namespace Game.WorldGen
                 this.AccentuatePeaks();
                 this.Normalize();
             }
+            
+            this.FillSinks();
             
             this.DetermineHeightLevels();
         }

@@ -12,6 +12,17 @@ namespace Game.WorldGen
     public class RiverGenerator
     {
         /// <summary>
+        /// All positions to check when trying to find the next river segment
+        /// </summary>
+        private static List<Position> _directions = new List<Position>()
+        {
+            new Position(1, 0),
+            new Position(-1, 0),
+            new Position(0, 1),
+            new Position(0, -1)
+        };
+        
+        /// <summary>
         /// The map generator seed
         /// </summary>
         protected int Seed { get; }
@@ -27,6 +38,11 @@ namespace Game.WorldGen
         protected HeightMap Elevation { get; }
         
         /// <summary>
+        /// The temperature component of the map
+        /// </summary>
+        protected TemperatureMap Temperature { get; }
+        
+        /// <summary>
         /// The biome map
         /// </summary>
         protected TerrainType[,] Biomes { get; }
@@ -39,12 +55,12 @@ namespace Game.WorldGen
         /// <summary>
         /// How many river starts to generate
         /// </summary>
-        protected int IterationCount { get; } = 300;
+        protected int IterationCount { get; } = 150;
 
         /// <summary>
         /// All completed rivers
         /// </summary>
-        protected List<River> Rivers { get; }
+        protected List<River> Rivers { get; set;  }
 
         /// <summary>
         /// All lake tiles
@@ -54,12 +70,13 @@ namespace Game.WorldGen
         /// <summary>
         /// Create new river generator instance
         /// </summary>
-        public RiverGenerator(Size dimensions, int seed, HeightMap elevation, TerrainType[,] biomes)
+        public RiverGenerator(Size dimensions, int seed, HeightMap elevation, TemperatureMap temperature, TerrainType[,] biomes)
         {
             this.Dimensions = dimensions;
             this.Seed = seed;
             this.Elevation = elevation;
             this.Biomes = biomes;
+            this.Temperature = temperature;
         }
 
         /// <summary>
@@ -67,7 +84,15 @@ namespace Game.WorldGen
         /// </summary>
         protected bool IsInAnyRiver(Position position)
         {
-            return this.Rivers.All(river => !river.ContainsSegment(position));
+            return !this.Rivers.All(river => !river.ContainsSegment(position));
+        }
+
+        /// <summary>
+        /// Retriever the river the current river will join into
+        /// </summary>
+        protected River GetJoinedIntoRiver(Position position)
+        {
+            return this.Rivers.First(river => river.ContainsSegment(position));
         }
         
         /// <summary>
@@ -91,7 +116,12 @@ namespace Game.WorldGen
                     if (this.Elevation[ix, iy] <= this.Elevation.LowMountainThreshold
                     && this.Elevation[ix, iy] >= this.Elevation.LandThreshold)
                     {
-                        viableSources.Add((ix, iy));
+                        var temperature = this.Temperature.TemperatureLevels[ix, iy];
+
+                        if (temperature != TemperatureLevel.Coldest && temperature != TemperatureLevel.Colder)
+                        {
+                            viableSources.Add((ix, iy));
+                        }
                     }
                 }
             }
@@ -110,7 +140,7 @@ namespace Game.WorldGen
                 var position = randomSource();
                 var oldPosition = position;
 
-                var river = new River(position);
+                var river = new River(new Position(position.Item1, position.Item2));
 
                 while (true)
                 {
@@ -121,55 +151,63 @@ namespace Game.WorldGen
                     var bestNewPos = (0, 0);
                     var cancelRiver = false;
                     
-                    for (var dx = -1; dx <= 1; ++dx)
+                    foreach(var direction in _directions)
                     {
-                        for (var dy = -1; dy <= 1; ++dy)
+                        var newPos = (position.Item1 + direction.X, position.Item2 + direction.Y);
+                        var newPos_ = new Position(newPos.Item1, newPos.Item2);
+
+                        // Dont go back
+                        if(newPos == oldPosition)
+                            continue;
+                        // If we hit _another_ river that is not the current one, we stop
+                        else if (this.IsInAnyRiver(newPos_))
                         {
-                            var newPos = (position.Item1 + dx, position.Item2 + dy);
-                            var newPos_ = new Position(newPos.Item1, newPos.Item2);
-
-                            // Dont go back
-                            if(newPos == oldPosition)
-                                continue;
-                            // If we hit _another_ river that is not the current one, we stop
-                            else if (this.IsInAnyRiver(newPos_) || this.Lakes.Contains(newPos))
+                            cancelRiver = true;
+                            
+                            // Notify the other river that we ended into it
+                            var otherRiver = this.GetJoinedIntoRiver(newPos_);
+                            otherRiver?.AddJoin(newPos_, new Position(position.Item1, position.Item2));
+                            
+                            break;
+                        }
+                        else if (this.Lakes.Contains(newPos))
+                        {
+                            cancelRiver = true;
+                            break;
+                        }
+                        // We would run into ourselves. ignore.
+                        else if (river.ContainsSegment(newPos_))
+                        {
+                            continue;
+                        }
+                        else if(newPos.Item1 >= 0 && newPos.Item1 < this.Dimensions.Width &&
+                                    newPos.Item2 >= 0 && newPos.Item2 < this.Dimensions.Height)
+                        {
+                            // End on ocean
+                            if (this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.Ocean ||
+                                this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.SeaIce)
                             {
                                 cancelRiver = true;
-                                break;
                             }
-                            // We would run into ourselves. ignore.
-                            else if (river.ContainsSegment(newPos_))
+                            else
                             {
-                                continue;
-                            }
-                            else if(newPos.Item1 >= 0 && newPos.Item1 < this.Dimensions.Width &&
-                                        newPos.Item2 >= 0 && newPos.Item2 < this.Dimensions.Height)
-                            {
-                                // End on ocean
-                                if (this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.Ocean ||
-                                    this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.SeaIce)
-                                {
-                                    cancelRiver = true;
-                                }
-                                else
-                                {
-                                    // Calculate slope
-                                    var newElevation = this.Elevation[newPos.Item1, newPos.Item2];
-                                    var slope = newElevation - elevation;
+                                // Calculate slope
+                                var newElevation = this.Elevation[newPos.Item1, newPos.Item2];
+                                var slope = newElevation - elevation;
 
-                                    if (slope < steepestSlope)
-                                    {
-                                        steepestSlope = slope;
-                                        bestNewPos = newPos;
-                                        anyFound = true;
-                                    }
+                                if (slope < steepestSlope)
+                                {
+                                    steepestSlope = slope;
+                                    bestNewPos = newPos;
+                                    anyFound = true;
                                 }
-                            }
-                            else // Cancel rivers that run outside of the map
-                            {
-                                cancelRiver = true;
                             }
                         }
+                        else // Cancel rivers that run outside of the map
+                        {
+                            cancelRiver = true;
+                        }
+                        
                     }
 
                     if (anyFound && !cancelRiver)
@@ -209,6 +247,7 @@ namespace Game.WorldGen
             foreach (var river in this.Rivers)
             {
                 river.GenerateTileTypes(this.RiverTileTypes);
+                river.SetTerrain(this.Biomes);
             }
             
             foreach (var (ix, iy) in this.Lakes)

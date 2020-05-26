@@ -41,7 +41,7 @@ namespace Game.WorldGen
             var biomeMapper = new BiomeMapper(this.WorldDimensions, heightMap, rainfallMap, drainageMap, temperatureMap);
 
             this.SignalNextStage("Generating rivers..", 0.70);
-            var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, biomeMapper.TerrainTypes);
+            var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, temperatureMap, biomeMapper.TerrainTypes);
             riverGenerator.GenerateRivers();
             
             this.SignalNextStage("Storing data..", 0.80);
@@ -49,6 +49,7 @@ namespace Game.WorldGen
             world.DetailedMap.Drainage = drainageMap.DrainageTiles;
             world.DetailedMap.Rainfall = rainfallMap.RainfallTiles;
             world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
+            world.DetailedMap.RiverTypes = riverGenerator.RiverTileTypes;
 
             this.SignalNextStage("Updating terrain tiles..", 0.85);
             world.UpdateTiles();
