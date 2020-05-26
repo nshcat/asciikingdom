@@ -49,7 +49,7 @@ namespace Game.WorldGen
             world.DetailedMap.Drainage = drainageMap.DrainageTiles;
             world.DetailedMap.Rainfall = rainfallMap.RainfallTiles;
             world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
-            world.DetailedMap.RiverTypes = riverGenerator.RiverTileTypes;
+            world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
 
             this.SignalNextStage("Updating terrain tiles..", 0.85);
             world.UpdateTiles();

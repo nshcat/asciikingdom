@@ -34,7 +34,7 @@ namespace Game.Simulation
         /// <summary>
         /// The detailed play map
         /// </summary>
-        public Map DetailedMap { get; }
+        public DetailedMap DetailedMap { get; }
         
         /// <summary>
         /// The overview map
@@ -50,7 +50,7 @@ namespace Game.Simulation
             this.OverviewScale = overviewScale;
             this.Dimensions = dimensions;
             
-            this.DetailedMap = new Map(dimensions, seed);
+            this.DetailedMap = new DetailedMap(dimensions, seed);
             this.OverviewMap = new Map(this.OverviewDimensions, seed);
         }
 

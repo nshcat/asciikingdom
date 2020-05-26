@@ -48,9 +48,9 @@ namespace Game.WorldGen
         protected TerrainType[,] Biomes { get; }
         
         /// <summary>
-        /// River tile type array
+        /// Extra river tile data
         /// </summary>
-        public RiverTileType[,] RiverTileTypes { get; protected set; }
+        public Dictionary<Position, RiverTileInfo> RiverTileInfo { get; protected set; }
 
         /// <summary>
         /// How many river starts to generate
@@ -102,7 +102,7 @@ namespace Game.WorldGen
         {
             var rng = new Random(this.Seed);
             
-            this.RiverTileTypes = new RiverTileType[this.Dimensions.Width, this.Dimensions.Height];
+            this.RiverTileInfo = new Dictionary<Position, RiverTileInfo>();
             this.Rivers = new List<River>();
             this.Lakes = new HashSet<(int, int)>();
             
@@ -172,8 +172,16 @@ namespace Game.WorldGen
                             
                             // Notify the other river that we ended into it
                             var otherRiver = this.GetJoinedIntoRiver(newPos_);
-                            otherRiver?.AddJoin(newPos_, new Position(position.Item1, position.Item2));
+                            otherRiver?.AddJoinedRiver(newPos_, new Position(position.Item1, position.Item2));
+                            
+                            // Since this river is new, it is of size 1
+                            otherRiver?.AdjustSize(newPos_, 1);
                             river.EndMarker = newPos_;
+
+                            if (otherRiver != null)
+                            {
+                                river.EndJoin = new River.RiverJoin(otherRiver, newPos_);
+                            }
                             
                             break;
                         }
@@ -255,7 +263,7 @@ namespace Game.WorldGen
         {
             foreach (var river in this.Rivers)
             {
-                river.GenerateTileTypes(this.RiverTileTypes);
+                river.GenerateTileTypes(this.RiverTileInfo);
                 river.SetTerrain(this.Biomes);
             }
             

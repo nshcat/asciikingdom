@@ -45,11 +45,6 @@ namespace Game.Simulation
         public Tile[,] Drainage { get; set; }
         
         /// <summary>
-        /// Types of river tiles on the map
-        /// </summary>
-        public RiverTileType[,] RiverTypes { get; set; }
-        
-        /// <summary>
         /// The seed used to generate this map
         /// </summary>
         public int Seed { get; }
@@ -68,7 +63,6 @@ namespace Game.Simulation
             this.Rainfall = new Tile[dimensions.Width, dimensions.Height];
             this.Temperature = new Tile[dimensions.Width, dimensions.Height];
             this.Drainage = new Tile[dimensions.Width, dimensions.Height];
-            this.RiverTypes = new RiverTileType[dimensions.Width, dimensions.Height];
         }
         
         /// <summary>
@@ -90,7 +84,7 @@ namespace Game.Simulation
         /// <summary>
         /// Build new tile array from terrain array
         /// </summary>
-        public void UpdateTiles()
+        public virtual void UpdateTiles()
         {
             var random = new Random(this.Seed);
 
@@ -99,21 +93,10 @@ namespace Game.Simulation
                 for (var iy = 0; iy < Dimensions.Height; ++iy)
                 {
                     var terrainType = this.GetTerrainType(new Position(ix, iy));
-                    var riverType = this.RiverTypes[ix, iy];
-                    
-                    // Special case: If the terrain is a river at this position, we have to query the stored
-                    // river type
-                    if (terrainType == TerrainType.River && riverType != RiverTileType.None)
-                    {
-                        var tile = RiverTileTypeData.GetRiverTile(riverType);
-                        this.Tiles[ix, iy] = tile;
-                    }
-                    else
-                    {
-                        var info = TerrainTypeData.GetInfo(terrainType);
-                        var tile = (random.NextDouble() > 0.5) ? info.Primary : info.Secondary;
-                        this.Tiles[ix, iy] = tile;
-                    }
+
+                    var info = TerrainTypeData.GetInfo(terrainType);
+                    var tile = (random.NextDouble() > 0.5) ? info.Primary : info.Secondary;
+                    this.Tiles[ix, iy] = tile;
                 }
             }
         }

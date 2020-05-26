@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
 using Engine.Core;
 using Game.Data;
-using OpenToolkit.Graphics.OpenGL4;
 
 namespace Game.WorldGen
 {
@@ -13,6 +10,32 @@ namespace Game.WorldGen
     /// </summary>
     public class River
     {
+        /// <summary>
+        /// Represents a combination of a river reference and a segment inside that river.
+        /// This class is used to remember into which other river a river ended and joined into.
+        /// </summary>
+        public class RiverJoin
+        {
+            /// <summary>
+            /// The river that was joined into
+            /// </summary>
+            public River JoinedRiver { get; }
+            
+            /// <summary>
+            /// In which segment of the river the join happened
+            /// </summary>
+            public Position JoinLocation { get; }
+
+            /// <summary>
+            /// Create a new river join instance
+            /// </summary>
+            public RiverJoin(River river, Position location)
+            {
+                this.JoinedRiver = river;
+                this.JoinLocation = location;
+            }
+        }
+        
         /// <summary>
         /// Flag field of possible directions another river tile connects on
         /// </summary>
@@ -24,6 +47,39 @@ namespace Game.WorldGen
             East = 2,
             South = 4,
             West = 8
+        }
+
+        /// <summary>
+        /// Represents a single segment in a river
+        /// </summary>
+        protected class RiverSegment
+        {
+            /// <summary>
+            /// Size of the river. Is used to differentiate between minor and major rivers.
+            /// </summary>
+            public int Size { get; set; }
+            
+            /// <summary>
+            /// The position of the segment on the world map.
+            /// </summary>
+            public Position Position { get; set; }
+
+            /// <summary>
+            /// Construct a new river segment instance
+            /// </summary>
+            public RiverSegment(Position position, int size)
+            {
+                this.Position = position;
+                this.Size = size;
+            }
+
+            /// <summary>
+            /// Increase the size of this river segment by given river size.
+            /// </summary>
+            public void IncreaseSize(int otherSize)
+            {
+                this.Size += otherSize;
+            }
         }
 
         /// <summary>
@@ -61,25 +117,42 @@ namespace Game.WorldGen
         public bool HasEndMarker => this.EndMarker != null;
         
         /// <summary>
-        /// All segments of this river in the form of a set.
+        /// Potential river join instance detailing into which river this river joined.
+        /// </summary>
+        /// <remarks>
+        /// This might be null, if this river did not join into another river.
+        /// </remarks>
+        public RiverJoin EndJoin { get; set; }
+
+        /// <summary>
+        /// Whether this river has an end join
+        /// </summary>
+        public bool HasEndJoin => this.EndJoin != null;
+        
+        /// <summary>
+        /// All segment positions of this river as a set.
         /// </summary>
         /// <remarks>
         /// This data structure allows fast checks whether a certain position is part of this river.
         /// </remarks>
-        protected HashSet<Position> Segments { get; }
+        protected HashSet<Position> SegmentPositions { get; }
             = new HashSet<Position>();
         
         /// <summary>
         /// Ordered river path
         /// </summary>
-        protected List<Position> Path { get; }
-            = new List<Position>();
+        protected List<RiverSegment> Path { get; }
+            = new List<RiverSegment>();
         
         /// <summary>
         /// Hash map of all joins, which are segments of the river where another river joined (and thus ended) in.
         /// The second position is the last segment of the ended river.
         /// </summary>
-        protected Dictionary<Position, List<Position>> Joins { get; }
+        /// <remarks>
+        /// This data is used to correctly generate river tile types, especially the connections between joined
+        /// rivers.
+        /// </remarks>
+        protected Dictionary<Position, List<Position>> JoinedRivers { get; }
             = new Dictionary<Position, List<Position>>();
 
         /// <summary>
@@ -91,12 +164,35 @@ namespace Game.WorldGen
         }
 
         /// <summary>
+        /// Recursively increase the size of this river and its potential join target by given size delta.
+        /// </summary>
+        public void AdjustSize(Position startLocation, int delta)
+        {
+            // Try to find the index of the segment corresponding to the start location
+            var startIndex = this.Path.FindIndex(x => x.Position == startLocation);
+            
+            if(startIndex == -1)
+                throw new ArgumentException("AdjustSize: Start location is not a river segment");
+
+            for (var i = startIndex; i < this.Path.Count; ++i)
+            {
+                this.Path[i].Size += delta;
+            }
+            
+            // If we joined into another river, we have to recurse
+            if(this.HasEndJoin)
+                this.EndJoin.JoinedRiver.AdjustSize(this.EndJoin.JoinLocation, delta);
+        }
+
+        /// <summary>
         /// Add a new river path segment.
         /// </summary>
         public void AddSegment(Position position)
         {
-            this.Segments.Add(position);
-            this.Path.Add(position);
+            // Initially, all rivers have size 1. Only when other rivers join into them
+            // the size of the affected segments is adjusted.
+            this.Path.Add(new RiverSegment(position, 1));
+            this.SegmentPositions.Add(position);
         }
 
         /// <summary>
@@ -104,23 +200,23 @@ namespace Game.WorldGen
         /// </summary>
         public bool ContainsSegment(Position position)
         {
-            return this.Segments.Contains(position);
+            return this.SegmentPositions.Contains(position);
         }
 
         /// <summary>
-        /// Add a new river join, which is another river ending into this one.
+        /// Add a new joined river, which is another river ending into this one.
         /// </summary>
         /// <param name="segment">Segment of this river the other river ended in</param>
         /// <param name="riverEnd">Last segment of the ended river, not intersecting with this river.</param>
-        public void AddJoin(Position segment, Position riverEnd)
+        public void AddJoinedRiver(Position segment, Position riverEnd)
         {
-            if (!this.Joins.ContainsKey(segment))
+            if (!this.JoinedRivers.ContainsKey(segment))
             {
-                this.Joins.Add(segment, new List<Position>{riverEnd});
+                this.JoinedRivers.Add(segment, new List<Position>{riverEnd});
             }
             else
             {
-                this.Joins[segment].Add(riverEnd);
+                this.JoinedRivers[segment].Add(riverEnd);
             }
         }
 
@@ -131,18 +227,19 @@ namespace Game.WorldGen
         {
             foreach (var segment in this.Path)
             {
-                terrain[segment.X, segment.Y] = TerrainType.River;
+                var position = segment.Position;
+                terrain[position.X, position.Y] = TerrainType.River;
             }
         }
 
         /// <summary>
         /// Convert river path into river tile type values.
         /// </summary>
-        public void GenerateTileTypes(RiverTileType[,] tileTypes)
+        public void GenerateTileTypes(Dictionary<Position, RiverTileInfo> riverTileInfos)
         {
             // Source
             var first = this.Path[0];
-            tileTypes[first.X, first.Y] = RiverTileType.Source;
+            riverTileInfos[first.Position] = new RiverTileInfo(RiverTileType.Source);
 
             if (this.Path.Count == 1)
                 return;
@@ -150,14 +247,14 @@ namespace Game.WorldGen
             if (this.Path.Count == 2)
             {
                 var last = this.Path[1];
-                var direction = this.FindDirection(last,  first);
+                var direction = this.FindDirection(last.Position,  first.Position);
 
                 if (this.HasEndMarker)
                 {
-                    direction |= this.FindDirection(last, this.EndMarker.Value);
+                    direction |= this.FindDirection(last.Position, this.EndMarker.Value);
                 }
-                
-                tileTypes[last.X, last.Y] = _riverTileLookupTable[(int) direction];
+
+                riverTileInfos[last.Position] = new RiverTileInfo(_riverTileLookupTable[(int) direction], last.Size);
             }
             else
             {
@@ -167,36 +264,42 @@ namespace Game.WorldGen
                     var current = this.Path[ix];
                     var next = this.Path[ix + 1];
 
-                    var directionPrev = this.FindDirection(current, previous);
-                    var directionNext = this.FindDirection(current, next);
+                    var directionPrev = this.FindDirection(current.Position, previous.Position);
+                    var directionNext = this.FindDirection(current.Position, next.Position);
                     var index = (int) (directionPrev | directionNext);
                     
                     // Check if there is a join
-                    if (this.Joins.ContainsKey(current))
+                    if (this.JoinedRivers.ContainsKey(current.Position))
                     {
-                        var riverEnds = this.Joins[current];
+                        var riverEnds = this.JoinedRivers[current.Position];
 
                         foreach (var end in riverEnds)
                         {
-                            var directionJoin = this.FindDirection(current, end);
+                            var directionJoin = this.FindDirection(current.Position, end);
                             index |= (int) directionJoin;
                         }
                     }
                     
-                    tileTypes[current.X, current.Y] = _riverTileLookupTable[index];
+                    riverTileInfos[current.Position] = new RiverTileInfo(
+                        _riverTileLookupTable[index],
+                        current.Size
+                    );
                 }
                 
                 // Last one
                 var last = this.Path[^1];
                 var penultimate = this.Path[^2];
-                var direction = this.FindDirection(last, penultimate);
+                var direction = this.FindDirection(last.Position, penultimate.Position);
 
                 if (this.HasEndMarker)
                 {
-                    direction |= this.FindDirection(last, this.EndMarker.Value);
+                    direction |= this.FindDirection(last.Position, this.EndMarker.Value);
                 }
-                
-                tileTypes[last.X, last.Y] = _riverTileLookupTable[(int) direction];
+
+                riverTileInfos[last.Position] = new RiverTileInfo(
+                    _riverTileLookupTable[(int) direction],
+                    last.Size
+                );
             }
         }
 
