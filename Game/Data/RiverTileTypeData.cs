@@ -23,8 +23,8 @@ namespace Game.Data
                 [RiverTileType.NorthWest] = new Tile(217, Color.FromHex("#005BD8")),
                 [RiverTileType.SouthEast] = new Tile(218, Color.FromHex("#005BD8")),
                 [RiverTileType.SouthWest] = new Tile(191, Color.FromHex("#005BD8")),
-                [RiverTileType.VerticalEast] = new Tile(180, Color.FromHex("#005BD8")),
-                [RiverTileType.VerticalWest] = new Tile(195, Color.FromHex("#005BD8")),
+                [RiverTileType.VerticalEast] = new Tile(195, Color.FromHex("#005BD8")),
+                [RiverTileType.VerticalWest] = new Tile(180, Color.FromHex("#005BD8")),
                 [RiverTileType.HorizontalNorth] = new Tile(193, Color.FromHex("#005BD8")),
                 [RiverTileType.HorizontalSouth] = new Tile(194, Color.FromHex("#005BD8"))
             };

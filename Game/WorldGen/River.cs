@@ -46,8 +46,19 @@ namespace Game.WorldGen
             RiverTileType.SouthWest,       // 12 (South and West)
             RiverTileType.VerticalWest,    // 13 (North, South and West)
             RiverTileType.HorizontalSouth, // 14 (East, South, and West)
-            RiverTileType.Source           // 15 (All directions)
+            RiverTileType.Cross            // 15 (All directions)
         };
+        
+        /// <summary>
+        /// An optional position that marks an invisible end segment of the river. This is used for rivers that
+        /// join into an ocean or another river, and makes the ends bend correctly
+        /// </summary>
+        public Position? EndMarker { get; set; }
+
+        /// <summary>
+        /// Whether this river has an end marker
+        /// </summary>
+        public bool HasEndMarker => this.EndMarker != null;
         
         /// <summary>
         /// All segments of this river in the form of a set.
@@ -133,9 +144,20 @@ namespace Game.WorldGen
             var first = this.Path[0];
             tileTypes[first.X, first.Y] = RiverTileType.Source;
 
-            if (this.Path.Count <= 2)
+            if (this.Path.Count == 1)
+                return;
+            
+            if (this.Path.Count == 2)
             {
+                var last = this.Path[1];
+                var direction = this.FindDirection(last,  first);
+
+                if (this.HasEndMarker)
+                {
+                    direction |= this.FindDirection(last, this.EndMarker.Value);
+                }
                 
+                tileTypes[last.X, last.Y] = _riverTileLookupTable[(int) direction];
             }
             else
             {
@@ -168,6 +190,12 @@ namespace Game.WorldGen
                 var last = this.Path[^1];
                 var penultimate = this.Path[^2];
                 var direction = this.FindDirection(last, penultimate);
+
+                if (this.HasEndMarker)
+                {
+                    direction |= this.FindDirection(last, this.EndMarker.Value);
+                }
+                
                 tileTypes[last.X, last.Y] = _riverTileLookupTable[(int) direction];
             }
         }

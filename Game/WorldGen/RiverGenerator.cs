@@ -135,9 +135,15 @@ namespace Game.WorldGen
                 return source;
             };
 
+            int riverId = 0;
             for (var i = 0; i < this.IterationCount; ++i)
             {
                 var position = randomSource();
+                
+                // Reject river source if it is part of an already existing river
+                if(this.IsInAnyRiver(new Position(position.Item1, position.Item2)))
+                    continue;
+
                 var oldPosition = position;
 
                 var river = new River(new Position(position.Item1, position.Item2));
@@ -167,6 +173,7 @@ namespace Game.WorldGen
                             // Notify the other river that we ended into it
                             var otherRiver = this.GetJoinedIntoRiver(newPos_);
                             otherRiver?.AddJoin(newPos_, new Position(position.Item1, position.Item2));
+                            river.EndMarker = newPos_;
                             
                             break;
                         }
@@ -187,6 +194,7 @@ namespace Game.WorldGen
                             if (this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.Ocean ||
                                 this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.SeaIce)
                             {
+                                river.EndMarker = newPos_;
                                 cancelRiver = true;
                             }
                             else
@@ -233,6 +241,7 @@ namespace Game.WorldGen
                 }
                 
                 this.Rivers.Add(river);
+                riverId++;
             }
             
             this.UpdateTerrain();
