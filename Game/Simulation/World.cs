@@ -82,7 +82,10 @@ namespace Game.Simulation
         /// </summary>
         protected void BuildOverviewTerrain()
         {
-            this.BuildOverviewHelper(this.DetailedMap.Terrain, this.OverviewMap.Terrain);
+            this.BuildOverviewHelper(
+                this.DetailedMap.Terrain,
+                this.OverviewMap.Terrain,
+                new HashSet<TerrainType> {TerrainType.River}); // Exclude rivers, since they are special map elements
             
             // Derive tiles from terrain types
             this.OverviewMap.UpdateTiles();
@@ -115,10 +118,13 @@ namespace Game.Simulation
         /// <summary>
         /// A helper method used to scale down arrays of detailed map to be used with the overview map
         /// </summary>
-        protected void BuildOverviewHelper<T>(T[,] source, T[,] destination)
+        protected void BuildOverviewHelper<T>(T[,] source, T[,] destination, HashSet<T> exclude = null)
         {
             var entries = new List<T>();
             var scaleFactor = (int)(1.0f / this.OverviewScale);
+
+            if (exclude == null)
+                exclude = new HashSet<T>();
             
             for (var ix = 0; ix < this.OverviewDimensions.Width; ++ix)
             {
@@ -133,7 +139,10 @@ namespace Game.Simulation
                     {
                         for (var iiy = topLeft.Y; iiy <= bottomRight.Y; ++iiy)
                         {
-                            entries.Add(source[iix, iiy]);
+                            var element = source[iix, iiy];
+                            
+                            if(!exclude.Contains(element))
+                                entries.Add(source[iix, iiy]);
                         }
                     }
                     

@@ -55,7 +55,7 @@ namespace Game.WorldGen
         /// <summary>
         /// How many river starts to generate
         /// </summary>
-        protected int IterationCount { get; } = 150;
+        protected int IterationCount { get; } = 25;
 
         /// <summary>
         /// All completed rivers

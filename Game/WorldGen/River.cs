@@ -291,6 +291,18 @@ namespace Game.WorldGen
                 var penultimate = this.Path[^2];
                 var direction = this.FindDirection(last.Position, penultimate.Position);
 
+                // Check if there is a join
+                if (this.JoinedRivers.ContainsKey(last.Position))
+                {
+                    var riverEnds = this.JoinedRivers[last.Position];
+
+                    foreach (var end in riverEnds)
+                    {
+                        var directionJoin = this.FindDirection(last.Position, end);
+                        direction |= directionJoin;
+                    }
+                }
+                
                 if (this.HasEndMarker)
                 {
                     direction |= this.FindDirection(last.Position, this.EndMarker.Value);
