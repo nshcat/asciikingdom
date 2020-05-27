@@ -6,11 +6,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AccidentalNoise\AccidentalNoise.csproj" />
       <ProjectReference Include="..\Engine\Engine.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="SharpNoise" Version="0.12.1.1" />
     </ItemGroup>
-
+    
+    <ItemGroup>
+        <None Include="..\Resources\**\*.*" LinkBase="Resources" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 </Project>

@@ -7,7 +7,6 @@ namespace Game.Data
     {
         Unknown,
         Ocean,
-        Lake,
         MountainsLow,
         MountainsMed,
         MountainsHigh,
@@ -28,9 +27,15 @@ namespace Game.Data
         TemperateBroadleafForest,
         TropicalBroadleafForest,
         ConiferousForest,
+        BadLands,
         
         // Not sure if these will be used
         Hills,
-        HillsDry
+        HillsDry,
+        
+        // This is a special marker. Metadata is used to correctly render
+        // river glyphs based on orientation and interconnectivity.
+        River,
+        Lake
     }
 }

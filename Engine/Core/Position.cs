@@ -27,6 +27,26 @@ namespace Engine.Core
         /// The origin position, with both coordinates set to zero.
         /// </summary>
         public static Position Origin => new Position(0, 0);
+        
+        /// <summary>
+        /// Delta position north
+        /// </summary>
+        public static Position North => new Position(0, -1);
+        
+        /// <summary>
+        /// Delta position south
+        /// </summary>
+        public static Position South => new Position(0, 1);
+        
+        /// <summary>
+        /// Delta position west
+        /// </summary>
+        public static Position West => new Position(-1, 0);
+        
+        /// <summary>
+        /// Delta position east
+        /// </summary>
+        public static Position East => new Position(1, 0);
 
         /// <summary>
         /// Construct a position with given coordinates.
@@ -57,10 +77,24 @@ namespace Engine.Core
         /// <returns>Flag indicating whether positions lies withing given bounds</returns>
         public bool IsInBounds(Size size)
         {
-            var rectangle = new Rectangle(size);
-            
-            return (this.X >= rectangle.TopLeft.X && this.X <= rectangle.BottomRight.X)
-                   && (this.Y >= rectangle.TopLeft.Y && this.Y <= rectangle.BottomRight.Y);
+            return (this.X >= 0 && this.X < size.Width)
+                   && (this.Y >= 0 && this.Y < size.Height);
+        }
+
+        /// <summary>
+        /// Calculate the distance between two points.
+        /// </summary>
+        public static float GetDistance(Position lhs, Position rhs)
+        {
+            return (float) Math.Sqrt(
+                Math.Pow(rhs.X - lhs.X, 2.0)
+                + Math.Pow(rhs.Y - lhs.Y, 2.0)
+            );
+        }
+
+        public override string ToString()
+        {
+            return $"({X}, {Y})";
         }
 
         #region Equality Implementation

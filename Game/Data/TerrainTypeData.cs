@@ -78,6 +78,11 @@ namespace Game.Data
                     new Tile(46, Color.FromHex("#00FF00")),
                     new Tile(252, Color.FromHex("#00FF00"))
                 ),
+                [TerrainType.BadLands] = new TerrainTypeInfo(
+                    "Badlands",
+                    new Tile(86, Color.FromHex("#804B09")),
+                    new Tile(251, Color.FromHex("#804B09"))
+                ),
                 [TerrainType.GrasslandDry] = new TerrainTypeInfo(
                     "Dry Grassland",
                     new Tile(46, Color.FromHex("#FFFF00")),
@@ -111,7 +116,7 @@ namespace Game.Data
                 [TerrainType.RockyWasteland] = new TerrainTypeInfo(
                     "Rocky Wasteland",
                     new Tile(44, Color.FromHex("#C0C0C0")),
-                    new Tile(39, Color.FromHex("#717100"))
+                    new Tile(39, Color.FromHex("#804B09"))
                 ),
                 [TerrainType.Hills] = new TerrainTypeInfo(
                     "Hills",
@@ -126,6 +131,14 @@ namespace Game.Data
                 [TerrainType.Ocean] = new TerrainTypeInfo(
                     "Ocean",
                     new Tile(247, Color.FromHex("#005BD8"))
+                ),
+                [TerrainType.River] = new TerrainTypeInfo(
+                    "River",
+                    new Tile(197, Color.FromHex("#005BD8"))
+                ),
+                [TerrainType.Lake] = new TerrainTypeInfo(
+                    "Lake",
+                    new Tile(126, Color.FromHex("#005BD8"))
                 ),
                 [TerrainType.Lake] = new TerrainTypeInfo(
                     "Lake",

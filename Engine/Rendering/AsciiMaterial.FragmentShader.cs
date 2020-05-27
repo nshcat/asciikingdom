@@ -16,6 +16,7 @@ namespace Engine.Rendering
 			flat in float fog_factor;
 			flat in uint shadows[8];
 			flat in uint is_transparent;
+			flat in uint is_ui_shadow;
 
 			uniform vec4 fog_color;
 			uniform sampler2D tex;
@@ -65,6 +66,13 @@ namespace Engine.Rendering
 			    p_pixel.a = 1.f;
 			}
 
+			void apply_ui_shadow(inout vec4 p_pixel)
+			{
+				if(is_ui_shadow > 0U)
+				{
+					p_pixel = p_pixel * 0.4f;
+				}
+			}
 
 			void main()
 			{
@@ -77,6 +85,7 @@ namespace Engine.Rendering
 
 			    apply_depth(clr);
 			    apply_shadows(clr);
+				apply_ui_shadow(clr);
 
 				fragmentColor = clr;
 			}

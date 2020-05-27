@@ -26,10 +26,10 @@ namespace Engine.Resources
 
         /// <summary>
         /// Create a new resource manager, using the current working directory for resources.
-        /// The resource bath will be ./resources/
+        /// The resource path will be ./Resources/
         /// </summary>
         public ResourceManager()
-            : this(Path.Combine(Directory.GetCurrentDirectory(), "resources"))
+            : this(Path.Combine(Directory.GetCurrentDirectory(), "Resources"))
         {
             
         }

@@ -1,0 +1,3 @@
+[submodule "AccidentalNoiseLibrary"]
+	path = AccidentalNoiseLibrary
+	url = https://github.com/TinkerWorX/AccidentalNoiseLibrary

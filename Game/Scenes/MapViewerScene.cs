@@ -1,13 +1,15 @@
 using System;
-using System.Reflection.Metadata;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
 using Engine.Rendering;
 using Engine.Resources;
 using Game.Core;
+using Game.Simulation;
 using Game.Data;
 using Game.Ui;
+using Game.WorldGen;
+using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Windowing.Common.Input;
 
 namespace Game.Scenes
@@ -27,8 +29,9 @@ namespace Game.Scenes
             MoveLeftFast,
             RegenerateMap,
             ShowMap,
-            ShowRainfaill,
-            ShowTemperature
+            ShowRainfall,
+            ShowTemperature,
+            ShowDrainage
         }
 
         private World _world;
@@ -36,9 +39,13 @@ namespace Game.Scenes
         private InputActionMapper<MapViewerAction> _actionMapper;
         private int _seed = 1337;
         private Random _random = new Random();
-
         private MapView _detailedView, _overviewView;
 
+        private WorldGenerator _worldGen;
+        private string _worldGenPhase;
+        private double _worldGenProgress;
+        private bool _isGeneratingMap = false;
+        
         public MapViewerScene(Scene parent) : base(parent)
         {
             this.Initialize();
@@ -51,8 +58,34 @@ namespace Game.Scenes
 
         private void InitializeViews()
         {
-            this._detailedView = new MapView(new Position(1, 1), Size.Empty, this._world.DetailMapTiles);
-            this._overviewView = new MapView(Position.Origin, Size.Empty, this._world.OverviewMapTiles);
+            this._detailedView = new MapView(new Position(1, 1), Size.Empty);
+            this._overviewView = new MapView(Position.Origin, Size.Empty);
+        }
+
+        private void RegenerateWorld(int seed)
+        {
+            this._worldGen = new WorldGenerator(new Size(256, 256), seed); // 340, 340
+            
+            this._worldGen.WorldGenerationStageChanged += (text, progress) =>
+            {
+                this._worldGenPhase = text;
+                this._worldGenProgress = progress;
+            };
+
+            this._worldGen.WorldGenerationFinished += world =>
+            {
+                this._world = world;
+                this._detailedView.ReplaceMap(this._world.DetailedMap);
+                this._overviewView.ReplaceMap(this._world.OverviewMap);
+                this._worldGen = null;
+                this._isGeneratingMap = false;
+            };
+
+            this._isGeneratingMap = true;
+            this._worldGenProgress = 0.0;
+            this._worldGenPhase = "Initializing..";
+            
+            this._worldGen.Run();
         }
 
         private void Initialize()
@@ -64,7 +97,7 @@ namespace Game.Scenes
 
         private void InitializeWorld()
         {
-            this._world = World.GenerateWorld(new Size(1024, 1024), 1337);
+            this.RegenerateWorld(1337);
         }
 
         private void InitializeMapper()
@@ -78,44 +111,51 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.MoveDownFast, KeyPressType.Down, Key.Down, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveLeftFast, KeyPressType.Down, Key.Left, Key.ShiftLeft),
                 new InputAction<MapViewerAction>(MapViewerAction.MoveRightFast, KeyPressType.Down, Key.Right, Key.ShiftLeft),
-                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Down, Key.R),
+                new InputAction<MapViewerAction>(MapViewerAction.RegenerateMap, KeyPressType.Pressed, Key.R),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowMap, KeyPressType.Pressed, Key.M),
-                new InputAction<MapViewerAction>(MapViewerAction.ShowRainfaill, KeyPressType.Pressed, Key.F),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowRainfall, KeyPressType.Pressed, Key.F),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowDrainage, KeyPressType.Pressed, Key.D),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T)
             );
         }
 
         private void DrawMap()
         {
-            this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed})" +
-                                                         $" Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}" +
-                                                         $" {TerrainTypeData.GetInfo(this._world.GetTerrainType(this._detailedView.CursorPosition)).Name}",
-                DefaultColors.White, DefaultColors.Black);
-            
-            this._detailedView.Render(this._surface);
+            if (this._detailedView.HasMapData)
+            {
+                this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed})" +
+                                                             $" Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}" +
+                                                             $" {TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name}",
+                    DefaultColors.White, DefaultColors.Black);
+
+
+                this._detailedView.Render(this._surface);
+            }
         }
 
         private void DrawOverview()
         {
             this._surface.DrawString(new Position(this._overviewView.Position.X, 0), "Overview Map", DefaultColors.White, DefaultColors.Black);
             
-            this._overviewView.Render(this._surface);
+            if(this._overviewView.HasMapData)
+                this._overviewView.Render(this._surface);
         }
 
         private void HandleInput(MapViewerAction action)
         {
+            if (this._isGeneratingMap)
+                return;
+            
             switch (action)
             {
                 case MapViewerAction.RegenerateMap:
                 {
-                    this._seed = this._random.Next();
+                    if (!this._isGeneratingMap)
+                    {
+                        this._seed = this._random.Next();
+                        this.RegenerateWorld(this._seed);
+                    }
                     
-                    this._world = World.GenerateWorld(new Size(1024, 1024), this._seed);
-                    this._detailedView.MapData = this._world.DetailMapTiles;
-                    this._detailedView.Recenter();
-                    this._overviewView.MapData = this._world.OverviewMapTiles;
-                    this._overviewView.Recenter();
-
                     break;
                 }
                 case MapViewerAction.MoveDown:
@@ -160,33 +200,61 @@ namespace Game.Scenes
                 }
                 case MapViewerAction.ShowMap:
                 {
-                    this._detailedView.MapData = this._world.DetailMapTiles;
+                    this._detailedView.DisplayMode = MapViewMode.Terrain;
+                    this._overviewView.DisplayMode = MapViewMode.Terrain;
                     break;
                 }
-                case MapViewerAction.ShowRainfaill:
+                case MapViewerAction.ShowRainfall:
                 {
-                    this._detailedView.MapData = this._world.RainfallMapTiles;
+                    this._detailedView.DisplayMode = MapViewMode.Rainfall;
+                    this._overviewView.DisplayMode = MapViewMode.Rainfall;
+                    break;
+                }
+                case MapViewerAction.ShowDrainage:
+                {
+                    this._detailedView.DisplayMode = MapViewMode.Drainage;
+                    this._overviewView.DisplayMode = MapViewMode.Drainage;
                     break;
                 }
                 case MapViewerAction.ShowTemperature:
                 {
-                    this._detailedView.MapData = this._world.TemperatureMapTiles;
+                    this._detailedView.DisplayMode = MapViewMode.Temperature;
+                    this._overviewView.DisplayMode = MapViewMode.Temperature;
                     break;
                 }
             }
         }
-        
         
         public override void Render(RenderParams rp)
         {
             this._surface.Clear();
             this.DrawMap();
             this.DrawOverview();
+            this.DrawWorldGenProgress();
+            
             this._surface.Render(rp);
+        }
+
+        private void DrawWorldGenProgress()
+        {
+            if (this._isGeneratingMap)
+            {
+                var windowBounds = this._surface.Bounds.Centered(new Size(35, 7));
+
+                this._surface.DrawWindow(windowBounds, "Generating World",
+                    UiColors.BorderFront, UiColors.BorderBack, UiColors.BorderTitle, DefaultColors.Black);
+                
+                this._surface.DrawString(windowBounds.TopLeft + new Position(2, 2), this._worldGenPhase, UiColors.ActiveText, DefaultColors.Black);
+                
+                var progressBarBounds = new Rectangle(windowBounds.TopLeft + new Position(2, 4), new Size(windowBounds.Size.Width - 4, 1));
+                this._surface.DrawProgressBar(progressBarBounds, this._worldGenProgress, UiColors.ActiveText, DefaultColors.Black);
+            }
         }
 
         public override void Update(double deltaTime)
         {
+            this._worldGen?.ProcessEvents();
+            
             this._actionMapper.Update();
             
             if (this._actionMapper.HasTriggeredAction)
@@ -197,6 +265,9 @@ namespace Game.Scenes
                     (int)(this._detailedView.CursorPosition.X * this._world.OverviewScale),
                     (int)(this._detailedView.CursorPosition.Y * this._world.OverviewScale));
             }
+            
+            this._overviewView.Update(deltaTime);
+            this._detailedView.Update(deltaTime);
         }
 
         public override void Reshape(Size newSize)
@@ -206,14 +277,14 @@ namespace Game.Scenes
             this._surface?.Destroy();
             
             this._surface = Surface.New()
-                .Tileset(this.Resources, "default.png")
+                .Tileset(this.Resources, "myne.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             
             this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-2);
             
             this._overviewView.Position = new Position((int)(this._surface.Dimensions.Width * 0.7f) + 1, 1);
-            this._overviewView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.3f)-2, (int)(this._surface.Dimensions.Height * 0.5f));
+            this._overviewView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.3f)-2, (int)(this._surface.Dimensions.Height * 0.65f));
         }
     }
 }

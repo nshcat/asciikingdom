@@ -16,6 +16,12 @@ namespace Game.Maths
         /// <returns>Value mapped into the output range</returns>
         public static float Map(float value, Range inputRange, Range outputRange)
         {
+            if (value > inputRange.Maximum)
+                return outputRange.Maximum;
+
+            if (value < inputRange.Minimum)
+                return outputRange.Minimum;
+            
             return (value - inputRange.Minimum) * (outputRange.Maximum - outputRange.Minimum)
                 / (inputRange.Maximum - inputRange.Minimum) + outputRange.Minimum;
         }
