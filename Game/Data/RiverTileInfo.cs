@@ -21,7 +21,7 @@ namespace Game.Data
         /// <summary>
         /// River size threshold after which the river is regarded to be a major one
         /// </summary>
-        protected static int MajorThreshold { get; } = 5;
+        protected static int MajorThreshold { get; } = 4;
         
         /// <summary>
         /// Tile used for unknown river tile types

@@ -196,6 +196,30 @@ namespace Game.WorldGen
         }
 
         /// <summary>
+        /// Create a new backtrack marker that will allow the river generator to backtrack this river
+        /// to its current state
+        /// </summary>
+        public int GetBacktrackMarker()
+        {
+            return this.Path.Count - 1;
+        }
+
+        /// <summary>
+        /// Backtrack river to state marked by given backtracking marker
+        /// </summary>
+        public void Backtrack(int marker)
+        {
+            var index = marker + 1;
+
+            foreach (var segment in this.Path.GetRange(index, this.Path.Count - index))
+            {
+                this.SegmentPositions.Remove(segment.Position);
+            }
+            
+            this.Path.RemoveRange(index, this.Path.Count - index);
+        }
+
+        /// <summary>
         /// Check whether this river contains the given position as a segment.
         /// </summary>
         public bool ContainsSegment(Position position)
