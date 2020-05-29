@@ -5,6 +5,7 @@ using Engine.Graphics;
 using Engine.Input;
 using Engine.Rendering;
 using Game.Core;
+using Game.Data;
 using Game.Scenes;
 using OpenToolkit.Graphics.OpenGL4;
 using OpenToolkit.Windowing.Common.Input;
@@ -36,6 +37,14 @@ namespace Game
         {
             var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
             this.SceneStack.AddInitialScene(initialScene);
+            
+            var loader = new TestTypeManager();
+            loader.LoadTypes(this.Resources);
+
+            foreach (var type in loader.AllTypes.Values)
+            {
+                Console.WriteLine($"{type.Identifier} {type.Test}");
+            }
         }
 
         /// <summary>

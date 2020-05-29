@@ -47,6 +47,18 @@ namespace Engine.Resources
         }
 
         /// <summary>
+        /// Retrieve JSON data file contents
+        /// </summary>
+        /// <param name="name">Name of the JSON file to retrieve contents from</param>
+        /// <returns>Contents of specified JSON file</returns>
+        public string GetJSON(string name)
+        {
+            var path = this.BuildPath("json", name);
+
+            return File.ReadAllText(path);
+        }
+
+        /// <summary>
         /// Retrieve tileset
         /// </summary>
         /// <param name="name">Name of tileset to retrieve</param>
