@@ -14,6 +14,10 @@ namespace Game.WorldGen
         /// Represents a combination of a river reference and a segment inside that river.
         /// This class is used to remember into which other river a river ended and joined into.
         /// </summary>
+        /// <remarks>
+        /// This information is very important, since when increasing a rivers size (because a new river ended into
+        /// it, and thus caused it to transport more water) we have to update all downstream rivers.
+        /// </remarks>
         public class RiverJoin
         {
             /// <summary>
@@ -261,6 +265,11 @@ namespace Game.WorldGen
         /// </summary>
         public void GenerateTileTypes(Dictionary<Position, RiverTileInfo> riverTileInfos)
         {
+            // We are employing an algorithm that resembles the marching-cube algorithm, but with river connections
+            // described as directions. The direction enumeration is a flag field, where each bit indicates a certain
+            // direction another river is connected to the currently handled river segment. A lookup table is then used
+            // to determine which type of segment it is (for example, a horizontal river with a connection at the top)
+
             // Source
             var first = this.Path[0];
             riverTileInfos[first.Position] = new RiverTileInfo(RiverTileType.Source);
