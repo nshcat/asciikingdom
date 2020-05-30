@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
 
@@ -12,9 +14,14 @@ namespace Game.Simulation
     public class World
     {
         /// <summary>
+        /// Various data about the world
+        /// </summary>
+        public WorldMetadata Metadata { get; protected set; }
+
+        /// <summary>
         /// The size of the map, in terrain tiles.
         /// </summary>
-        public Size Dimensions { get; }
+        public Size Dimensions => Metadata.Dimensions;
 
         /// <summary>
         /// The size of the overview map, in terrain tiles.
@@ -24,12 +31,12 @@ namespace Game.Simulation
         /// <summary>
         /// The relative scale of the overview map in relation to the detailed map
         /// </summary>
-        public float OverviewScale { get; }
-        
+        public float OverviewScale => this.Metadata.OverviewScale;
+
         /// <summary>
         /// The seed used to generate the current map
         /// </summary>
-        public int Seed { get; }
+        public int Seed => this.Metadata.Seed;
         
         /// <summary>
         /// The detailed play map
@@ -46,10 +53,7 @@ namespace Game.Simulation
         /// </summary>
         public World(Size dimensions, int seed, float overviewScale = 0.1250f)
         {
-            this.Seed = seed;
-            this.OverviewScale = overviewScale;
-            this.Dimensions = dimensions;
-            
+            this.Metadata = new WorldMetadata(dimensions, seed, overviewScale);
             this.DetailedMap = new DetailedMap(dimensions, seed);
             this.OverviewMap = new Map(this.OverviewDimensions, seed);
         }
@@ -160,6 +164,15 @@ namespace Game.Simulation
                     destination[ix, iy] = average;
                 }
             }
+        }
+
+        /// <summary>
+        /// Save the world to given world directory path
+        /// </summary>
+        /// <param name="prefix">The directory in which the world will be saved</param>
+        public void Save(string prefix)
+        {
+            
         }
     }
 }
