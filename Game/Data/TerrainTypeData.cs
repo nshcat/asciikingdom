@@ -78,6 +78,11 @@ namespace Game.Data
                     new Tile(46, Color.FromHex("#00FF00")),
                     new Tile(252, Color.FromHex("#00FF00"))
                 ),
+                [TerrainType.HillyGrassland] = new TerrainTypeInfo(
+                    "Hilly Grassland",
+                    new Tile(239, Color.FromHex("#00FF00")),
+                    new Tile(252, Color.FromHex("#00FF00"))
+                ),
                 [TerrainType.BadLands] = new TerrainTypeInfo(
                     "Badlands",
                     new Tile(86, Color.FromHex("#804B09")),
@@ -93,6 +98,21 @@ namespace Game.Data
                     new Tile(34, Color.FromHex("#00FF00")),
                     new Tile(252, Color.FromHex("#00FF00"))
                 ),
+                [TerrainType.HillySavanna] = new TerrainTypeInfo(
+                    "Hilly Savanna",
+                    new Tile(34, Color.FromHex("#00FF00")),
+                    new Tile(239, Color.FromHex("#00FF00"))
+                ),
+                [TerrainType.Steppe] = new TerrainTypeInfo(
+                    "Steppe",
+                    new Tile(44, Color.FromHex("#00FF00")),
+                    new Tile(34, Color.FromHex("#00FF00"))
+                ),
+                [TerrainType.HillySteppe] = new TerrainTypeInfo(
+                    "Hilly Steppe",
+                    new Tile(44, Color.FromHex("#00FF00")),
+                    new Tile(239, Color.FromHex("#00FF00"))
+                ),
                 [TerrainType.SavannaDry] = new TerrainTypeInfo(
                     "Dry Savanna",
                     new Tile(34, Color.FromHex("#FFFF00")),
@@ -101,6 +121,11 @@ namespace Game.Data
                 [TerrainType.Shrubland] = new TerrainTypeInfo(
                     "Shrubland",
                     new Tile(34, Color.FromHex("#00FF00")),
+                    new Tile(231, Color.FromHex("#00FF00"))
+                ),
+                [TerrainType.HillyShrubland] = new TerrainTypeInfo(
+                    "Hilly Shrubland",
+                    new Tile(239, Color.FromHex("#00FF00")),
                     new Tile(231, Color.FromHex("#00FF00"))
                 ),
                 [TerrainType.ShrublandDry] = new TerrainTypeInfo(
