@@ -75,8 +75,11 @@ namespace Game.WorldGen
             // Chance ranges for broad leaf forest generation, pulled out of the loops to avoid repeated heap allocations
             //var sourceRange = new Range(this.Temperature.ColderThreshold, this.Temperature.ColdThreshold);
             // Alternative: Source range starting at 0.0f. Causes forests to almost never be 100% coniferous
-            var sourceRange = new Range(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
+            var coniferousSrcRange = new Range(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
             var destRange = new Range(0.0f, 1.0f);
+
+            var difference = this.Temperature.WarmThreshold - this.Temperature.ColdThreshold;
+            var jungleSrcRange = new Range(this.Temperature.ColdThreshold + (difference / 2), this.Temperature.WarmThreshold);
             
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
@@ -175,12 +178,20 @@ namespace Game.WorldGen
                                     if (temperature == TemperatureLevel.Warmer ||
                                         temperature == TemperatureLevel.Warmest)
                                         type = TerrainType.TropicalBroadleafForest;
+                                    else if (temperature == TemperatureLevel.Warm)
+                                    {
+                                        var jungleChance = MathUtil.Map(rawTemperature, jungleSrcRange, destRange);
+                                        if (rng.NextDouble() <= jungleChance)
+                                            type = TerrainType.TropicalBroadleafForest;
+                                        else
+                                            type = TerrainType.TemperateBroadleafForest;
+                                    }
                                     else
                                     {
-                                        // In colder climated, we use a scaling chance of generation broad leaf forests
+                                        // In colder climates, we use a scaling chance of generation broad leaf forests
                                         // to smoothly transition from temperate zones with broad leaf forests to
                                         // more colder zones with coniferous forests
-                                        var broadleafChance = MathUtil.Map(rawTemperature, sourceRange, destRange);
+                                        var broadleafChance = MathUtil.Map(rawTemperature, coniferousSrcRange, destRange);
 
                                        // broadleafChance *= broadleafChance;
                                         
