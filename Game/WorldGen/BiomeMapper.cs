@@ -128,7 +128,7 @@ namespace Game.WorldGen
                             // Marsh, shrubland region
                             else if (rainfall < 0.66f)
                             {
-                                if (drainage < 0.05f/*0.10f*/)
+                                if (drainage < 0.12f/*0.05f*//*0.10f*/)
                                     type = TerrainType.Marsh;
                                 else if (drainage < 0.5f)
                                 {
@@ -150,7 +150,7 @@ namespace Game.WorldGen
                             // Forest/Swamp region
                             else
                             {
-                                if (drainage < 0.05f/*0.10f*/)
+                                if (drainage < 0.12f/*0.10f*/)
                                     type = TerrainType.Swamp;
                                 else
                                 {

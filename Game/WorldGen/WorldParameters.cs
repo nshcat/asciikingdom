@@ -16,6 +16,17 @@ namespace Game.WorldGen
         /// This will stop land from generating right at the map border.
         /// </summary>
         public bool ForceOceanSides { get; set; } = true;
+
+        
+        /// <summary>
+        /// Whether to prevent colder and coldest zones from appearing at longitudes more than <see cref="ColdZoneLongitudeLimit"/> percent
+        /// </summary>
+        public bool LimitColdZones { get; set; } = true;
+
+        /// <summary>
+        /// Percentage longitude limit after which no coldest and colder zones may appear
+        /// </summary>
+        public float ColdZoneLongitudeLimit { get; set; } = 0.15f;
         
         /// <summary>
         /// The percentage amount of terrain that is supposed to be underwater, in percent

@@ -1,4 +1,5 @@
 using System;
+using System.Reflection.Metadata;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
@@ -12,8 +13,6 @@ namespace Game.WorldGen
     /// <summary>
     /// Represents the temperature layer of a game world
     /// </summary>
-    /// TODO: Maybe also use percentages here to make fixed amount of glacier?
-    /// Own temperature type for glacier?
     public class TemperatureMap : Map
     {
         /// <summary>
@@ -160,6 +159,14 @@ namespace Game.WorldGen
                     else if (temperature <= warmerThreshold)
                         temperatureLevel = TemperatureLevel.Warmer;
 
+                    if (this.Parameters.LimitColdZones
+                        && (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
+                        && (temperatureLevel == TemperatureLevel.Colder ||
+                            temperatureLevel == TemperatureLevel.Coldest))
+                    {
+                        temperatureLevel = TemperatureLevel.Cold;
+                    }
+                    
                     this.TemperatureLevels[ix, iy] = temperatureLevel;
                     var tile = new Tile(0, DefaultColors.Black, this.GetTemperatureColor(temperatureLevel));
                     this.TemperatureTiles[ix, iy] = tile;
