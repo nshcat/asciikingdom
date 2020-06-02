@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Engine.Resources;
+using Game.Utility;
 
 namespace Game.Data
 {
@@ -42,11 +43,7 @@ namespace Game.Data
         public void LoadTypes(ResourceManager resourceManager)
         {
             var contents = resourceManager.GetJSON(this.FileName);
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = new SnakeCaseNamingPolicy()
-            };
-            var types = JsonSerializer.Deserialize<List<T>>(contents, options);
+            var types = JsonSerializer.Deserialize<List<T>>(contents, Serialization.DefaultOptions);
 
             foreach (var type in types)
             {

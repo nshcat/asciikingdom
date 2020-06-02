@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
+using Game.Utility;
 
 namespace Game.Simulation
 {
@@ -13,6 +15,11 @@ namespace Game.Simulation
     /// </summary>
     public class World
     {
+        /// <summary>
+        /// The index of the world in the save directory. If set to -1, the world has not been saved yet.
+        /// </summary>
+        public int Index { get; set; } = -1;
+        
         /// <summary>
         /// Various data about the world
         /// </summary>
@@ -47,15 +54,24 @@ namespace Game.Simulation
         /// The overview map
         /// </summary>
         public Map OverviewMap { get; }
-        
+
         /// <summary>
-        /// Internal constructor
+        /// Construct new, empty world instance
+        /// </summary>
+        public World(WorldMetadata metadata)
+        {
+            this.Metadata = metadata;
+            this.DetailedMap = new DetailedMap(this.Dimensions, this.Seed);
+            this.OverviewMap = new Map(this.OverviewDimensions, this.Seed);
+        }
+
+        /// <summary>
+        /// Construct new, empty world instance
         /// </summary>
         public World(Size dimensions, int seed, float overviewScale = 0.1250f)
+            : this(new WorldMetadata(dimensions, seed, overviewScale))
         {
-            this.Metadata = new WorldMetadata(dimensions, seed, overviewScale);
-            this.DetailedMap = new DetailedMap(dimensions, seed);
-            this.OverviewMap = new Map(this.OverviewDimensions, seed);
+            
         }
 
         /// <summary>
@@ -172,7 +188,89 @@ namespace Game.Simulation
         /// <param name="prefix">The directory in which the world will be saved</param>
         public void Save(string prefix)
         {
+            // Make sure the directory exists
+            Directory.CreateDirectory(prefix);
             
+            // Serialize meta data to own JSON file
+            var metadataPath = Path.Combine(prefix, "metadata.json");
+            Serialization.SerializeToFile(this.Metadata, metadataPath, Serialization.DefaultOptions);
+
+            // Write terrain data
+            var terrainPath = Path.Combine(prefix, "terrain.bin");
+            using (var writer = new BinaryWriter(File.Open(terrainPath, FileMode.Create)))
+            {
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                    {
+                        var value = (byte) this.DetailedMap.Terrain[ix, iy];
+                        writer.Write(value);
+                    }
+                }
+            }
+            
+            // Write extra river data
+            var riverPath = Path.Combine(prefix, "rivers.bin");
+            using (var writer = new BinaryWriter(File.Open(riverPath, FileMode.Create)))
+            {
+                writer.Write(this.DetailedMap.RiverTileInfo.Count);
+                
+                foreach (var entry in this.DetailedMap.RiverTileInfo)
+                {
+                    writer.Write(entry.Key.X);
+                    writer.Write(entry.Key.Y);
+                    writer.Write(entry.Value.Size);
+                    writer.Write((byte)entry.Value.Type);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Load world from given directory
+        /// </summary>
+        public static World Load(string prefix)
+        {
+            // Load metadata first
+            var metadataPath = Path.Combine(prefix, "metadata.json");
+            var metadata = Serialization.DeserializeFromFile<WorldMetadata>(metadataPath, Serialization.DefaultOptions);
+            
+            var world = new World(metadata);
+            
+            // Load terrain
+            var terrainPath = Path.Combine(prefix, "terrain.bin");
+            using (var reader = new BinaryReader(File.Open(terrainPath, FileMode.Open)))
+            {
+                for (var ix = 0; ix < metadata.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < metadata.Dimensions.Height; ++iy)
+                    {
+                        var value = (TerrainType)reader.ReadByte();
+                        world.DetailedMap.Terrain[ix, iy] = value;
+                    }
+                }
+            }
+            
+            world.UpdateTiles();
+            
+            // Load river info
+            var riverPath = Path.Combine(prefix, "rivers.bin");
+            using (var reader = new BinaryReader(File.Open(riverPath, FileMode.Open)))
+            {
+                // Read number of entries
+                var count = reader.ReadInt32();
+
+                for (var i = 0; i < count; ++i)
+                {
+                    var x = reader.ReadInt32();
+                    var y = reader.ReadInt32();
+                    var size = reader.ReadInt32();
+                    var type = (RiverTileType) reader.ReadByte();
+                    
+                    world.DetailedMap.RiverTileInfo.Add(new Position(x, y), new RiverTileInfo(type, size));
+                }
+            }
+
+            return world;
         }
     }
 }

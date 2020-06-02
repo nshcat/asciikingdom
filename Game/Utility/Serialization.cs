@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Game.Data;
 
 namespace Game.Utility
 {
@@ -8,6 +9,16 @@ namespace Game.Utility
     /// </summary>
     public static class Serialization
     {
+        /// <summary>
+        /// The JSON serializer options to use in the project.
+        /// </summary>
+        public static JsonSerializerOptions DefaultOptions { get; }
+            = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+                WriteIndented = true
+            };
+        
         /// <summary>
         /// Serialize object to JSON file at given path
         /// </summary>

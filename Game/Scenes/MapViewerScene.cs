@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -79,6 +80,8 @@ namespace Game.Scenes
                 this._overviewView.ReplaceMap(this._world.OverviewMap);
                 this._worldGen = null;
                 this._isGeneratingMap = false;
+                
+                world.Save(Path.Combine(GameDirectories.SaveGames, "world1"));
             };
 
             this._isGeneratingMap = true;

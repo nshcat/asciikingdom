@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Engine.Core
 {
@@ -20,6 +21,7 @@ namespace Engine.Core
         /// <summary>
         /// Whether this size represents the empty size, with all dimensions set to zero.
         /// </summary>
+        [JsonIgnore]
         public bool IsEmpty => this.Width == 0 && this.Height == 0;
         
         /// <summary>

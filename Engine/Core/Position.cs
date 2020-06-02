@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 // TODO: IsInBounds(Rectangle)
 namespace Engine.Core
@@ -21,6 +22,7 @@ namespace Engine.Core
         /// <summary>
         /// Whether this position represents the origin (both coordinates zero)
         /// </summary>
+        [JsonIgnore]
         public bool IsOrigin => this.X == 0 && this.Y == 0;
 
         /// <summary>
