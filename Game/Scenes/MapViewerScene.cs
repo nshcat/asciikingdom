@@ -38,7 +38,7 @@ namespace Game.Scenes
         private World _world;
         private Surface _surface;
         private InputActionMapper<MapViewerAction> _actionMapper;
-        private int _seed = 1337;
+        private int _seed = 1770780010;
         private Random _random = new Random();
         private MapView _detailedView, _overviewView;
 
@@ -100,7 +100,7 @@ namespace Game.Scenes
 
         private void InitializeWorld()
         {
-            this.RegenerateWorld(1337);
+            this.RegenerateWorld(1770780010);
         }
 
         private void InitializeMapper()

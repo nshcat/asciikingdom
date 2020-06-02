@@ -1,6 +1,9 @@
+using System;
 using Engine.Core;
 using Game.Data;
+using Game.Maths;
 using OpenToolkit.Graphics.OpenGL;
+using Range = Game.Maths.Range;
 
 namespace Game.WorldGen
 {
@@ -38,13 +41,19 @@ namespace Game.WorldGen
         /// Temperature layer
         /// </summary>
         protected TemperatureMap Temperature { get; set; }
-
+        
+        /// <summary>
+        /// The world seed
+        /// </summary>
+        protected int Seed { get; set; }
+        
         /// <summary>
         /// Construct a new biome mapper instance.
         /// </summary>
-        public BiomeMapper(Size dimensions, HeightMap elevation, RainfallMap rainfall, DrainageMap drainage,
+        public BiomeMapper(Size dimensions, int seed, HeightMap elevation, RainfallMap rainfall, DrainageMap drainage,
             TemperatureMap temperature)
         {
+            this.Seed = seed;
             this.Dimensions = dimensions;
             this.Elevation = elevation;
             this.Rainfall = rainfall;
@@ -61,6 +70,17 @@ namespace Game.WorldGen
         /// </summary>
         protected void MapBiomes()
         {
+            var rng = new Random(this.Seed + 13185);
+            
+            // Chance ranges for broad leaf forest generation, pulled out of the loops to avoid repeated heap allocations
+            //var sourceRange = new Range(this.Temperature.ColderThreshold, this.Temperature.ColdThreshold);
+            // Alternative: Source range starting at 0.0f. Causes forests to almost never be 100% coniferous
+            var coniferousSrcRange = new Range(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
+            var destRange = new Range(0.0f, 1.0f);
+
+            var difference = this.Temperature.WarmThreshold - this.Temperature.ColdThreshold;
+            var jungleSrcRange = new Range(this.Temperature.ColdThreshold + (difference / 2), this.Temperature.WarmThreshold);
+            
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
@@ -68,6 +88,7 @@ namespace Game.WorldGen
                     var elevation = this.Elevation.HeightLevels[ix, iy];
                     var drainage = this.Drainage[ix, iy];
                     var temperature = this.Temperature.TemperatureLevels[ix, iy];
+                    var rawTemperature = this.Temperature[ix, iy];
                     var rainfall = this.Rainfall[ix, iy];
 
                     var type = TerrainType.Unknown;
@@ -128,7 +149,7 @@ namespace Game.WorldGen
                             // Marsh, shrubland region
                             else if (rainfall < 0.66f)
                             {
-                                if (drainage < 0.05f/*0.10f*/)
+                                if (drainage < 0.12f/*0.05f*//*0.10f*/)
                                     type = TerrainType.Marsh;
                                 else if (drainage < 0.5f)
                                 {
@@ -150,22 +171,34 @@ namespace Game.WorldGen
                             // Forest/Swamp region
                             else
                             {
-                                if (drainage < 0.05f/*0.10f*/)
+                                if (drainage < 0.12f/*0.10f*/)
                                     type = TerrainType.Swamp;
                                 else
                                 {
-                                    // Its a forest. Determine type
-                                    if (rainfall < 0.75f)
+                                    if (temperature == TemperatureLevel.Warmer ||
+                                        temperature == TemperatureLevel.Warmest)
+                                        type = TerrainType.TropicalBroadleafForest;
+                                    else if (temperature == TemperatureLevel.Warm)
                                     {
-                                        type = TerrainType.ConiferousForest;
-                                    }
-                                    else // Broadleaf forest. Which type?
-                                    {
-                                        if (temperature == TemperatureLevel.Warmer ||
-                                            temperature == TemperatureLevel.Warmest)
+                                        var jungleChance = MathUtil.Map(rawTemperature, jungleSrcRange, destRange);
+                                        if (rng.NextDouble() <= jungleChance)
                                             type = TerrainType.TropicalBroadleafForest;
                                         else
                                             type = TerrainType.TemperateBroadleafForest;
+                                    }
+                                    else
+                                    {
+                                        // In colder climates, we use a scaling chance of generation broad leaf forests
+                                        // to smoothly transition from temperate zones with broad leaf forests to
+                                        // more colder zones with coniferous forests
+                                        var broadleafChance = MathUtil.Map(rawTemperature, coniferousSrcRange, destRange);
+
+                                       // broadleafChance *= broadleafChance;
+                                        
+                                        if (rng.NextDouble() <= broadleafChance)
+                                            type = TerrainType.TemperateBroadleafForest;
+                                        else
+                                            type = TerrainType.ConiferousForest;
                                     }
                                 }
                             }

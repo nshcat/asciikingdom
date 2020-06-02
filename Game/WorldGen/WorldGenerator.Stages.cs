@@ -38,7 +38,7 @@ namespace Game.WorldGen
             
             // Generate rivers, readjust rainfall map and rebuild levels
             this.SignalNextStage("Generating biomes..", 0.60);
-            var biomeMapper = new BiomeMapper(this.WorldDimensions, heightMap, rainfallMap, drainageMap, temperatureMap);
+            var biomeMapper = new BiomeMapper(this.WorldDimensions, this.Seed, heightMap, rainfallMap, drainageMap, temperatureMap);
 
             this.SignalNextStage("Generating rivers..", 0.70);
             var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, temperatureMap, rainfallMap, biomeMapper.TerrainTypes);

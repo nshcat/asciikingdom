@@ -37,12 +37,12 @@ namespace Game.WorldGen
         /// <summary>
         /// Weight factor for the standard derivation in the final drainage values
         /// </summary>
-        protected float StandardDerivationWeight { get; set; } = 1.0f;
+        protected float StandardDerivationWeight { get; set; } = 0.75f;
 
         /// <summary>
         /// Weight factor for the noise in the final drainage values
         /// </summary>
-        protected float NoiseWeight { get; set; } = 0.21f;
+        protected float NoiseWeight { get; set; } = 0.75f;
 
         /// <summary>
         /// Color for low drainage
@@ -139,7 +139,7 @@ namespace Game.WorldGen
                     else
                     {
                         var drainage = this.StandardDerivationWeight * this.StandardDerivation[ix, iy]
-                                       * this.NoiseWeight * this.NoiseValues[ix, iy];
+                                       + this.NoiseWeight * this.NoiseValues[ix, iy];
 
                         this.Values[ix, iy] = drainage;
                     }
@@ -176,8 +176,7 @@ namespace Game.WorldGen
             var module = new Perlin()
             {
                 Seed = this.Seed + 12842,
-                Frequency = 0.9,
-                Lacunarity = 1.75,
+                Frequency = 24,
                 OctaveCount = 5
             };
             

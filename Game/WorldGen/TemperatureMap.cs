@@ -1,4 +1,5 @@
 using System;
+using System.Reflection.Metadata;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
@@ -12,8 +13,6 @@ namespace Game.WorldGen
     /// <summary>
     /// Represents the temperature layer of a game world
     /// </summary>
-    /// TODO: Maybe also use percentages here to make fixed amount of glacier?
-    /// Own temperature type for glacier?
     public class TemperatureMap : Map
     {
         /// <summary>
@@ -50,6 +49,31 @@ namespace Game.WorldGen
         /// Weight of the noise in the final temperature map
         /// </summary>
         protected float NoiseWeight { get; } = 0.25f;
+        
+        /// <summary>
+        /// Threshold under which temperature is coldest
+        /// </summary>
+        public float ColdestThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Threshold under which temperature is colder
+        /// </summary>
+        public float ColderThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Threshold under which temperature is cold
+        /// </summary>
+        public float ColdThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Threshold under which temperature is warm
+        /// </summary>
+        public float WarmThreshold { get; protected set; }
+        
+        /// <summary>
+        /// Threshold under which temperature is warmer
+        /// </summary>
+        public float WarmerThreshold { get; protected set; }
 
         /// <summary>
         /// Create new temperature map
@@ -135,11 +159,11 @@ namespace Game.WorldGen
             
             this.Normalize();
 
-            var coldestThreshold = this.CalculateThreshold(this.Parameters.ColdestPercentage);
-            var colderThreshold = this.CalculateThreshold(this.Parameters.ColderPercentage);
-            var coldThreshold = this.CalculateThreshold(this.Parameters.ColdPercentage);
-            var warmThreshold = this.CalculateThreshold(this.Parameters.WarmPercentage);
-            var warmerThreshold = this.CalculateThreshold(this.Parameters.WarmerPercentage);
+            this.ColdestThreshold = this.CalculateThreshold(this.Parameters.ColdestPercentage);
+            this.ColderThreshold = this.CalculateThreshold(this.Parameters.ColderPercentage);
+            this.ColdThreshold = this.CalculateThreshold(this.Parameters.ColdPercentage);
+            this.WarmThreshold = this.CalculateThreshold(this.Parameters.WarmPercentage);
+            this.WarmerThreshold = this.CalculateThreshold(this.Parameters.WarmerPercentage);
 
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
@@ -149,17 +173,25 @@ namespace Game.WorldGen
                     
                     var temperatureLevel = TemperatureLevel.Warmest;
 
-                    if (temperature <= coldestThreshold)
+                    if (temperature <= this.ColdestThreshold)
                         temperatureLevel = TemperatureLevel.Coldest;
-                    else if (temperature <= colderThreshold)
+                    else if (temperature <= this.ColderThreshold)
                         temperatureLevel = TemperatureLevel.Colder;
-                    else if (temperature <= coldThreshold)
+                    else if (temperature <= this.ColdThreshold)
                         temperatureLevel = TemperatureLevel.Cold;
-                    else if (temperature <= warmThreshold)
+                    else if (temperature <= this.WarmThreshold)
                         temperatureLevel = TemperatureLevel.Warm;
-                    else if (temperature <= warmerThreshold)
+                    else if (temperature <= this.WarmerThreshold)
                         temperatureLevel = TemperatureLevel.Warmer;
 
+                    if (this.Parameters.LimitColdZones
+                        && (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
+                        && (temperatureLevel == TemperatureLevel.Colder ||
+                            temperatureLevel == TemperatureLevel.Coldest))
+                    {
+                        temperatureLevel = TemperatureLevel.Cold;
+                    }
+                    
                     this.TemperatureLevels[ix, iy] = temperatureLevel;
                     var tile = new Tile(0, DefaultColors.Black, this.GetTemperatureColor(temperatureLevel));
                     this.TemperatureTiles[ix, iy] = tile;
