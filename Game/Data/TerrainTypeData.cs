@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Engine.Graphics;
 using Game.Core;
 
@@ -237,6 +238,33 @@ namespace Game.Data
             if (TerrainInfo.ContainsKey(terrainType))
                 return TerrainInfo[terrainType];
             else return UnknownTerrain;
+        }
+
+        /// <summary>
+        /// Create a new weighted collection based on given weighted collection of ASCII glyphs, where each glyph
+        /// is present in any of the colors in the palette.
+        /// </summary>
+        /// <remarks>
+        /// This method adjusts the weights in order to make each symbol equally as likely as before
+        /// </remarks>
+        private static WeightedCollection<Tile> WithPalette(
+            WeightedCollection<int> glyphs,
+            IEnumerable<Color> palette)
+        {
+            var collection = new WeightedCollection<Tile>();
+            var paletteSize = palette.Count();
+
+            foreach (var entry in glyphs)
+            {
+                var weight = entry.Weight / (float) paletteSize;
+
+                foreach (var color in palette)
+                {
+                    collection.Add(weight, new Tile(entry.Value, color, DefaultColors.Black));
+                }
+            }
+
+            return collection;
         }
     }
 }
