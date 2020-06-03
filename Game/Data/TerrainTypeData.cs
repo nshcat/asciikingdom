@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Engine.Graphics;
+using Game.Core;
 
 namespace Game.Data
 {
@@ -12,14 +14,9 @@ namespace Game.Data
     public class TerrainTypeInfo
     {
         /// <summary>
-        /// The primary tile.
+        /// Weighted collection of all tiles that are used to display this terrain type.
         /// </summary>
-        public Tile Primary { get; }
-        
-        /// <summary>
-        /// The secondary tile.
-        /// </summary>
-        public Tile Secondary { get; }
+        public WeightedCollection<Tile> Tiles { get; }
         
         /// <summary>
         /// A human-readable name.
@@ -29,20 +26,36 @@ namespace Game.Data
         /// <summary>
         /// Construct a new instance with given ASCII tiles.
         /// </summary>
-        public TerrainTypeInfo(string name, Tile primary, Tile secondary)
+        public TerrainTypeInfo(string name, WeightedCollection<Tile> tiles)
         {
             this.Name = name;
-            this.Primary = primary;
-            this.Secondary = secondary;
+            this.Tiles = tiles;
         }
 
         /// <summary>
-        /// Construct a new instance with both primary and secondary tiles being
-        /// identical.
+        /// Construct a new instance with a single tile variant.
         /// </summary>
-        public TerrainTypeInfo(string name, Tile tile) : this(name, tile, tile)
+        public TerrainTypeInfo(string name, Tile tile)
+            : this(name, new WeightedCollection<Tile> {{1.0, tile}})
         {
             
+        }
+        
+        /// <summary>
+        /// Construct a new instance with a two possible tile variants.
+        /// </summary>
+        public TerrainTypeInfo(string name, Tile primary, Tile secondary)
+            : this(name, new WeightedCollection<Tile> {{0.5, primary}, {0.5, secondary}})
+        {
+            
+        }
+
+        /// <summary>
+        /// Pick a random tile for this terrain type.
+        /// </summary>
+        public Tile PickTile(Random rng)
+        {
+            return this.Tiles.Next(rng);
         }
     }
     

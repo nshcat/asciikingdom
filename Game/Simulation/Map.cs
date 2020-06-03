@@ -95,7 +95,7 @@ namespace Game.Simulation
                     var terrainType = this.GetTerrainType(new Position(ix, iy));
 
                     var info = TerrainTypeData.GetInfo(terrainType);
-                    var tile = (random.NextDouble() > 0.5) ? info.Primary : info.Secondary;
+                    var tile = info.PickTile(random);
                     this.Tiles[ix, iy] = tile;
                 }
             }
