@@ -156,6 +156,9 @@ namespace Game.Data
         {
             Color.FromHex("#ACBA12"),
             Color.FromHex("#73BA12"),
+            Color.FromHex("#A59E01"),
+            Color.FromHex("#908B22"),
+            Color.FromHex("#C9DA00"),
             Color.FromHex("#8CC341"),
             Color.FromHex("#97B33B"),
             Color.FromHex("#70B62D"),
@@ -170,6 +173,13 @@ namespace Game.Data
             Color.FromHex("#B3BA12"),
             Color.FromHex("#949B0E"),
             Color.FromHex("#BFBE00"),
+            Color.FromHex("#C8CC47"),
+            Color.FromHex("#C1C801"),
+            Color.FromHex("#C9DA00"),
+            Color.FromHex("#B2BC44"),
+            Color.FromHex("#CDC300"),
+            Color.FromHex("#A8A10C"),
+            Color.FromHex("#D7D03D"),
             Color.FromHex("#8ACD38"),
             Color.FromHex("#A6CD38"),
             Color.FromHex("#C8CD38"),
@@ -177,6 +187,32 @@ namespace Game.Data
             Color.FromHex("#7EA025"),
             Color.FromHex("#8DA44E"),
             Color.FromHex("#A1A44E")
+        };
+
+        private static List<Color> HillsPalette = new List<Color>
+        {
+            Color.FromHex("#87B63E"),
+            Color.FromHex("#ACDF5E"),
+            Color.FromHex("#C7DF5E"),
+            Color.FromHex("#A5C908"),
+            Color.FromHex("#93B600"),
+            Color.FromHex("#B8C809"),
+            Color.FromHex("#95D44C")
+        };
+        
+        private static List<Color> DryHillsPalette = new List<Color>
+        {
+            Color.FromHex("#D1D85A"),
+            Color.FromHex("#C1C66A"),
+            Color.FromHex("#C5CA73"),
+            Color.FromHex("#C3AB0C"),
+            Color.FromHex("#B7C700"),
+            Color.FromHex("#CFDB4A"),
+            Color.FromHex("#9ABF4A"),
+            Color.FromHex("#C9C956"),
+            Color.FromHex("#C4CA48"),
+            Color.FromHex("#BBE840"),
+            Color.FromHex("#D8E527")
         };
 
         /// <summary>
@@ -316,7 +352,7 @@ namespace Game.Data
                         WithPalette(
                             new WeightedCollection<int>
                             {
-                                { 0.1, 231 },
+                                { 0.05, 231 },
                                 { 0.05, 34 }
                             },
                             ShrublandPalette
@@ -334,13 +370,11 @@ namespace Game.Data
                 ),
                 [TerrainType.Hills] = new TerrainTypeInfo(
                     "Hills",
-                    new Tile(252, Color.FromHex("#00FF00")),
-                    new Tile(239, Color.FromHex("#00FF00"))
+                    WithPalette(new WeightedCollection<int>(252, 239), HillsPalette)
                 ),
                 [TerrainType.HillsDry] = new TerrainTypeInfo(
                     "Dry Hills",
-                    new Tile(252, Color.FromHex("#FFFF00")),
-                    new Tile(239, Color.FromHex("#FFFF00"))
+                    WithPalette(new WeightedCollection<int>(252, 239), DryHillsPalette)
                 ),
                 [TerrainType.Ocean] = new TerrainTypeInfo(
                     "Ocean",
@@ -382,11 +416,11 @@ namespace Game.Data
                 ),
                 [TerrainType.Swamp] = new TerrainTypeInfo(
                     "Swamp",
-                    WithPalette(new WeightedCollection<int>(34, 244), TropicalGreenPalette)
+                    WithPalette(new WeightedCollection<int>(34, 244), DarkGreenPalette)
                 ),
                 [TerrainType.Marsh] = new TerrainTypeInfo(
                     "Marsh",
-                    WithPalette(new WeightedCollection<int>(34, 252), TropicalGreenPalette)
+                    WithPalette(new WeightedCollection<int>(34, 252), DarkGreenPalette)
                 )
             };
         
