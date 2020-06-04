@@ -55,6 +55,25 @@ namespace Game.Core
         protected double Sum { get; set; }
 
         /// <summary>
+        /// Construct empty weighted collection
+        /// </summary>
+        public WeightedCollection()
+        {
+            
+        }
+
+        /// <summary>
+        /// Construct weighted collection with given values, each having the exact same weight of 1.0.
+        /// </summary>
+        public WeightedCollection(params T[] values)
+        {
+            foreach (var value in values)
+            {
+                this.Add(1.0, value);
+            }
+        }
+
+        /// <summary>
         /// Add new entry. This is supplied to allow simpler collection initialization.
         /// </summary>
         public void Add(double probability, T value)
@@ -94,10 +113,11 @@ namespace Game.Core
         /// <summary>
         /// Append given weighted collection to this instance.
         /// </summary>
-        public void Append(WeightedCollection<T> other)
+        public WeightedCollection<T> Append(WeightedCollection<T> other)
         {
             this.Entries.AddRange(other);
             this.Sum += other.Sum;
+            return this;
         }
 
         /// <summary>

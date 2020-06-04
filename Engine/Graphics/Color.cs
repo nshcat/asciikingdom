@@ -82,7 +82,7 @@ namespace Engine.Graphics
         /// <returns></returns>
         public static Color FromRgb(int rgb)
         {
-            var r = (rgb & 0xFF000) >> 16;
+            var r = (rgb & 0xFF0000) >> 16;
             var g = (rgb & 0xFF00) >> 8;
             var b = (rgb & 0xFF);
 
