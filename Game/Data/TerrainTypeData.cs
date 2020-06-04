@@ -220,7 +220,32 @@ namespace Game.Data
         /// </summary>
         private static List<Color> SavannaPalette = new List<Color>
         {
-            
+            Color.FromHex("#EAEDA2"),
+            Color.FromHex("#E9F058"),
+            Color.FromHex("#D9DF63"),
+            Color.FromHex("#FADE34"),
+            Color.FromHex("#CAC645"),
+            Color.FromHex("#E6D672"),
+            Color.FromHex("#E6DB93"),
+            Color.FromHex("#F2D885"),
+            Color.FromHex("#FFD85A"),
+            Color.FromHex("#FFD652"),
+            Color.FromHex("#FFD652"),
+        };
+        
+        private static List<Color> SavannaTreePalette = new List<Color>
+        {
+            Color.FromHex("#73B94C"),
+            Color.FromHex("#9CD320"),
+            Color.FromHex("#5AD500"),
+            Color.FromHex("#96C970"),
+            Color.FromHex("#8CD654"),
+            Color.FromHex("#6CBB33"),
+            Color.FromHex("#55B80E"),
+            Color.FromHex("#89C95A"),
+            Color.FromHex("#95CC6E"),
+            Color.FromHex("#7CB058"),
+            Color.FromHex("#7B9E63")
         };
 
         /// <summary>
@@ -289,28 +314,39 @@ namespace Game.Data
                 ),
                 [TerrainType.Savanna] = new TerrainTypeInfo(
                     "Savanna",
-                    new Tile(34, Color.FromHex("#00FF00")),
-                    new Tile(252, Color.FromHex("#00FF00"))
-                ),
-                [TerrainType.HillySavanna] = new TerrainTypeInfo(
-                    "Hilly Savanna",
-                    new Tile(34, Color.FromHex("#00FF00")),
-                    new Tile(239, Color.FromHex("#00FF00"))
-                ),
-                [TerrainType.Steppe] = new TerrainTypeInfo(
-                    "Steppe",
-                    new Tile(44, Color.FromHex("#00FF00")),
-                    new Tile(34, Color.FromHex("#00FF00"))
-                ),
-                [TerrainType.HillySteppe] = new TerrainTypeInfo(
-                    "Hilly Steppe",
-                    new Tile(44, Color.FromHex("#00FF00")),
-                    new Tile(239, Color.FromHex("#00FF00"))
+                    WithPalette(
+                        new WeightedCollection<int>
+                        {
+                            { 1.0, 34 },
+                            { 1.0, 252 }
+                        }, 
+                        SavannaPalette
+                    ).Append(
+                        WithPalette(
+                            new WeightedCollection<int>
+                            {
+                                { 0.50, 231 },
+                                { 0.15, 34 }
+                            }, 
+                            SavannaTreePalette
+                        )
+                    )
                 ),
                 [TerrainType.SavannaDry] = new TerrainTypeInfo(
                     "Dry Savanna",
-                    new Tile(34, Color.FromHex("#FFFF00")),
-                    new Tile(252, Color.FromHex("#FFFF00"))
+                    WithPalette(new WeightedCollection<int>(34, 252), SavannaPalette)
+                ),
+                [TerrainType.HillySavanna] = new TerrainTypeInfo(
+                    "Hilly Savanna",
+                    WithPalette(new WeightedCollection<int>(34, 239), SavannaPalette)
+                ),
+                [TerrainType.Steppe] = new TerrainTypeInfo(
+                    "Steppe",
+                    WithPalette(new WeightedCollection<int>(44, 34), SavannaPalette)
+                ),
+                [TerrainType.HillySteppe] = new TerrainTypeInfo(
+                    "Hilly Steppe",
+                    WithPalette(new WeightedCollection<int>(44, 239), SavannaPalette)
                 ),
                 [TerrainType.Shrubland] = new TerrainTypeInfo(
                     "Shrubland",
