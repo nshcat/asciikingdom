@@ -1,12 +1,31 @@
 using System;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenToolkit.Mathematics;
 
 namespace Engine.Graphics
 {
     /// <summary>
+    /// JSON converter for colors
+    /// </summary>
+    public class ColorConverter : JsonConverter<Color>
+    {
+        public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return Color.FromHex(reader.GetString());
+        }
+
+        public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToHex());
+        }
+    }
+    
+    /// <summary>
     /// Represents a 24-bit integral RGB color triple.
     /// </summary>
+    [JsonConverter(typeof(ColorConverter))]
     public struct Color : IEquatable<Color>
     {
         /// <summary>
@@ -108,6 +127,15 @@ namespace Engine.Graphics
                 lerpChannel(value, a.G, b.G),
                 lerpChannel(value, a.B, b.B)
             );
+        }
+
+        /// <summary>
+        /// Convert color to hex string
+        /// </summary>
+        /// <returns>Hex string representation of this color, including preceding '#'</returns>
+        public string ToHex()
+        {
+            return $"#{this.R:X2}#{this.G:X2}#{this.B:X2}";
         }
 
         #region Equality Implementation
