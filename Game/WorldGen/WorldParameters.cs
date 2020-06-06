@@ -37,6 +37,11 @@ namespace Game.WorldGen
         public float UnderWaterPercentage { get; set; } = 0.65f;//0.55f;
 
         /// <summary>
+        /// Whether rivers provide irrigation to their neighbouring tiles
+        /// </summary>
+        public bool RiverIrrigation { get; set; } = false;
+
+        /// <summary>
         /// The percentage amount of terrain that is supposed to be under the tree line
         /// </summary>
         /// <remarks>

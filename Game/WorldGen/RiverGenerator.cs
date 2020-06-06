@@ -72,26 +72,11 @@ namespace Game.WorldGen
         /// The temperature component of the map
         /// </summary>
         protected TemperatureMap Temperature { get; }
-        
-        /// <summary>
-        /// The rainfall component of the map
-        /// </summary>
-        protected RainfallMap Rainfall { get; }
-        
-        /// <summary>
-        /// The biome map
-        /// </summary>
-        protected TerrainType[,] Biomes { get; }
 
         /// <summary>
         /// The minium distance between two river sources, in tiles.
         /// </summary>
         protected float MinimumSourceDistance { get; } = 8.0f;
-
-        /// <summary>
-        /// Whether river sources may not exist in arid tiles
-        /// </summary>
-        protected bool ForbidAridSources { get; } = false;
         
         /// <summary>
         /// Extra river tile data
@@ -121,20 +106,18 @@ namespace Game.WorldGen
         /// <summary>
         /// Create new river generator instance
         /// </summary>
-        public RiverGenerator(Size dimensions, int seed, HeightMap elevation, TemperatureMap temperature, RainfallMap rainfall, TerrainType[,] biomes)
+        public RiverGenerator(Size dimensions, int seed, HeightMap elevation, TemperatureMap temperature)
         {
             this.Dimensions = dimensions;
             this.Seed = seed;
             this.Elevation = elevation;
-            this.Biomes = biomes;
             this.Temperature = temperature;
-            this.Rainfall = rainfall;
         }
 
         /// <summary>
         /// Checks whether given position is a segment of any river that is not the currently created one
         /// </summary>
-        protected bool IsInAnyRiver(Position position)
+        public bool IsInAnyRiver(Position position)
         {
             return !this.Rivers.All(river => !river.ContainsSegment(position));
         }
@@ -174,8 +157,8 @@ namespace Game.WorldGen
                     neighbour.Y >= 0 && neighbour.Y < this.Dimensions.Height)
                 {
                     // If its an ocean or sea ice, we return false since the algorithm always picks these
-                    var biome = this.Biomes[neighbour.X, neighbour.Y];
-                    if (biome == TerrainType.Ocean || biome == TerrainType.SeaIce)
+                    var elevation = this.Elevation[neighbour.X, neighbour.Y];
+                    if (elevation <= this.Elevation.SeaThreshold)
                         return false;
                     
                     // If its another river, we also return false since the algorithm picks it.
@@ -221,11 +204,9 @@ namespace Game.WorldGen
                     && this.Elevation[ix, iy] >= this.Elevation.LandThreshold)
                     {
                         var temperature = this.Temperature.TemperatureLevels[ix, iy];
-                        var rainfall = this.Rainfall[ix, iy];
 
                         if (temperature != TemperatureLevel.Coldest 
                             && temperature != TemperatureLevel.Colder
-                            && (!this.ForbidAridSources || rainfall > this.Rainfall.BarrenThreshold)
                         )
                         {
                             viableSources.Add((ix, iy));
@@ -326,8 +307,7 @@ namespace Game.WorldGen
                                     newPos.Item2 >= 0 && newPos.Item2 < this.Dimensions.Height)
                         {
                             // End on ocean
-                            if (this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.Ocean ||
-                                this.Biomes[newPos.Item1, newPos.Item2] == TerrainType.SeaIce)
+                            if (this.Elevation[newPos.Item1, newPos.Item2] <= this.Elevation.SeaThreshold)
                             {
                                 river.EndMarker = newPos_;
                                 cancelRiver = true;
@@ -441,24 +421,22 @@ namespace Game.WorldGen
                 this.Rivers.Add(river);
                 riverId++;
             }
-            
-            this.UpdateTerrain();
         }
         
 
         /// <summary>
         /// Update terrain types to respect generated rivers
         /// </summary>
-        private void UpdateTerrain()
+        public void UpdateTerrain(TerrainType[,] biomes)
         {
             foreach (var river in this.Rivers)
             {
                 river.GenerateTileTypes(this.RiverTileInfo);
-                river.SetTerrain(this.Biomes);
+                river.SetTerrain(biomes);
             }
             
             foreach (var (ix, iy) in this.Lakes)
-                this.Biomes[ix, iy] = TerrainType.Lake;
+                biomes[ix, iy] = TerrainType.Lake;
         }
     }
 }

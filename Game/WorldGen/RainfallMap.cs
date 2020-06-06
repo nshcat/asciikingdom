@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
@@ -47,6 +48,11 @@ namespace Game.WorldGen
         /// How strongly the noise is weighted when combining it with the rainfall
         /// </summary>
         protected float NoiseWeight { get; } = 0.085f;//0.20f;
+        
+        /// <summary>
+        /// Moisture from rivers
+        /// </summary>
+        protected float[,] IrrigationValues { get; }
         
         /// <summary>
         /// The rain shadow values
@@ -114,15 +120,22 @@ namespace Game.WorldGen
         public float ConiferThreshold { get; protected set; }
         
         /// <summary>
+        /// Reference to the river generator. Used to check if certain tiles are rivers.
+        /// </summary>
+        protected RiverGenerator Rivers { get; set; }
+
+        /// <summary>
         /// Construct new rainfall map
         /// </summary>
-        public RainfallMap(Size dimensions, int seed, WorldParameters parameters, HeightMap elevation)
+        public RainfallMap(Size dimensions, int seed, WorldParameters parameters, HeightMap elevation, RiverGenerator rivers)
             : base(dimensions, seed, parameters)
         {
             this.Elevation = elevation;
+            this.Rivers = rivers;
             this.RainfallTiles = new Tile[dimensions.Width, dimensions.Height];
             this.RainShadow = new float[dimensions.Width, dimensions.Height];
             this.NoiseValues = new float[dimensions.Width, dimensions.Height];
+            this.IrrigationValues = new float[dimensions.Width, dimensions.Height];
             this.Generate();
         }
 
@@ -133,6 +146,7 @@ namespace Game.WorldGen
         {
             this.GenerateShadow();
             this.GenerateNoise();
+            this.GenerateIrrigation();
             this.GenerateRainfall();
             this.GenerateTiles();
         }
@@ -250,7 +264,8 @@ namespace Game.WorldGen
                     else
                     {
                         var rainfall = this.RainShadowWeight * this.RainShadow[ix, iy]
-                                       + this.NoiseWeight * this.NoiseValues[ix, iy];
+                                       + this.NoiseWeight * this.NoiseValues[ix, iy]
+                                       + this.IrrigationValues[ix, iy];
 
                         this.Values[ix, iy] = rainfall;
                     }
@@ -275,6 +290,49 @@ namespace Game.WorldGen
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
                     this.Values[ix, iy] = mapper.Map(this.Values[ix, iy]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generate irrigation values from rivers
+        /// </summary>
+        protected void GenerateIrrigation()
+        {
+            if (!this.Parameters.RiverIrrigation)
+                return;
+            
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                {
+                    // Check if its a river
+                    var position = new Position(ix, iy);
+                    if (this.Rivers.IsInAnyRiver(position))
+                    {
+                        // Irrigate in a 3x3
+                        for (var dx = -5; dx <= 5; ++dx)
+                        {
+                            for (var dy = -5; dy <= 5; ++dy)
+                            {
+                                var irrigationPos = position + new Position(dx, dy);
+                                
+                                if(irrigationPos.X < 0 || irrigationPos.X >= this.Dimensions.Width
+                                || irrigationPos.Y < 0 || irrigationPos.Y >= this.Dimensions.Height)
+                                    continue;
+
+                                Func<float, float> falloff = x => 1.0f - (float)(Math.Pow(0.08f, x) - 1.0f) / (0.08f - 1.0f);
+
+                                var baseAmount = 0.35f; // 0.15f
+                                var amountX = baseAmount * falloff(Math.Abs(dx) / 5.0f);
+                                var amountY = baseAmount * falloff(Math.Abs(dy) / 5.0f);
+                                var amount = Math.Min(amountX, amountY);
+
+                                this.IrrigationValues[irrigationPos.X, irrigationPos.Y]
+                                    = Math.Max(this.IrrigationValues[irrigationPos.X, irrigationPos.Y], amount);
+                            }
+                        }
+                    }
                 }
             }
         }
