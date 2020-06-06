@@ -99,7 +99,7 @@ namespace Game.WorldGen
         /// </summary>
         protected void GenerateResources()
         {
-            var sampler = new PoissonDiskSampler(this.Dimensions, 7.5f);
+            var sampler = new PoissonDiskSampler(this.Dimensions, 6.5f);
             var rng = new Random(this.Seed + 9118);
             var positions = sampler.Sample(rng);
 

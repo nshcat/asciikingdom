@@ -51,6 +51,23 @@
         ]
     },
     {
+        "identifier" : "ore_silver",
+        "display_name" : "Silver Ore",
+        "description" : "Raw silver ore, used to produce silver metal",
+        "tile" :
+        {
+            "front" : "#E5E5E5",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 0.75,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
         "identifier" : "ore_coal",
         "display_name" : "Coal",
         "description" : "A combustible, black rock used in forges.",
@@ -131,6 +148,38 @@
             "glyph" : 66
         },
         "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "trade_diamonds",
+        "display_name" : "Diamonds",
+        "description" : "Very valuable, clear stones used in jewelry",
+        "tile" :
+        {
+            "front" : "#B1F9EC",
+            "back" : "#000000",
+            "glyph" : 4
+        },
+        "weight" : 0.65,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "trade_gems",
+        "display_name" : "Gemstones",
+        "description" : "Various types of valuable stones used in jewelry",
+        "tile" :
+        {
+            "front" : "#FF4A69",
+            "back" : "#000000",
+            "glyph" : 4
+        },
+        "weight" : 0.8,
         "allowed_terrain" : 
         [
             "TropicalBroadleafForest"
