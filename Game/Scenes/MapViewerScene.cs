@@ -266,10 +266,28 @@ namespace Game.Scenes
             this.DrawOverview();
             this.DrawWorldGenProgress();
             this.DrawTileInfo();
+            this.DrawKeybindings();
             
             this._surface.Render(rp);
         }
 
+        private void DrawKeybindings()
+        {
+            if (this._isGeneratingMap)
+                return;
+            
+            var next = 0;
+
+            next = this._surface.DrawKeybinding(new Position(1, this._surface.Dimensions.Height - 2), "r", "New map",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "mtdf", "Map mode",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "R", "Show resources",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+        }
+        
         private void DrawWorldGenProgress()
         {
             if (this._isGeneratingMap)
@@ -316,7 +334,7 @@ namespace Game.Scenes
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             
-            this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-2);
+            this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-4);
             
             this._overviewView.Position = new Position((int)(this._surface.Dimensions.Width * 0.7f) + 1, 1);
 

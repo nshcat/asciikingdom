@@ -8,7 +8,7 @@ namespace Game.WorldGen
         /// <summary>
         /// The chance that a resource will spawn on a selected tile
         /// </summary>
-        public float ResourceSpawnChance { get; set; } = 0.5f;
+        public float ResourceSpawnChance { get; set; } = 0.7f;
         
         /// <summary>
         /// Whether the whole height map should be multiplied with itself. Makes hills

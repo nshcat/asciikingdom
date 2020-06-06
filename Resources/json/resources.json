@@ -71,5 +71,69 @@
             "Hills",
             "HillsDry"
         ]
+    },
+    {
+        "identifier" : "fruit_oranges",
+        "display_name" : "Oranges",
+        "description" : "A sweet and tasty citrus fruit",
+        "tile" :
+        {
+            "front" : "#FFBB00",
+            "back" : "#000000",
+            "glyph" : 79
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_lemons",
+        "display_name" : "Lemons",
+        "description" : "A sour and tasty citrus fruit",
+        "tile" :
+        {
+            "front" : "#EBFF00",
+            "back" : "#000000",
+            "glyph" : 76
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_limes",
+        "display_name" : "Limes",
+        "description" : "A sweet and slightly sour citrus fruit",
+        "tile" :
+        {
+            "front" : "#57EC04",
+            "back" : "#000000",
+            "glyph" : 76
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_bananas",
+        "display_name" : "Bananas",
+        "description" : "A long, sweet fruit, with a taste similar to honey",
+        "tile" :
+        {
+            "front" : "#E8EC04",
+            "back" : "#000000",
+            "glyph" : 66
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
     }
 ]

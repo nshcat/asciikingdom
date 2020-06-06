@@ -122,6 +122,27 @@ namespace Engine.Graphics
         }
 
         /// <summary>
+        /// Draw a key binding hint, and return X coordinate of last character.
+        /// </summary>
+        /// <param name="surface">Surface to draw on</param>
+        /// <param name="position">Position to draw the key binding hint</param>
+        /// <param name="key">Key symbol</param>
+        /// <param name="text">Descriptive text</param>
+        /// <param name="keyFront">Foreground color for key symbol</param>
+        /// <param name="textFront">Foreground color for description</param>
+        /// <param name="back">Background color</param>
+        /// <returns>X coordinate of last printed character</returns>
+        public static int DrawKeybinding(this Surface surface, Position position, string key, string text,
+            Color keyFront, Color textFront, Color back)
+        {
+            surface.DrawString(position, key, keyFront, back);
+            surface.DrawString(new Position(position.X + key.Length, position.Y),
+                $": {text}", textFront, back);
+
+            return position.X + key.Length + 1 + text.Length;
+        }
+        
+        /// <summary>
         /// Draw a window consisting of a border and a title.
         /// </summary>
         /// <param name="surface">Target surface</param>

@@ -202,7 +202,8 @@ namespace Game.Ui
                         && screenPosition.IsInBounds(surface.Dimensions))
                     {
                         // TODO: The instanceof is ugly here, fix that (maybe derived class, `DetailedMapView`?)
-                        if (this.ShowResources
+                        if (this.DisplayMode == MapViewMode.Terrain
+                            && this.ShowResources
                             && (this.Map is DetailedMap) 
                             && (this.Map as DetailedMap).Resources.ContainsKey(mapPosition))
                         {
