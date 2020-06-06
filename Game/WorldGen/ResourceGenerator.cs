@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Engine.Core;
 using Game.Core;
 using Game.Data;
+using Game.Maths;
 
 namespace Game.WorldGen
 {
@@ -98,7 +99,19 @@ namespace Game.WorldGen
         /// </summary>
         protected void GenerateResources()
         {
-            
+            var sampler = new PoissonDiskSampler(this.Dimensions, 5.0f);
+            var rng = new Random(this.Seed + 9118);
+            var positions = sampler.Sample(rng);
+
+            foreach (var position in positions)
+            {
+                var biome = this.Biomes[position.X, position.Y];
+
+                if (this.HasResources(biome))
+                {
+                    this.Resources.Add(position, this.SelectResource(rng, biome));
+                }
+            }
         }
     }
 }

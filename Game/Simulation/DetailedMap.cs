@@ -14,6 +14,11 @@ namespace Game.Simulation
         /// Extra information about river terrain tiles, such as direction and size.
         /// </summary>
         public Dictionary<Position, RiverTileInfo> RiverTileInfo { get; set; }
+        
+        /// <summary>
+        /// Resources present on the map
+        /// </summary>
+        public Dictionary<Position, ResourceType> Resources { get; set; }
 
         /// <summary>
         /// Construct a new detailed map instance
@@ -41,9 +46,8 @@ namespace Game.Simulation
 
                     if (terrainType == TerrainType.River)
                     {
-                        // Create position instance inside this if in order to avoid doing a lot of allocations
                         var position = new Position(ix, iy);
-
+                        
                         if (this.RiverTileInfo.ContainsKey(position))
                         {
                             var info = this.RiverTileInfo[position];
