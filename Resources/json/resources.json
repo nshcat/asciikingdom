@@ -9,7 +9,7 @@
             "back" : "#000000",
             "glyph" : 42
         },
-        "weight" : 1.0,
+        "weight" : 1.2,
         "allowed_terrain" : 
         [
             "MountainsLow",
@@ -26,7 +26,24 @@
             "back" : "#000000",
             "glyph" : 42
         },
-        "weight" : 1.5,
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
+        "identifier" : "ore_gold",
+        "display_name" : "Gold Ore",
+        "description" : "Raw gold ore, used to produce gold metal",
+        "tile" :
+        {
+            "front" : "#FFD700",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 0.65,
         "allowed_terrain" : 
         [
             "MountainsLow",
@@ -43,7 +60,7 @@
             "back" : "#000000",
             "glyph" : 42
         },
-        "weight" : 3.0,
+        "weight" : 2.0,
         "allowed_terrain" : 
         [
             "MountainsLow",

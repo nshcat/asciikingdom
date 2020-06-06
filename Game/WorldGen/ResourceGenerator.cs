@@ -99,17 +99,20 @@ namespace Game.WorldGen
         /// </summary>
         protected void GenerateResources()
         {
-            var sampler = new PoissonDiskSampler(this.Dimensions, 15.0f);
+            var sampler = new PoissonDiskSampler(this.Dimensions, 8.5f);
             var rng = new Random(this.Seed + 9118);
             var positions = sampler.Sample(rng);
 
             foreach (var position in positions)
             {
-                var biome = this.Biomes[position.X, position.Y];
-
-                if (this.HasResources(biome))
+                if (rng.NextDouble() <= this.Parameters.ResourceSpawnChance)
                 {
-                    this.Resources.Add(position, this.SelectResource(rng, biome));
+                    var biome = this.Biomes[position.X, position.Y];
+
+                    if (this.HasResources(biome))
+                    {
+                        this.Resources.Add(position, this.SelectResource(rng, biome));
+                    }
                 }
             }
         }

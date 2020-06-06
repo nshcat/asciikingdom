@@ -6,6 +6,11 @@ namespace Game.WorldGen
     public class WorldParameters
     {
         /// <summary>
+        /// The chance that a resource will spawn on a selected tile
+        /// </summary>
+        public float ResourceSpawnChance { get; set; } = 0.5f;
+        
+        /// <summary>
         /// Whether the whole height map should be multiplied with itself. Makes hills
         /// steeper.
         /// </summary>
@@ -17,7 +22,6 @@ namespace Game.WorldGen
         /// </summary>
         public bool ForceOceanSides { get; set; } = true;
 
-        
         /// <summary>
         /// Whether to prevent colder and coldest zones from appearing at longitudes more than <see cref="ColdZoneLongitudeLimit"/> percent
         /// </summary>
