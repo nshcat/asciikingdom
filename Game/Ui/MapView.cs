@@ -44,6 +44,11 @@ namespace Game.Ui
         public Size MapDimensions => this.Map.Dimensions;
 
         /// <summary>
+        /// Whether to show special resources on the map
+        /// </summary>
+        public bool ShowResources { get; set; } = true;
+
+        /// <summary>
         /// The map position the cursor is pointing on
         /// </summary>
         public Position CursorPosition { get; set; } = Position.Origin;
@@ -196,7 +201,18 @@ namespace Game.Ui
                         && (mapPosition.X >= 0 && mapPosition.Y >= 0) 
                         && screenPosition.IsInBounds(surface.Dimensions))
                     {
-                        surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
+                        // TODO: The instanceof is ugly here, fix that (maybe derived class, `DetailedMapView`?)
+                        if (this.ShowResources
+                            && (this.Map is DetailedMap) 
+                            && (this.Map as DetailedMap).Resources.ContainsKey(mapPosition))
+                        {
+                            var tile = (this.Map as DetailedMap).Resources[mapPosition].Tile;
+                            surface.SetTile(screenPosition, tile);
+                        }
+                        else
+                        {
+                            surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
+                        }
                     }
                 }
             }

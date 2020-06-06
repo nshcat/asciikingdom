@@ -13,8 +13,7 @@
         "allowed_terrain" : 
         [
             "MountainsLow",
-            "MountainsMed",
-            "MountainsHigh"
+            "MountainsMed"
         ]
     },
     {
@@ -27,12 +26,33 @@
             "back" : "#000000",
             "glyph" : 42
         },
-        "weight" : 2.5,
+        "weight" : 1.5,
         "allowed_terrain" : 
         [
             "MountainsLow",
-            "MountainsMed",
-            "MountainsHigh"
+            "MountainsMed"
         ]
     },
+    {
+        "identifier" : "ore_coal",
+        "display_name" : "Coal",
+        "description" : "A combustible, black rock used in forges.",
+        "tile" :
+        {
+            "front" : "#565656",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 3.0,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "HillyGrassland",
+            "HillyShrubland",
+            "HillySavanna",
+            "HillySteppe",
+            "Hills",
+            "HillsDry"
+        ]
+    }
 ]

@@ -57,6 +57,7 @@ namespace Game.Maths
             public Grid(Size dimensions)
             {
                 this.Dimensions = dimensions;
+                this.Entries = new Vector2?[dimensions.Width, dimensions.Height];
             }
 
             /// <summary>
