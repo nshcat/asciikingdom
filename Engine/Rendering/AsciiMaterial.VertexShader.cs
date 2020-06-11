@@ -4,7 +4,7 @@ namespace Engine.Rendering
     {
 	    protected string VertexShaderSource { get; } =
 		    @"
-			#version 450
+			#version 330
 
 
 			//===----------------------------------------------------------------------===//
