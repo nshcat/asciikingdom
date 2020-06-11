@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Core;
@@ -170,6 +172,80 @@ namespace Game.Ui
         }
 
         /// <summary>
+        /// For detailed maps, collect all world sites
+        /// </summary>
+        protected Dictionary<Position, IWorldSite> CollectSites()
+        {
+            var result = new Dictionary<Position, IWorldSite>();
+            var map = this.Map as DetailedMap;
+
+            foreach (var province in map.Provinces)
+            {
+                foreach (var city in province.AssociatedCities)
+                {
+                    result.Add(city.Position, city);
+
+                    foreach (var village in city.AssociatedVillages)
+                    {
+                        result.Add(village.Position, village);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Perform drawing for detailed map
+        /// </summary>
+        protected void DrawDetailed(Surface surface, Position topLeft, Position screenPosition, Position mapPosition)
+        {
+            var map = this.Map as DetailedMap;
+            var sites = this.CollectSites();
+            var mapData = this.MapData;
+
+            if (sites.ContainsKey(mapPosition))
+            {
+                var site = sites[mapPosition];
+                surface.SetTile(screenPosition, site.Tile);
+
+                // Draw title if cursor is some distance away from site
+                var distance = Position.GetDistance(mapPosition, this.CursorPosition);
+
+                if (site.ShowName &&
+                    !string.IsNullOrEmpty(site.Name) &&
+                    distance >= 5.0f)
+                {
+                    surface.DrawStringCentered(
+                        new Position(screenPosition.X, screenPosition.Y - 2),
+                        site.Name,
+                        DefaultColors.Black,
+                        UiColors.MapLabel
+                        
+                    );
+
+                    var half = (int) (site.Name.Length / 2);
+                    for (var ix = 0; ix < site.Name.Length; ++ix)
+                    {
+                        var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
+                        surface.SetUiShadow(pos, true);
+                    }
+                }
+            }
+            else if (this.DisplayMode == MapViewMode.Terrain
+                && this.ShowResources
+                && map.Resources.ContainsKey(mapPosition))
+            {
+                var tile = map.Resources[mapPosition].Tile;
+                surface.SetTile(screenPosition, tile);
+            }
+            else
+            {
+                surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
+            }
+        }
+        
+        /// <summary>
         /// Draw map view
         /// </summary>
         public override void Render(Surface surface)
@@ -189,9 +265,9 @@ namespace Game.Ui
 
             var mapData = this.MapData;
             
-            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            for (var iy = 0; iy < this.Dimensions.Height; ++iy)
             {
-                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
                 {
                     var localPosition = new Position(ix, iy);
                     var mapPosition = localPosition + finalTopLeft;
@@ -201,14 +277,10 @@ namespace Game.Ui
                         && (mapPosition.X >= 0 && mapPosition.Y >= 0) 
                         && screenPosition.IsInBounds(surface.Dimensions))
                     {
-                        // TODO: The instanceof is ugly here, fix that (maybe derived class, `DetailedMapView`?)
-                        if (this.DisplayMode == MapViewMode.Terrain
-                            && this.ShowResources
-                            && (this.Map is DetailedMap) 
-                            && (this.Map as DetailedMap).Resources.ContainsKey(mapPosition))
+                        // Special handling when map is detailed map (this is ugly!)
+                        if (this.Map is DetailedMap)
                         {
-                            var tile = (this.Map as DetailedMap).Resources[mapPosition].Tile;
-                            surface.SetTile(screenPosition, tile);
+                            this.DrawDetailed(surface, finalTopLeft, screenPosition, mapPosition);
                         }
                         else
                         {

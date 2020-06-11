@@ -19,6 +19,11 @@ namespace Game.Simulation
         public string TypeDescriptor { get; }
         
         /// <summary>
+        /// Whether this sites name should be shown on the world map
+        /// </summary>
+        public bool ShowName { get; }
+        
+        /// <summary>
         /// The tile used to represent this site on the world map
         /// </summary>
         public Tile Tile { get; }

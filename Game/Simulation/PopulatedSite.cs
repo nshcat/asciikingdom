@@ -15,6 +15,7 @@ namespace Game.Simulation
         #region Abstract properties
         public abstract string Name { get; set; }
         public abstract Position Position { get; set; }
+        public abstract bool ShowName { get; }
         #endregion
         
         #region Implemented interface properties
@@ -85,7 +86,7 @@ namespace Game.Simulation
             if(this.SiteTiles.Count <= 0)
                 throw new InvalidOperationException("Populate site tile list is empty");
 
-            var result = Tile.Empty;
+            var result = new Tile();
             
             foreach (var (threshold, tile) in this.SiteTiles)
             {

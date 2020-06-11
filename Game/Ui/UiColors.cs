@@ -13,5 +13,6 @@ namespace Game.Ui
         public static Color ActiveText => new Color(222, 222, 222);
         public static Color InactiveText => new Color(158, 158, 158);
         public static Color Keybinding => Color.FromHex("#38EC00");
+        public static Color MapLabel => Color.FromHex("#D4D79D");
     }
 }

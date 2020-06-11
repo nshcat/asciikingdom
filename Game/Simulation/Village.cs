@@ -14,7 +14,12 @@ namespace Game.Simulation
         /// The name of this village
         /// </summary>
         public override string Name { get; set; }
-        
+
+        /// <summary>
+        /// Village names are not shown on the world map
+        /// </summary>
+        public override bool ShowName => false;
+
         /// <summary>
         /// The position of this village on the world map
         /// </summary>

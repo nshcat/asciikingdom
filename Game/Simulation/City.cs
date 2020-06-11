@@ -30,6 +30,11 @@ namespace Game.Simulation
         public override Position Position { get; set; }
         
         /// <summary>
+        /// City names are shown on the world map
+        /// </summary>
+        public override bool ShowName => true;
+        
+        /// <summary>
         /// The province this city is associated with
         /// </summary>
         public Province AssociatedProvince { get; set; }

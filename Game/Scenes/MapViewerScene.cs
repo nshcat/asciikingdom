@@ -87,6 +87,21 @@ namespace Game.Scenes
                 // Adjust overview map view height
                 this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
                     Math.Min(world.OverviewDimensions.Height, (int) (this._surface.Dimensions.Height * 0.65f)));
+                
+                var city = new City("Weymouth", new Position(162, 111), 65000);
+                var village1 = new Village("", new Position(160, 108), 103, city);
+                var village2 = new Village("", new Position(157, 113), 46, city);
+                var village3 = new Village("", new Position(158, 109), 16, city);
+                city.AssociatedVillages.Add(village1);
+                city.AssociatedVillages.Add(village2);
+                city.AssociatedVillages.Add(village3);
+                
+                var province = new Province(city);
+                
+                var city2 = new City("Bristol", new Position(191, 98), 150000);
+                province.AssociatedCities.Add(city2);
+                
+                world.DetailedMap.Provinces.Add(province);
             };
 
             this._isGeneratingMap = true;
