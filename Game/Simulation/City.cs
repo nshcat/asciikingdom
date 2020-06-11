@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Engine.Graphics;
+using Game.Maths;
 
 namespace Game.Simulation
 {
@@ -31,6 +32,23 @@ namespace Game.Simulation
         /// How many associated villages this city can support
         /// </summary>
         public int VillageCapacity => 3 + (this.Population / 35000);
+
+        /// <summary>
+        /// The radius of the influence sphere this city has. Associated villages
+        /// can only be placed inside this sphere.
+        /// </summary>
+        public int InfluenceRadius => 5 + (this.Population / 20000);
+        
+        /// <summary>
+        /// The current influence circle
+        /// </summary>
+        public Circle InfluenceCircle => new Circle(this.Position, this.InfluenceRadius);
+        
+        /// <summary>
+        /// All villages associated with this city
+        /// </summary>
+        public List<Village> AssociatedVillages { get; }
+            = new List<Village>();
 
         /// <summary>
         /// List of city growth stages
