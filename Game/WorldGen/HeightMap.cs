@@ -78,6 +78,9 @@ namespace Game.WorldGen
         /// </summary>
         private void FillSinks()
         {
+            // This RNG is only used when randomized sink filling is enabled
+            var rng = new Random(this.Seed + 17710);
+            
             var directions = new[]
             {
                 Position.East,
@@ -108,6 +111,13 @@ namespace Game.WorldGen
             {
                 var wasChanged = false;
 
+                // When randomized sink filling is enabled in the world parameters, we choose a random epsilon
+                // for each iteration. This prevents weird artifacts from being generated (mostly completely straight,
+                // very long diagonal lines, creating big diamond-shaped terrain patterns on some seeds)
+                var currentEpsilon = this.Parameters.RandomizedSinkFilling
+                    ? (float) (rng.NextDouble() * 1e-5f) + 1e-6f
+                    : epsilon;
+
                 for (var ix = 0; ix < this.Dimensions.Width; ++ix)
                 {
                     for (var iy = 0; iy < this.Dimensions.Height; ++iy)
@@ -123,14 +133,14 @@ namespace Game.WorldGen
                             var neighbour = position + direction;
 
                             if (this.Values[ix, iy] >=
-                                newValues[neighbour.X, neighbour.Y] + epsilon)
+                                newValues[neighbour.X, neighbour.Y] + currentEpsilon)
                             {
                                 newValues[ix, iy] = this.Values[ix, iy];
                                 wasChanged = true;
                                 break;
                             }
 
-                            var oh = newValues[neighbour.X, neighbour.Y] + epsilon;
+                            var oh = newValues[neighbour.X, neighbour.Y] + currentEpsilon;
 
                             if ((newValues[ix, iy] > oh) && (oh > this.Values[ix, iy]))
                             {

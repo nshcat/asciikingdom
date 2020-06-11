@@ -6,6 +6,15 @@ namespace Game.WorldGen
     public class WorldParameters
     {
         /// <summary>
+        /// Whether the depression filling algorithm should use randomized parameters
+        /// </summary>
+        /// <remarks>
+        /// This avoids weird artifacts like very long, straight, diagonal lines from appearing, but slightly changes
+        /// how worlds look.
+        /// </remarks>
+        public bool RandomizedSinkFilling { get; set; } = false;
+        
+        /// <summary>
         /// The chance that a resource will spawn on a selected tile
         /// </summary>
         public float ResourceSpawnChance { get; set; } = 0.7f;
