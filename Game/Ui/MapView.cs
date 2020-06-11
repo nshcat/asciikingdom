@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Core;
@@ -18,6 +19,22 @@ namespace Game.Ui
         Temperature,
         Rainfall,
         Drainage
+    }
+
+    /// <summary>
+    /// Cursor display modes
+    /// </summary>
+    public enum CursorMode
+    {
+        /// <summary>
+        /// Normal, yellow cursor
+        /// </summary>
+        Normal,
+        
+        /// <summary>
+        /// Red cursor, used to indicate things like invalid site placement
+        /// </summary>
+        Invalid
     }
     
     /// <summary>
@@ -61,15 +78,42 @@ namespace Game.Ui
         public bool DrawCursor { get; set; } = true;
 
         /// <summary>
-        /// The tile to use to draw the cursor
+        /// The current cursor display mode
         /// </summary>
-        public Tile CursorTile { get; set; } = new Tile(88, DefaultColors.Yellow, DefaultColors.Black);
+        public CursorMode CursorMode { get; set; } = CursorMode.Normal;
+
+        /// <summary>
+        /// Whether to draw city influence ranges
+        /// </summary>
+        public bool DrawCityInfluence { get; set; } = false;
+
+        /// <summary>
+        /// The tile to use to draw the cursor in normal mode
+        /// </summary>
+        public Tile NormalCursorTile { get; set; } = new Tile(88, DefaultColors.Yellow, DefaultColors.Black);
+        
+        /// <summary>
+        /// The tile to use to draw the cursor in invalid mode
+        /// </summary>
+        public Tile InvalidCursorTile { get; set; } = new Tile(88, DefaultColors.Red, DefaultColors.Black);
+
+        /// <summary>
+        /// The tile to use to draw the cursor. Depends on the value of see <see cref="CursorMode"/>.
+        /// </summary>
+        protected Tile CursorTile => (this.CursorMode == CursorMode.Normal) ? this.NormalCursorTile : InvalidCursorTile;
         
         /// <summary>
         /// Timer used to blink cursor
         /// </summary>
         protected ToggleTimer CursorTimer { get; set; } = new ToggleTimer(0.25, true);
-
+        
+        /// <summary>
+        /// List used to remember all cities in view. This is used to draw certain overlays like influence range
+        /// after the map has been drawn.
+        /// </summary>
+        public List<City> CitiesInView { get; set; }
+            = new List<City>();
+        
         /// <summary>
         /// The map data to visualize. This depends on the current <see cref="DisplayMode"/>.
         /// </summary>
@@ -204,44 +248,74 @@ namespace Game.Ui
             var sites = this.CollectSites();
             var mapData = this.MapData;
 
-            if (sites.ContainsKey(mapPosition))
+            if (this.DisplayMode != MapViewMode.Terrain)
             {
-                var site = sites[mapPosition];
-                surface.SetTile(screenPosition, site.Tile);
-
-                // Draw title if cursor is some distance away from site
-                var distance = Position.GetDistance(mapPosition, this.CursorPosition);
-
-                if (site.ShowName &&
-                    !string.IsNullOrEmpty(site.Name) &&
-                    distance >= 5.0f)
-                {
-                    surface.DrawStringCentered(
-                        new Position(screenPosition.X, screenPosition.Y - 2),
-                        site.Name,
-                        DefaultColors.Black,
-                        UiColors.MapLabel
-                        
-                    );
-
-                    var half = (int) (site.Name.Length / 2);
-                    for (var ix = 0; ix < site.Name.Length; ++ix)
-                    {
-                        var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
-                        surface.SetUiShadow(pos, true);
-                    }
-                }
-            }
-            else if (this.DisplayMode == MapViewMode.Terrain
-                && this.ShowResources
-                && map.Resources.ContainsKey(mapPosition))
-            {
-                var tile = map.Resources[mapPosition].Tile;
-                surface.SetTile(screenPosition, tile);
+                surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
             }
             else
             {
-                surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
+                if (sites.ContainsKey(mapPosition))
+                {
+                    var site = sites[mapPosition];
+
+                    // Remember site if its a city for later influence circle drawing
+                    if (site is City city)
+                        this.CitiesInView.Add(city);
+
+                    surface.SetTile(screenPosition, site.Tile);
+
+                    // Draw title if cursor is some distance away from site
+                    var distance = Position.GetDistance(mapPosition, this.CursorPosition);
+
+                    if (site.ShowName &&
+                        !string.IsNullOrEmpty(site.Name) &&
+                        distance >= 5.0f)
+                    {
+                        surface.DrawStringCentered(
+                            new Position(screenPosition.X, screenPosition.Y - 2),
+                            site.Name,
+                            DefaultColors.Black,
+                            UiColors.MapLabel
+                        );
+
+                        var half = (int) (site.Name.Length / 2);
+                        for (var ix = 0; ix < site.Name.Length; ++ix)
+                        {
+                            var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
+                            surface.SetUiShadow(pos, true);
+                        }
+                    }
+                }
+                else if (this.DisplayMode == MapViewMode.Terrain
+                         && this.ShowResources
+                         && map.Resources.ContainsKey(mapPosition))
+                {
+                    var tile = map.Resources[mapPosition].Tile;
+                    surface.SetTile(screenPosition, tile);
+                }
+                else
+                {
+                    surface.SetTile(screenPosition, mapData[mapPosition.X, mapPosition.Y]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Symbolize influence circles
+        /// </summary>
+        protected void DrawInfluenceCircles(Surface surface, Position topLeft)
+        {
+            var circles = this.CitiesInView.Select(x => x.InfluenceCircle).ToList();
+            
+            for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                {
+                    if (!circles.Any(x => x.ContainsPoint(new Position(ix, iy) + topLeft)))
+                    {
+                        surface.SetUiShadow(new Position(ix, iy) + this.Position, true);
+                    }
+                }
             }
         }
         
@@ -250,6 +324,9 @@ namespace Game.Ui
         /// </summary>
         public override void Render(Surface surface)
         {
+            // Reset cached cities in view from last frame
+            this.CitiesInView.Clear();
+
             var halfDimensions = new Position(this.Dimensions.Width / 2, this.Dimensions.Height / 2);
             
             // The view prefers the cursor position to be in the center of the screen, so calculate
@@ -316,6 +393,9 @@ namespace Game.Ui
 
                 surface.SetTile(new Position(x, y), this.CursorTile);
             }
+
+            if (this.DrawCityInfluence && this.Map is DetailedMap && this.DisplayMode == MapViewMode.Terrain)
+                this.DrawInfluenceCircles(surface, finalTopLeft);
         }
 
         /// <summary>

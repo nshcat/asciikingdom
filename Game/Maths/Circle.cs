@@ -15,7 +15,7 @@ namespace Game.Maths
         /// Collection of all points inside the circle
         /// </summary>
         public List<Position> Points { get; }
-        
+
         /// <summary>
         /// The radius of the circle, in tiles
         /// </summary>
@@ -36,6 +36,14 @@ namespace Game.Maths
             this.Center = center;
 
             this.GenerateCircle();
+        }
+
+        /// <summary>
+        /// Checks whether given point is inside this circle
+        /// </summary>
+        public bool ContainsPoint(Position point)
+        {
+            return this.Points.Contains(point);
         }
 
         /// <summary>

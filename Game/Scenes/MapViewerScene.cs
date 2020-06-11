@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -33,7 +34,8 @@ namespace Game.Scenes
             ShowRainfall,
             ShowTemperature,
             ShowDrainage,
-            ShowResources
+            ShowResources,
+            ShowInfluence
         }
 
         private World _world;
@@ -47,7 +49,8 @@ namespace Game.Scenes
         private string _worldGenPhase;
         private double _worldGenProgress;
         private bool _isGeneratingMap = false;
-        
+        private bool _showInfluence = false;
+        private City _currentCity = null; // City in whos influence radius the cursor currently is
         public MapViewerScene(Scene parent) : base(parent)
         {
             this.Initialize();
@@ -139,6 +142,7 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.ShowRainfall, KeyPressType.Pressed, Key.F),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowDrainage, KeyPressType.Pressed, Key.D),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowInfluence, KeyPressType.Pressed, Key.I),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft)
             );
         }
@@ -164,6 +168,16 @@ namespace Game.Scenes
             var position = new Position(
                 this._overviewView.Position.X,
                 this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
+
+            var drawInfluence = this._currentCity != null;
+
+            if (drawInfluence)
+            {
+                this._surface.DrawString(position, $"In Territory: {this._currentCity.Name}",
+                    DefaultColors.White, DefaultColors.Black);
+                
+                position += new Position(0, 1);
+            }
             
             this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
                 DefaultColors.White, DefaultColors.Black);
@@ -247,6 +261,16 @@ namespace Game.Scenes
                     this._detailedView.ShowResources = !this._detailedView.ShowResources;
                     break;
                 }
+                case MapViewerAction.ShowInfluence:
+                {
+                    this._showInfluence = !this._showInfluence;
+                    this._detailedView.DrawCityInfluence = this._showInfluence;
+
+                    if (!this._showInfluence)
+                        this._detailedView.CursorMode = CursorMode.Normal;
+                        
+                    break;
+                }
                 case MapViewerAction.ShowMap:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Terrain;
@@ -301,6 +325,9 @@ namespace Game.Scenes
             
             next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "R", "Show resources",
                 UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "i", "Show influence",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
         }
         
         private void DrawWorldGenProgress()
@@ -336,6 +363,22 @@ namespace Game.Scenes
             
             this._overviewView.Update(deltaTime);
             this._detailedView.Update(deltaTime);
+            
+
+            // Determine in which cities influence the cursor currently is
+            var citiesInView = this._detailedView.CitiesInView.Select(x => new {Site = x, Circle = x.InfluenceCircle});
+            var result = citiesInView.FirstOrDefault(x => x.Circle.ContainsPoint(this._detailedView.CursorPosition));
+
+            if (result != null)
+            {
+                this._detailedView.CursorMode = CursorMode.Normal;
+                this._currentCity = result.Site;
+            }
+            else
+            {
+                this._detailedView.CursorMode = (this._showInfluence ? CursorMode.Invalid : CursorMode.Normal);
+                this._currentCity = null;
+            }
         }
 
         public override void Reshape(Size newSize)
