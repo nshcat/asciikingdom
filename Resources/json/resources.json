@@ -1,0 +1,188 @@
+[
+    {
+        "identifier" : "ore_iron",
+        "display_name" : "Iron Ore",
+        "description" : "Raw iron ore, used to produce iron and steel",
+        "tile" :
+        {
+            "front" : "#7B7B7B",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 1.2,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
+        "identifier" : "ore_copper",
+        "display_name" : "Copper Ore",
+        "description" : "Raw copper ore, used to produce copper metal",
+        "tile" :
+        {
+            "front" : "#B87333",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
+        "identifier" : "ore_gold",
+        "display_name" : "Gold Ore",
+        "description" : "Raw gold ore, used to produce gold metal",
+        "tile" :
+        {
+            "front" : "#FFD700",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 0.65,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
+        "identifier" : "ore_silver",
+        "display_name" : "Silver Ore",
+        "description" : "Raw silver ore, used to produce silver metal",
+        "tile" :
+        {
+            "front" : "#E5E5E5",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 0.75,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "MountainsMed"
+        ]
+    },
+    {
+        "identifier" : "ore_coal",
+        "display_name" : "Coal",
+        "description" : "A combustible, black rock used in forges.",
+        "tile" :
+        {
+            "front" : "#565656",
+            "back" : "#000000",
+            "glyph" : 42
+        },
+        "weight" : 2.0,
+        "allowed_terrain" : 
+        [
+            "MountainsLow",
+            "HillyGrassland",
+            "HillyShrubland",
+            "HillySavanna",
+            "HillySteppe",
+            "Hills",
+            "HillsDry"
+        ]
+    },
+    {
+        "identifier" : "fruit_oranges",
+        "display_name" : "Oranges",
+        "description" : "A sweet and tasty citrus fruit",
+        "tile" :
+        {
+            "front" : "#FFBB00",
+            "back" : "#000000",
+            "glyph" : 79
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_lemons",
+        "display_name" : "Lemons",
+        "description" : "A sour and tasty citrus fruit",
+        "tile" :
+        {
+            "front" : "#EBFF00",
+            "back" : "#000000",
+            "glyph" : 76
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_limes",
+        "display_name" : "Limes",
+        "description" : "A sweet and slightly sour citrus fruit",
+        "tile" :
+        {
+            "front" : "#57EC04",
+            "back" : "#000000",
+            "glyph" : 76
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "fruit_bananas",
+        "display_name" : "Bananas",
+        "description" : "A long, sweet fruit, with a taste similar to honey",
+        "tile" :
+        {
+            "front" : "#E8EC04",
+            "back" : "#000000",
+            "glyph" : 66
+        },
+        "weight" : 1.0,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "trade_diamonds",
+        "display_name" : "Diamonds",
+        "description" : "Very valuable, clear stones used in jewelry",
+        "tile" :
+        {
+            "front" : "#B1F9EC",
+            "back" : "#000000",
+            "glyph" : 4
+        },
+        "weight" : 0.65,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    },
+    {
+        "identifier" : "trade_gems",
+        "display_name" : "Gemstones",
+        "description" : "Various types of valuable stones used in jewelry",
+        "tile" :
+        {
+            "front" : "#FF4A69",
+            "back" : "#000000",
+            "glyph" : 4
+        },
+        "weight" : 0.8,
+        "allowed_terrain" : 
+        [
+            "TropicalBroadleafForest"
+        ]
+    }
+]

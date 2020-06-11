@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace Game.Data
 {
     /// <summary>
     /// Describes the different types of terrain that can appear on the game map
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum TerrainType
     {
         Unknown,
@@ -13,8 +16,13 @@ namespace Game.Data
         MountainPeak,
         Grassland,
         GrasslandDry,
+        HillyGrassland,
+        HillyShrubland,
+        HillySavanna,
         Savanna,
         SavannaDry,
+        Steppe,
+        HillySteppe,
         Shrubland,
         ShrublandDry,
         SandDesert,

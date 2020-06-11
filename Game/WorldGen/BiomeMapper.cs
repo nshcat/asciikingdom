@@ -13,6 +13,15 @@ namespace Game.WorldGen
     public class BiomeMapper
     {
         /// <summary>
+        /// The two rough climate zones of habitable land
+        /// </summary>
+        private enum ClimateZone
+        {
+            Temperate,
+            Tropical
+        }
+        
+        /// <summary>
         /// Terrain type layer
         /// </summary>
         public TerrainType[,] TerrainTypes { get; protected set; }
@@ -80,6 +89,7 @@ namespace Game.WorldGen
 
             var difference = this.Temperature.WarmThreshold - this.Temperature.ColdThreshold;
             var jungleSrcRange = new Range(this.Temperature.ColdThreshold + (difference / 2), this.Temperature.WarmThreshold);
+            var climateZoneSrcRange = jungleSrcRange;
             
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
@@ -90,6 +100,22 @@ namespace Game.WorldGen
                     var temperature = this.Temperature.TemperatureLevels[ix, iy];
                     var rawTemperature = this.Temperature[ix, iy];
                     var rainfall = this.Rainfall[ix, iy];
+                    
+                    // Determine rough climate zone.
+                    var climateZone = ClimateZone.Temperate;
+
+                    // Warmer and warmest temperatures are always tropical
+                    if (temperature == TemperatureLevel.Warmer ||
+                        temperature == TemperatureLevel.Warmest)
+                    {
+                        climateZone = ClimateZone.Tropical;
+                    }
+                    else if(temperature == TemperatureLevel.Warm) // Smoothly transition in warm temperature zone
+                    {
+                        var tropicalChance = MathUtil.Map(rawTemperature, climateZoneSrcRange, destRange);
+                        if (rng.NextDouble() <= tropicalChance)
+                            climateZone = ClimateZone.Tropical;
+                    }
 
                     var type = TerrainType.Unknown;
 
@@ -113,17 +139,91 @@ namespace Game.WorldGen
                             // Very dry region
                             if (rainfall < 0.1f)
                             {
-                                if (drainage < 0.33f)
-                                    type = TerrainType.SandDesert;
-                                else if (drainage < 0.5f)
-                                    type = TerrainType.RockyWasteland;
+                                if (climateZone == ClimateZone.Tropical)
+                                {
+                                    // Tropical zones have little bad lands, but lots of deserts and rocky
+                                    // wastelands
+                                    if (drainage < 0.85f)
+                                        type = TerrainType.SandDesert;
+                                    else
+                                        type = TerrainType.RockyWasteland;
+                                }
                                 else
                                 {
-                                    type = TerrainType.BadLands;
+                                    // Temperate regions have no deserts
+                                    if (drainage < 0.65f)
+                                        type = TerrainType.RockyWasteland;
+                                    else
+                                    {
+                                        type = TerrainType.BadLands;
+                                    }
+                                }
+                            }
+                            else if (rainfall < 0.66f)
+                            {
+                                if (climateZone == ClimateZone.Tropical)
+                                {
+                                    // Since evaporation is high, even moderately high rainfall levels will still result
+                                    // in arid biomes
+                                    if (rainfall < 0.30f)
+                                    {
+                                        type = TerrainType.SandDesert;
+                                    }
+                                    else if (rainfall < 0.45f)
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.Steppe;
+                                        else
+                                            type = TerrainType.HillySteppe;
+                                    }
+                                    else if (rainfall < 0.55f)
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.SavannaDry;
+                                        else
+                                            type = TerrainType.HillsDry;
+                                    }
+                                    else
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.Savanna;
+                                        else
+                                            type = TerrainType.HillySavanna;
+                                    }
+                                }
+                                else // Temperate climate
+                                {
+                                    // In a temperate climate, evaporation is low. Thus, only areas with very little
+                                    // rainfall will develop arid biomes
+                                    if (rainfall < 0.20f)
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.ShrublandDry;
+                                        else
+                                            type = TerrainType.HillsDry;
+                                    }
+                                    else if (rainfall < 0.40f)
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.Shrubland;
+                                        else
+                                            type = TerrainType.Hills;
+                                    }
+                                    else if(rainfall > 0.55 && drainage < 0.15f)
+                                    {
+                                        type = TerrainType.Marsh;
+                                    }
+                                    else
+                                    {
+                                        if (drainage < 0.5)
+                                            type = TerrainType.Grassland;
+                                        else
+                                            type = TerrainType.HillyGrassland;
+                                    }
                                 }
                             }
                             // Grasslands region
-                            else if (rainfall < 0.2f)
+                            /*else if (rainfall < 0.2f)
                             {
                                 if (drainage < 0.5f)
                                 {
@@ -149,7 +249,7 @@ namespace Game.WorldGen
                             // Marsh, shrubland region
                             else if (rainfall < 0.66f)
                             {
-                                if (drainage < 0.12f/*0.05f*//*0.10f*/)
+                                if (drainage < 0.12f)
                                     type = TerrainType.Marsh;
                                 else if (drainage < 0.5f)
                                 {
@@ -167,7 +267,7 @@ namespace Game.WorldGen
                                     else
                                         type = TerrainType.Hills;
                                 }
-                            }
+                            }*/
                             // Forest/Swamp region
                             else
                             {

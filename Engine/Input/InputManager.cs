@@ -82,30 +82,36 @@ namespace Engine.Input
 
             this.Window.KeyDown += args =>
             {
-                this._activeState[args.Key] = true;
-                this._newKeys[args.Key] = true;
-                
-                // Check all modifiers
-                foreach (var (mod, key) in this.Modifiers)
+                if (this.IsKeyValid(args.Key))
                 {
-                    if (args.Modifiers.HasFlag(mod))
+                    this._activeState[args.Key] = true;
+                    this._newKeys[args.Key] = true;
+
+                    // Check all modifiers
+                    foreach (var (mod, key) in this.Modifiers)
                     {
-                        this._activeState[key] = true;
-                        this._newKeys[key] = true;
+                        if (args.Modifiers.HasFlag(mod))
+                        {
+                            this._activeState[key] = true;
+                            this._newKeys[key] = true;
+                        }
                     }
                 }
             };
             
             this.Window.KeyUp += args =>
             {
-                this._activeState[args.Key] = false;
-
-                // Check all modifiers
-                foreach (var (mod, key) in this.Modifiers)
+                if (this.IsKeyValid(args.Key))
                 {
-                    if (args.Modifiers.HasFlag(mod))
+                    this._activeState[args.Key] = false;
+
+                    // Check all modifiers
+                    foreach (var (mod, key) in this.Modifiers)
                     {
-                        this._activeState[key] = false;
+                        if (args.Modifiers.HasFlag(mod))
+                        {
+                            this._activeState[key] = false;
+                        }
                     }
                 }
             };
@@ -168,6 +174,21 @@ namespace Engine.Input
         public bool AreKeysDown(KeyPressType type, params Key[] keys)
         {
             return keys.Select(k => this.IsKeyDown(type, k)).All(x => x);
+        }
+
+        /// <summary>
+        /// Check whether given key is a standard, valid input key.
+        /// </summary>
+        /// <remarks>
+        /// This excludes special keys such as multi media keys, since they trigger exceptions in OpenTK
+        /// when used with <see cref="KeyboardState"/>. This sadly means that users can't use macro keys
+        /// on their gaming keyboards until this issue is fixed in OpenTK.
+        /// </remarks>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private bool IsKeyValid(Key key)
+        {
+            return key > Key.Unknown && key <= Key.NonUSBackSlash;
         }
     }
 }

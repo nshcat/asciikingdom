@@ -32,7 +32,8 @@ namespace Game.Scenes
             ShowMap,
             ShowRainfall,
             ShowTemperature,
-            ShowDrainage
+            ShowDrainage,
+            ShowResources
         }
 
         private World _world;
@@ -82,6 +83,10 @@ namespace Game.Scenes
                 this._isGeneratingMap = false;
                 
                 world.Save(Path.Combine(GameDirectories.SaveGames, "world1"));
+                
+                // Adjust overview map view height
+                this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
+                    Math.Min(world.OverviewDimensions.Height, (int) (this._surface.Dimensions.Height * 0.65f)));
             };
 
             this._isGeneratingMap = true;
@@ -118,7 +123,8 @@ namespace Game.Scenes
                 new InputAction<MapViewerAction>(MapViewerAction.ShowMap, KeyPressType.Pressed, Key.M),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowRainfall, KeyPressType.Pressed, Key.F),
                 new InputAction<MapViewerAction>(MapViewerAction.ShowDrainage, KeyPressType.Pressed, Key.D),
-                new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T)
+                new InputAction<MapViewerAction>(MapViewerAction.ShowTemperature, KeyPressType.Pressed, Key.T),
+                new InputAction<MapViewerAction>(MapViewerAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft)
             );
         }
 
@@ -127,12 +133,32 @@ namespace Game.Scenes
             if (this._detailedView.HasMapData)
             {
                 this._surface.DrawString(new Position(1, 0), $"Detailed Map (Seed: {this._seed})" +
-                                                             $" Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}" +
-                                                             $" {TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name}",
+                                                             $" Cursor: {this._detailedView.CursorPosition.X}:{this._detailedView.CursorPosition.Y}",
                     DefaultColors.White, DefaultColors.Black);
 
 
                 this._detailedView.Render(this._surface);
+            }
+        }
+
+        private void DrawTileInfo()
+        {
+            if (this._world == null)
+                return;
+            
+            var position = new Position(
+                this._overviewView.Position.X,
+                this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
+            
+            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
+                DefaultColors.White, DefaultColors.Black);
+
+            if (this._detailedView.ShowResources &&
+                this._world.DetailedMap.Resources.ContainsKey(this._detailedView.CursorPosition))
+            {
+                var resourceType = this._world.DetailedMap.Resources[this._detailedView.CursorPosition];
+                this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
+                    DefaultColors.White, DefaultColors.Black);
             }
         }
 
@@ -201,6 +227,11 @@ namespace Game.Scenes
                     this._detailedView.Right(5);
                     break;
                 }
+                case MapViewerAction.ShowResources:
+                {
+                    this._detailedView.ShowResources = !this._detailedView.ShowResources;
+                    break;
+                }
                 case MapViewerAction.ShowMap:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Terrain;
@@ -234,10 +265,29 @@ namespace Game.Scenes
             this.DrawMap();
             this.DrawOverview();
             this.DrawWorldGenProgress();
+            this.DrawTileInfo();
+            this.DrawKeybindings();
             
             this._surface.Render(rp);
         }
 
+        private void DrawKeybindings()
+        {
+            if (this._isGeneratingMap)
+                return;
+            
+            var next = 0;
+
+            next = this._surface.DrawKeybinding(new Position(1, this._surface.Dimensions.Height - 2), "r", "New map",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "mtdf", "Map mode",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "R", "Show resources",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+        }
+        
         private void DrawWorldGenProgress()
         {
             if (this._isGeneratingMap)
@@ -284,10 +334,22 @@ namespace Game.Scenes
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             
-            this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-2);
+            this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-4);
             
             this._overviewView.Position = new Position((int)(this._surface.Dimensions.Width * 0.7f) + 1, 1);
-            this._overviewView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.3f)-2, (int)(this._surface.Dimensions.Height * 0.65f));
+
+            if (this._world != null)
+            {
+                var overviewHeight = this._world.OverviewDimensions.Height;
+                
+                this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
+                    Math.Min(overviewHeight, (int) (this._surface.Dimensions.Height * 0.65f)));
+            }
+            else
+            {
+                this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
+                    (int) (this._surface.Dimensions.Height * 0.65f));
+            }
         }
     }
 }

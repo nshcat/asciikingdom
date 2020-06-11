@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Game.Core;
-using Game.Utility;
 
 namespace Game.Simulation
 {
@@ -38,8 +37,8 @@ namespace Game.Simulation
                 {
                     var index = int.Parse(name.Replace("world", ""));
 
-                    var metadata = Serialization.DeserializeFromFile<WorldMetadata>(
-                        Path.Combine(directory, "metadata.json"), Serialization.DefaultOptions);
+                    var metadata = Serialization.Serialization.DeserializeFromFile<WorldMetadata>(
+                        Path.Combine(directory, "metadata.json"), Serialization.Serialization.DefaultOptions);
                     
                     this.Worlds.Add((index, metadata.Name));
                 }

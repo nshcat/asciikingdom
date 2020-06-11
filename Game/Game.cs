@@ -38,13 +38,16 @@ namespace Game
             var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
             this.SceneStack.AddInitialScene(initialScene);
             
-            var loader = new TestTypeManager();
-            loader.LoadTypes(this.Resources);
+            // Load data files
+            this.LoadData();
+        }
 
-            foreach (var type in loader.AllTypes.Values)
-            {
-                Console.WriteLine($"{type.Identifier} {type.Test}");
-            }
+        /// <summary>
+        /// Load game data from filesystem
+        /// </summary>
+        protected void LoadData()
+        {
+            ResourceTypeManager.Instance.LoadTypes(this.Resources);
         }
 
         /// <summary>

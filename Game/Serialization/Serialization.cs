@@ -2,7 +2,7 @@ using System.IO;
 using System.Text.Json;
 using Game.Data;
 
-namespace Game.Utility
+namespace Game.Serialization
 {
     /// <summary>
     /// Class containing serialization helpers

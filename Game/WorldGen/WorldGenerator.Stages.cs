@@ -44,12 +44,16 @@ namespace Game.WorldGen
             var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, temperatureMap, rainfallMap, biomeMapper.TerrainTypes);
             riverGenerator.GenerateRivers();
             
+            this.SignalNextStage("Placing resources..", 0.75);
+            var resourceGenerator = new ResourceGenerator(this.WorldDimensions, this.Seed, biomeMapper.TerrainTypes, this.Parameters);
+            
             this.SignalNextStage("Storing data..", 0.80);
             world.DetailedMap.Temperature = temperatureMap.TemperatureTiles;
             world.DetailedMap.Drainage = drainageMap.DrainageTiles;
             world.DetailedMap.Rainfall = rainfallMap.RainfallTiles;
             world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
             world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
+            world.DetailedMap.Resources = resourceGenerator.Resources;
 
             this.SignalNextStage("Updating terrain tiles..", 0.85);
             world.UpdateTiles();

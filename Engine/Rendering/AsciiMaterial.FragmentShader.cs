@@ -7,7 +7,7 @@ namespace Engine.Rendering
 	    /// </summary>
         protected string FragmentShaderSource { get; } =
             @"
-			#version 450
+			#version 330
 
 			in vec2 tex_coords;
 			flat in vec4 front_color;

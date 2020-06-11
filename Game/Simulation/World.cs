@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
-using Game.Utility;
 
 namespace Game.Simulation
 {
@@ -193,7 +192,7 @@ namespace Game.Simulation
             
             // Serialize meta data to own JSON file
             var metadataPath = Path.Combine(prefix, "metadata.json");
-            Serialization.SerializeToFile(this.Metadata, metadataPath, Serialization.DefaultOptions);
+            Serialization.Serialization.SerializeToFile(this.Metadata, metadataPath, Serialization.Serialization.DefaultOptions);
 
             // Write terrain data
             var terrainPath = Path.Combine(prefix, "terrain.bin");
@@ -232,7 +231,7 @@ namespace Game.Simulation
         {
             // Load metadata first
             var metadataPath = Path.Combine(prefix, "metadata.json");
-            var metadata = Serialization.DeserializeFromFile<WorldMetadata>(metadataPath, Serialization.DefaultOptions);
+            var metadata = Serialization.Serialization.DeserializeFromFile<WorldMetadata>(metadataPath, Serialization.Serialization.DefaultOptions);
             
             var world = new World(metadata);
             

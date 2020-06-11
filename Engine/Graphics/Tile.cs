@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Engine.Graphics
 {
@@ -26,6 +27,7 @@ namespace Engine.Graphics
         /// <summary>
         /// The empty tile, which just renders as fully black.
         /// </summary>
+        [JsonIgnore]
         public Tile Empty => new Tile(0, DefaultColors.Black, DefaultColors.Black);
 
         /// <summary>
