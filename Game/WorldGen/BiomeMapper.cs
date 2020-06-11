@@ -139,13 +139,24 @@ namespace Game.WorldGen
                             // Very dry region
                             if (rainfall < 0.1f)
                             {
-                                if (drainage < 0.33f)
-                                    type = TerrainType.SandDesert;
-                                else if (drainage < 0.5f)
-                                    type = TerrainType.RockyWasteland;
+                                if (climateZone == ClimateZone.Tropical)
+                                {
+                                    // Tropical zones have little bad lands, but lots of deserts and rocky
+                                    // wastelands
+                                    if (drainage < 0.85f)
+                                        type = TerrainType.SandDesert;
+                                    else
+                                        type = TerrainType.RockyWasteland;
+                                }
                                 else
                                 {
-                                    type = TerrainType.BadLands;
+                                    // Temperate regions have no deserts
+                                    if (drainage < 0.65f)
+                                        type = TerrainType.RockyWasteland;
+                                    else
+                                    {
+                                        type = TerrainType.BadLands;
+                                    }
                                 }
                             }
                             else if (rainfall < 0.66f)
