@@ -177,11 +177,12 @@ namespace Engine.Input
         }
 
         /// <summary>
-        /// Check whether given key is a valid input key.
+        /// Check whether given key is a standard, valid input key.
         /// </summary>
         /// <remarks>
         /// This excludes special keys such as multi media keys, since they trigger exceptions in OpenTK
-        /// when used with <see cref="KeyboardState"/>.
+        /// when used with <see cref="KeyboardState"/>. This sadly means that users can't use macro keys
+        /// on their gaming keyboards until this issue is fixed in OpenTK.
         /// </remarks>
         /// <param name="key"></param>
         /// <returns></returns>
