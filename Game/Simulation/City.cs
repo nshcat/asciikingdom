@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -27,6 +28,11 @@ namespace Game.Simulation
         /// The position of this city on the world map
         /// </summary>
         public override Position Position { get; set; }
+        
+        /// <summary>
+        /// The province this city is associated with
+        /// </summary>
+        public Province AssociatedProvince { get; set; }
 
         /// <summary>
         /// How many associated villages this city can support
@@ -85,7 +91,10 @@ namespace Game.Simulation
         /// </summary>
         public override void Update(int weeks)
         {
-            throw new System.NotImplementedException();
+            foreach (var village in this.AssociatedVillages)
+            {
+                village.Update(weeks);
+            }
         }
     }
 }

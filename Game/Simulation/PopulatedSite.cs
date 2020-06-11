@@ -20,10 +20,8 @@ namespace Game.Simulation
         #region Implemented interface properties
         public Guid Id { get; set; }
         
-        [JsonIgnore]
         public string TypeDescriptor => this.GetCurrentDescriptor();
         
-        [JsonIgnore]
         public Tile Tile => this.GetCurrentTile();
         #endregion
         

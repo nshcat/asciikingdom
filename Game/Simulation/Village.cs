@@ -49,7 +49,7 @@ namespace Game.Simulation
         
         public override void Update(int weeks)
         {
-            throw new System.NotImplementedException();
+            // TODO
         }
     }
 }
