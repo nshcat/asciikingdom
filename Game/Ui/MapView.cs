@@ -100,9 +100,6 @@ namespace Game.Ui
         /// </summary>
         protected override void RenderCell(Surface surface, Position worldPosition, Position screenPosition)
         {
-            if (!this.HasMapData)
-                return;
-            
             if (this.Map is DetailedMap detailedMap
                 && this.DisplayMode == MapViewMode.Terrain
                 && this.ShowResources
@@ -116,5 +113,10 @@ namespace Game.Ui
                 surface.SetTile(screenPosition, this.MapData[worldPosition.X, worldPosition.Y]);
             }
         }
+
+        /// <summary>
+        /// The map view is rendered when there is map data associated with it.
+        /// </summary>
+        protected override bool ShouldRender() => this.HasMapData;
     }
 }

@@ -21,12 +21,6 @@ namespace Game.Simulation
         public Dictionary<Position, ResourceType> Resources { get; set; }
         
         /// <summary>
-        /// All provinces of the kingdom
-        /// </summary>
-        public List<Province> Provinces { get; set; }
-            = new List<Province>();
-
-        /// <summary>
         /// Construct a new detailed map instance
         /// </summary>
         public DetailedMap(Size dimensions, int seed)

@@ -190,8 +190,10 @@ namespace Game.Ui
         /// <param name="surface">Surface to render to</param>
         public override void Render(Surface surface)
         {
-            if (!this.Enabled)
+            if (!this.Enabled || !this.ShouldRender())
                 return;
+            
+            this.BeforeRender(surface);
 
             var worldBounds = new Rectangle(this.WorldDimensions);
 
@@ -239,5 +241,22 @@ namespace Game.Ui
         {
             
         }
+        
+        /// <summary>
+        /// Perform any rendering actions before the main view will be drawn
+        /// </summary>
+        /// <param name="surface">The surface to draw to</param>
+        protected virtual void BeforeRender(Surface surface)
+        {
+            
+        }
+
+        /// <summary>
+        /// Whether the view should render itself right now.
+        /// </summary>
+        /// <remarks>
+        /// This is used for views that sometimes do not have any data attached to them.
+        /// </remarks>
+        protected abstract bool ShouldRender();
     }
 }
