@@ -94,6 +94,20 @@ namespace Engine.Core
             );
         }
 
+        /// <summary>
+        /// Create new position with clamped coordinates
+        /// </summary>
+        /// <param name="min">Minimum values for the two coordinates</param>
+        /// <param name="max">Maximum values for the two coordinates</param>
+        /// <returns></returns>
+        public Position Clamp(Position min, Position max)
+        {
+            return new Position(
+                Math.Max(min.X, Math.Min(max.X, this.X)),
+                Math.Max(min.Y, Math.Min(max.Y, this.Y))
+            );
+        }
+
         public override string ToString()
         {
             return $"({X}, {Y})";
@@ -148,6 +162,14 @@ namespace Engine.Core
         public static Position operator -(Position lhs, Position rhs)
         {
             return new Position(lhs.X - rhs.X, lhs.Y - rhs.Y);
+        }
+        
+        /// <summary>
+        /// Multiply position components with given factor.
+        /// </summary>
+        public static Position operator *(Position lhs, int f)
+        {
+            return new Position(lhs.X * f, lhs.Y * f);
         }
         #endregion
         

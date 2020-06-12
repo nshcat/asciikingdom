@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -37,13 +38,15 @@ namespace Game.Scenes
             ShowResources,
             ShowInfluence
         }
-
-        private World _world;
+        
+        private SimulationState _state;
         private Surface _surface;
         private InputActionMapper<MapViewerAction> _actionMapper;
         private int _seed = 1770780010;
         private Random _random = new Random();
-        private MapView _detailedView, _overviewView;
+        private MapView _detailedView;
+        private MapView _overviewView;
+        private SiteView _siteView;
 
         private WorldGenerator _worldGen;
         private string _worldGenPhase;
@@ -63,8 +66,24 @@ namespace Game.Scenes
 
         private void InitializeViews()
         {
-            this._detailedView = new MapView(new Position(1, 1), Size.Empty);
+            this._detailedView = new MapView(new Position(1, 1), Size.Empty) { CursorMode = CursorMode.Disabled };
             this._overviewView = new MapView(Position.Origin, Size.Empty);
+            this._siteView = new SiteView(new Position(1, 1), Size.Empty);
+
+            this._detailedView.CursorMoved += (newPosition) =>
+            {
+                if (this._state == null)
+                    return;
+                
+                this._overviewView.CursorPosition = new Position(
+                    (int)(newPosition.X * this._state.World.OverviewScale),
+                    (int)(newPosition.Y * this._state.World.OverviewScale));
+
+                this._siteView.CursorPosition = newPosition;
+                
+                this._overviewView.RecalulatePositions();
+                this._siteView.RecalulatePositions();
+            };
         }
 
         private void RegenerateWorld(int seed)
@@ -79,9 +98,10 @@ namespace Game.Scenes
 
             this._worldGen.WorldGenerationFinished += world =>
             {
-                this._world = world;
-                this._detailedView.ReplaceMap(this._world.DetailedMap);
-                this._overviewView.ReplaceMap(this._world.OverviewMap);
+                this._state = new SimulationState(world);
+                this._detailedView.ReplaceMap(world.DetailedMap);
+                this._overviewView.ReplaceMap(world.OverviewMap);
+                this._siteView.ReplaceState(this._state);
                 this._worldGen = null;
                 this._isGeneratingMap = false;
                 
@@ -104,7 +124,7 @@ namespace Game.Scenes
                 var city2 = new City("Bristol", new Position(191, 98), 150000);
                 province.AssociatedCities.Add(city2);
                 
-                world.DetailedMap.Provinces.Add(province);
+                this._state.Provinces.Add(province);
             };
 
             this._isGeneratingMap = true;
@@ -157,12 +177,13 @@ namespace Game.Scenes
 
 
                 this._detailedView.Render(this._surface);
+                this._siteView.Render(this._surface);
             }
         }
 
         private void DrawTileInfo()
         {
-            if (this._world == null)
+            if (this._state == null)
                 return;
             
             var position = new Position(
@@ -179,13 +200,13 @@ namespace Game.Scenes
                 position += new Position(0, 1);
             }
             
-            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
+            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
                 DefaultColors.White, DefaultColors.Black);
 
             if (this._detailedView.ShowResources &&
-                this._world.DetailedMap.Resources.ContainsKey(this._detailedView.CursorPosition))
+                this._state.World.DetailedMap.Resources.ContainsKey(this._detailedView.CursorPosition))
             {
-                var resourceType = this._world.DetailedMap.Resources[this._detailedView.CursorPosition];
+                var resourceType = this._state.World.DetailedMap.Resources[this._detailedView.CursorPosition];
                 this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
                     DefaultColors.White, DefaultColors.Black);
             }
@@ -218,42 +239,42 @@ namespace Game.Scenes
                 }
                 case MapViewerAction.MoveDown:
                 {
-                    this._detailedView.Down();
+                    this._detailedView.MoveCursor(MovementDirection.Down);
                     break;
                 }
                 case MapViewerAction.MoveUp:
                 {
-                    this._detailedView.Up();
+                    this._detailedView.MoveCursor(MovementDirection.Up);
                     break;
                 }
                 case MapViewerAction.MoveLeft:
                 {
-                    this._detailedView.Left();
+                    this._detailedView.MoveCursor(MovementDirection.Left);
                     break;
                 }
                 case MapViewerAction.MoveRight:
                 {
-                    this._detailedView.Right();
+                    this._detailedView.MoveCursor(MovementDirection.Right);
                     break;
                 }
                 case MapViewerAction.MoveDownFast:
                 {
-                    this._detailedView.Down(5);
+                    this._detailedView.MoveCursor(MovementDirection.Down, 5);
                     break;
                 }
                 case MapViewerAction.MoveUpFast:
                 {
-                    this._detailedView.Up(5);
+                    this._detailedView.MoveCursor(MovementDirection.Up, 5);
                     break;
                 }
                 case MapViewerAction.MoveLeftFast:
                 {
-                    this._detailedView.Left(5);
+                    this._detailedView.MoveCursor(MovementDirection.Left, 5);
                     break;
                 }
                 case MapViewerAction.MoveRightFast:
                 {
-                    this._detailedView.Right(5);
+                    this._detailedView.MoveCursor(MovementDirection.Right, 5);
                     break;
                 }
                 case MapViewerAction.ShowResources:
@@ -264,10 +285,10 @@ namespace Game.Scenes
                 case MapViewerAction.ShowInfluence:
                 {
                     this._showInfluence = !this._showInfluence;
-                    this._detailedView.DrawCityInfluence = this._showInfluence;
+                    this._siteView.DrawCityInfluence = this._showInfluence;
 
                     if (!this._showInfluence)
-                        this._detailedView.CursorMode = CursorMode.Normal;
+                        this._siteView.CursorMode = CursorMode.Normal;
                         
                     break;
                 }
@@ -275,24 +296,28 @@ namespace Game.Scenes
                 {
                     this._detailedView.DisplayMode = MapViewMode.Terrain;
                     this._overviewView.DisplayMode = MapViewMode.Terrain;
+                    this._siteView.Enabled = true;
                     break;
                 }
                 case MapViewerAction.ShowRainfall:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Rainfall;
                     this._overviewView.DisplayMode = MapViewMode.Rainfall;
+                    this._siteView.Enabled = false;
                     break;
                 }
                 case MapViewerAction.ShowDrainage:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Drainage;
                     this._overviewView.DisplayMode = MapViewMode.Drainage;
+                    this._siteView.Enabled = false;
                     break;
                 }
                 case MapViewerAction.ShowTemperature:
                 {
                     this._detailedView.DisplayMode = MapViewMode.Temperature;
                     this._overviewView.DisplayMode = MapViewMode.Temperature;
+                    this._siteView.Enabled = false;
                     break;
                 }
             }
@@ -355,28 +380,25 @@ namespace Game.Scenes
             if (this._actionMapper.HasTriggeredAction)
             {
                 this.HandleInput(this._actionMapper.TriggeredAction);
-                
-                this._overviewView.CursorPosition = new Position(
-                    (int)(this._detailedView.CursorPosition.X * this._world.OverviewScale),
-                    (int)(this._detailedView.CursorPosition.Y * this._world.OverviewScale));
             }
             
             this._overviewView.Update(deltaTime);
             this._detailedView.Update(deltaTime);
+            this._siteView.Update(deltaTime);
             
 
             // Determine in which cities influence the cursor currently is
-            var citiesInView = this._detailedView.CitiesInView.Select(x => new {Site = x, Circle = x.InfluenceCircle});
+            var citiesInView = this._siteView.CitiesInView.Select(x => new {Site = x, Circle = x.InfluenceCircle});
             var result = citiesInView.FirstOrDefault(x => x.Circle.ContainsPoint(this._detailedView.CursorPosition));
 
             if (result != null)
             {
-                this._detailedView.CursorMode = CursorMode.Normal;
+                this._siteView.CursorMode = CursorMode.Normal;
                 this._currentCity = result.Site;
             }
             else
             {
-                this._detailedView.CursorMode = (this._showInfluence ? CursorMode.Invalid : CursorMode.Normal);
+                this._siteView.CursorMode = (this._showInfluence ? CursorMode.Invalid : CursorMode.Normal);
                 this._currentCity = null;
             }
         }
@@ -393,12 +415,13 @@ namespace Game.Scenes
                 .Build();
             
             this._detailedView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-4);
+            this._siteView.Dimensions = this._detailedView.Dimensions;
             
             this._overviewView.Position = new Position((int)(this._surface.Dimensions.Width * 0.7f) + 1, 1);
 
-            if (this._world != null)
+            if (this._state != null)
             {
-                var overviewHeight = this._world.OverviewDimensions.Height;
+                var overviewHeight = this._state.World.OverviewDimensions.Height;
                 
                 this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
                     Math.Min(overviewHeight, (int) (this._surface.Dimensions.Height * 0.65f)));
@@ -408,6 +431,10 @@ namespace Game.Scenes
                 this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
                     (int) (this._surface.Dimensions.Height * 0.65f));
             }
+
+            this._detailedView.RecalulatePositions();
+            this._overviewView.RecalulatePositions();
+            this._siteView.RecalulatePositions();
         }
     }
 }
