@@ -164,8 +164,8 @@ namespace Game.Scenes
 
         private void InitializeWorld()
         {
-            //this.RegenerateWorld(1770780010);
-            this.ReplaceState(SimulationState.Load(Path.Combine(GameDirectories.SaveGames, "world1")));
+            this.RegenerateWorld(1770780010);
+            //this.ReplaceState(SimulationState.Load(Path.Combine(GameDirectories.SaveGames, "world1")));
         }
 
         private void InitializeMapper()
