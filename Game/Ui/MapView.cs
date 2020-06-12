@@ -22,22 +22,6 @@ namespace Game.Ui
     }
 
     /// <summary>
-    /// Cursor display modes
-    /// </summary>
-    public enum CursorMode
-    {
-        /// <summary>
-        /// Normal, yellow cursor
-        /// </summary>
-        Normal,
-        
-        /// <summary>
-        /// Red cursor, used to indicate things like invalid site placement
-        /// </summary>
-        Invalid
-    }
-    
-    /// <summary>
     /// A scene component that allows rendering of a world map.
     /// </summary>
     public class MapView : SceneComponent, ILogic
