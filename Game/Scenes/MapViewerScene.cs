@@ -43,7 +43,8 @@ namespace Game.Scenes
         private InputActionMapper<MapViewerAction> _actionMapper;
         private int _seed = 1770780010;
         private Random _random = new Random();
-        private MapView _detailedView, _overviewView;
+        private MapView _detailedView;
+        private MapView _overviewView;
 
         private WorldGenerator _worldGen;
         private string _worldGenPhase;
@@ -65,6 +66,18 @@ namespace Game.Scenes
         {
             this._detailedView = new MapView(new Position(1, 1), Size.Empty);
             this._overviewView = new MapView(Position.Origin, Size.Empty);
+
+            this._detailedView.CursorMoved += (newPosition) =>
+            {
+                if (this._world == null)
+                    return;
+                
+                this._overviewView.CursorPosition = new Position(
+                    (int)(newPosition.X * this._world.OverviewScale),
+                    (int)(newPosition.Y * this._world.OverviewScale));
+                
+                this._overviewView.RecalulatePositions();
+            };
         }
 
         private void RegenerateWorld(int seed)
@@ -218,42 +231,42 @@ namespace Game.Scenes
                 }
                 case MapViewerAction.MoveDown:
                 {
-                    this._detailedView.Down();
+                    this._detailedView.MoveCursor(MovementDirection.Down);
                     break;
                 }
                 case MapViewerAction.MoveUp:
                 {
-                    this._detailedView.Up();
+                    this._detailedView.MoveCursor(MovementDirection.Up);
                     break;
                 }
                 case MapViewerAction.MoveLeft:
                 {
-                    this._detailedView.Left();
+                    this._detailedView.MoveCursor(MovementDirection.Left);
                     break;
                 }
                 case MapViewerAction.MoveRight:
                 {
-                    this._detailedView.Right();
+                    this._detailedView.MoveCursor(MovementDirection.Right);
                     break;
                 }
                 case MapViewerAction.MoveDownFast:
                 {
-                    this._detailedView.Down(5);
+                    this._detailedView.MoveCursor(MovementDirection.Down, 5);
                     break;
                 }
                 case MapViewerAction.MoveUpFast:
                 {
-                    this._detailedView.Up(5);
+                    this._detailedView.MoveCursor(MovementDirection.Up, 5);
                     break;
                 }
                 case MapViewerAction.MoveLeftFast:
                 {
-                    this._detailedView.Left(5);
+                    this._detailedView.MoveCursor(MovementDirection.Left, 5);
                     break;
                 }
                 case MapViewerAction.MoveRightFast:
                 {
-                    this._detailedView.Right(5);
+                    this._detailedView.MoveCursor(MovementDirection.Right, 5);
                     break;
                 }
                 case MapViewerAction.ShowResources:
@@ -264,7 +277,7 @@ namespace Game.Scenes
                 case MapViewerAction.ShowInfluence:
                 {
                     this._showInfluence = !this._showInfluence;
-                    this._detailedView.DrawCityInfluence = this._showInfluence;
+                    //this._detailedView.DrawCityInfluence = this._showInfluence;
 
                     if (!this._showInfluence)
                         this._detailedView.CursorMode = CursorMode.Normal;
@@ -355,10 +368,6 @@ namespace Game.Scenes
             if (this._actionMapper.HasTriggeredAction)
             {
                 this.HandleInput(this._actionMapper.TriggeredAction);
-                
-                this._overviewView.CursorPosition = new Position(
-                    (int)(this._detailedView.CursorPosition.X * this._world.OverviewScale),
-                    (int)(this._detailedView.CursorPosition.Y * this._world.OverviewScale));
             }
             
             this._overviewView.Update(deltaTime);
@@ -366,7 +375,7 @@ namespace Game.Scenes
             
 
             // Determine in which cities influence the cursor currently is
-            var citiesInView = this._detailedView.CitiesInView.Select(x => new {Site = x, Circle = x.InfluenceCircle});
+            /*var citiesInView = this._detailedView.CitiesInView.Select(x => new {Site = x, Circle = x.InfluenceCircle});
             var result = citiesInView.FirstOrDefault(x => x.Circle.ContainsPoint(this._detailedView.CursorPosition));
 
             if (result != null)
@@ -378,7 +387,7 @@ namespace Game.Scenes
             {
                 this._detailedView.CursorMode = (this._showInfluence ? CursorMode.Invalid : CursorMode.Normal);
                 this._currentCity = null;
-            }
+            }*/
         }
 
         public override void Reshape(Size newSize)
@@ -408,6 +417,9 @@ namespace Game.Scenes
                 this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
                     (int) (this._surface.Dimensions.Height * 0.65f));
             }
+
+            this._detailedView.RecalulatePositions();
+            this._overviewView.RecalulatePositions();
         }
     }
 }

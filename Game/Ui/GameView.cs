@@ -55,12 +55,12 @@ namespace Game.Ui
         /// <summary>
         /// The dimensions of the game world
         /// </summary>
-        public Size WorldDimensions { get; }
+        public Size WorldDimensions { get; protected set; }
         
         /// <summary>
         /// The dimensions of this view, halved
         /// </summary>
-        protected Size HalfDimensions { get; }
+        protected Size HalfDimensions { get; set; }
 
         /// <summary>
         /// The current position of the cursor, in absolute world coordinates
@@ -136,8 +136,14 @@ namespace Game.Ui
         /// <summary>
         /// Recalculate various positions based on the current value of <see cref="CursorPosition"/>
         /// </summary>
+        /// <remarks>
+        /// This needs to be called every time the cursor position, view dimensions or position are changed from
+        /// outside this class.
+        /// </remarks>
         public void RecalulatePositions()
         {
+            this.HalfDimensions = new Position(this.Dimensions.Width / 2, this.Dimensions.Height / 2);
+            
             var max = this.WorldDimensions - this.Dimensions;
 
             this.TopLeft = (this.CursorPosition - (Position) this.HalfDimensions)
@@ -151,7 +157,7 @@ namespace Game.Ui
         /// <summary>
         /// Move the view cursor in given direction and distance.
         /// </summary>
-        public void MoveCursor(MovementDirection direction, int distance)
+        public void MoveCursor(MovementDirection direction, int distance = 1)
         {
             var vector = direction switch
             {
@@ -187,6 +193,8 @@ namespace Game.Ui
             if (!this.Enabled)
                 return;
 
+            var worldBounds = new Rectangle(this.WorldDimensions);
+
             for (var iy = 0; iy < this.Dimensions.Height; ++iy)
             {
                 for (var ix = 0; ix < this.Dimensions.Width; ++ix)
@@ -195,7 +203,8 @@ namespace Game.Ui
                     var screenPosition = localPosition + this.Position;
                     var worldPosition = localPosition + this.TopLeft;
                     
-                    this.RenderCell(surface, worldPosition, screenPosition);
+                    if(worldPosition.IsInBounds(worldBounds))
+                        this.RenderCell(surface, worldPosition, screenPosition);
                 }
             }
 
@@ -226,6 +235,9 @@ namespace Game.Ui
         /// Perform any rendering actions after the main view has been drawn
         /// </summary>
         /// <param name="surface">The surface to draw to</param>
-        protected abstract void AfterRender(Surface surface);
+        protected virtual void AfterRender(Surface surface)
+        {
+            
+        }
     }
 }
