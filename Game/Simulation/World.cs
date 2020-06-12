@@ -190,9 +190,6 @@ namespace Game.Simulation
         /// <param name="prefix">The directory in which the world will be saved</param>
         public void Save(string prefix)
         {
-            // Make sure the directory exists
-            Directory.CreateDirectory(prefix);
-            
             // Serialize meta data to own JSON file
             var metadataPath = Path.Combine(prefix, "metadata.json");
             Serialization.Serialization.SerializeToFile(this.Metadata, metadataPath, Serialization.Serialization.DefaultOptions);
@@ -258,9 +255,7 @@ namespace Game.Simulation
                     }
                 }
             }
-            
-            world.UpdateTiles();
-            
+
             // Load river info
             var riverPath = Path.Combine(prefix, "rivers.bin");
             using (var reader = new BinaryReader(File.Open(riverPath, FileMode.Open)))
@@ -268,6 +263,8 @@ namespace Game.Simulation
                 // Read number of entries
                 var count = reader.ReadInt32();
 
+                world.DetailedMap.RiverTileInfo = new Dictionary<Position, RiverTileInfo>();
+                
                 for (var i = 0; i < count; ++i)
                 {
                     var x = reader.ReadInt32();
@@ -290,6 +287,8 @@ namespace Game.Simulation
                 x => Position.FromString(x.Key),
                 x => ResourceTypeManager.Instance.GetType(x.Value)
             );
+            
+            world.UpdateTiles();
 
             return world;
         }

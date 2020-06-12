@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
+using Game.Serialization;
 
 namespace Game.Simulation
 {
@@ -58,7 +60,7 @@ namespace Game.Simulation
         /// <summary>
         /// All villages associated with this city
         /// </summary>
-        public List<Village> AssociatedVillages { get; }
+        public List<Village> AssociatedVillages { get; set; }
             = new List<Village>();
 
         /// <summary>
@@ -100,6 +102,23 @@ namespace Game.Simulation
             {
                 village.Update(weeks);
             }
+        }
+        
+        /// <summary>
+        /// Create a simulation view from this object
+        /// </summary>
+        public CityView ToView()
+        {
+            var villages = this.AssociatedVillages.Select(x => x.ToView()).ToList();
+
+            return new CityView
+            {
+                Id = this.Id,
+                Population = this.Population,
+                Position = this.Position,
+                Name = this.Name,
+                AssociatedVillages = villages
+            };
         }
     }
 }

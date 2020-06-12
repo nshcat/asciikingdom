@@ -111,18 +111,10 @@ namespace Game.Scenes
 
             this._worldGen.WorldGenerationFinished += world =>
             {
-                this._state = new SimulationState(world);
-                this._detailedView.ReplaceMap(world.DetailedMap);
-                this._overviewView.ReplaceMap(world.OverviewMap);
-                this._siteView.ReplaceState(this._state);
+                this.ReplaceState(new SimulationState(world));
+                
                 this._worldGen = null;
                 this._isGeneratingMap = false;
-                
-                world.Save(Path.Combine(GameDirectories.SaveGames, "world1"));
-                
-                // Adjust overview map view height
-                this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
-                    Math.Min(world.OverviewDimensions.Height, (int) (this._surface.Dimensions.Height * 0.65f)));
                 
                 var city = new City("Weymouth", new Position(162, 111), 65000);
                 var village1 = new Village("", new Position(160, 108), 103, city);
@@ -138,6 +130,8 @@ namespace Game.Scenes
                 province.AssociatedCities.Add(city2);
                 
                 this._state.Provinces.Add(province);
+                
+                this._state.Save(Path.Combine(GameDirectories.SaveGames, "world1"));
             };
 
             this._isGeneratingMap = true;
@@ -147,16 +141,31 @@ namespace Game.Scenes
             this._worldGen.Run();
         }
 
+        private void ReplaceState(SimulationState state)
+        {
+            this._state = state;
+            this._detailedView.ReplaceMap(state.World.DetailedMap);
+            this._overviewView.ReplaceMap(state.World.OverviewMap);
+            this._siteView.ReplaceState(this._state);
+
+            if (this._surface != null)
+            {
+                this._overviewView.Dimensions = new Size((int) (this._surface.Dimensions.Width * 0.3f) - 2,
+                    Math.Min(state.World.OverviewDimensions.Height, (int) (this._surface.Dimensions.Height * 0.65f)));
+            }
+        }
+
         private void Initialize()
         {
+            this.InitializeViews();
             this.InitializeMapper();
             this.InitializeWorld();
-            this.InitializeViews();
         }
 
         private void InitializeWorld()
         {
-            this.RegenerateWorld(1770780010);
+            //this.RegenerateWorld(1770780010);
+            this.ReplaceState(SimulationState.Load(Path.Combine(GameDirectories.SaveGames, "world1")));
         }
 
         private void InitializeMapper()

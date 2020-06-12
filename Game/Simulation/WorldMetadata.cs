@@ -37,5 +37,13 @@ namespace Game.Simulation
             this.Seed = seed;
             this.OverviewScale = overviewScale;
         }
+
+        /// <summary>
+        /// Parameterless constructor for deserialization
+        /// </summary>
+        public WorldMetadata()
+        {
+            
+        }
     }
 }

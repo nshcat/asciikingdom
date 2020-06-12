@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Game.Serialization;
 
 namespace Game.Simulation
 {
@@ -51,6 +53,22 @@ namespace Game.Simulation
         {
             foreach(var city in this.AssociatedCities)
                 city.Update(weeks);
+        }
+        
+        /// <summary>
+        /// Create a simulation view from this object
+        /// </summary>
+        public ProvinceView ToView()
+        {
+            var cities = this.AssociatedCities.Select(x => x.ToView()).ToList();
+
+            return new ProvinceView
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Capital = this.Capital.Id,
+                AssociatedCities = cities
+            };
         }
     }
 }

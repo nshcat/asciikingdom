@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using Engine.Core;
 using Game.Core;
+using Game.Serialization;
 
 namespace Game.Simulation
 {
@@ -60,6 +64,54 @@ namespace Game.Simulation
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Create a simulation view from this object
+        /// </summary>
+        public SimulationStateView ToView()
+        {
+            var provinces = this.Provinces.Select(x => x.ToView()).ToList();
+
+            return new SimulationStateView
+            {
+                Provinces = provinces
+            };
+        }
+
+        /// <summary>
+        /// Save simulation state to disk, in given world folder
+        /// </summary>
+        public void Save(string prefix)
+        {
+            // Make sure the directory exists
+            Directory.CreateDirectory(prefix);
+            
+            // First save the world
+            this.World.Save(prefix);
+            
+            // Now create a view and serialize it
+            var view = this.ToView();
+            var statePath = Path.Combine(prefix, "state.json");
+            File.WriteAllText(statePath, JsonSerializer.Serialize(view, Serialization.Serialization.DefaultOptions));
+        }
+
+        /// <summary>
+        /// Load simulation state from given world directory prefix
+        /// </summary>
+        public static SimulationState Load(string prefix)
+        {
+            // First load world
+            var world = World.Load(prefix);
+            
+            // Load serialization view
+            var statePath = Path.Combine(prefix, "state.json");
+            var view = JsonSerializer.Deserialize<SimulationStateView>(
+                File.ReadAllText(statePath),
+                Serialization.Serialization.DefaultOptions
+            );
+
+            return view.MakeObject(world);
         }
     }
 }

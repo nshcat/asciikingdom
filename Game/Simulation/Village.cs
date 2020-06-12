@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Engine.Core;
 using Engine.Graphics;
+using Game.Serialization;
 
 namespace Game.Simulation
 {
@@ -55,6 +56,20 @@ namespace Game.Simulation
         public override void Update(int weeks)
         {
             // TODO
+        }
+        
+        /// <summary>
+        /// Create a simulation view from this object
+        /// </summary>
+        public VillageView ToView()
+        {
+            return new VillageView
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Population = this.Population,
+                Position = this.Position
+            };
         }
     }
 }

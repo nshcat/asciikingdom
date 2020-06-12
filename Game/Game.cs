@@ -35,11 +35,11 @@ namespace Game
         /// </summary>
         protected override void OnSetup()
         {
-            var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
-            this.SceneStack.AddInitialScene(initialScene);
-            
             // Load data files
             this.LoadData();
+            
+            var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
+            this.SceneStack.AddInitialScene(initialScene);
         }
 
         /// <summary>
