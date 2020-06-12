@@ -54,6 +54,7 @@ namespace Game.Scenes
         private bool _isGeneratingMap = false;
         private bool _showInfluence = false;
         private City _currentCity = null; // City in whos influence radius the cursor currently is
+        private IWorldSite _cursorSite = null; // The site the cursor currently is on
         public MapViewerScene(Scene parent) : base(parent)
         {
             this.Initialize();
@@ -83,6 +84,18 @@ namespace Game.Scenes
                 
                 this._overviewView.RecalulatePositions();
                 this._siteView.RecalulatePositions();
+                
+                // Detect if the cursor is currently on a site
+                var sites = this._state.GetAllSites();
+
+                if (sites.ContainsKey(newPosition))
+                {
+                    this._cursorSite = sites[newPosition];
+                }
+                else
+                {
+                    this._cursorSite = null;
+                }
             };
         }
 
@@ -190,11 +203,17 @@ namespace Game.Scenes
                 this._overviewView.Position.X,
                 this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
 
-            var drawInfluence = this._currentCity != null;
-
-            if (drawInfluence)
+            if (this._currentCity != null)
             {
                 this._surface.DrawString(position, $"In Territory: {this._currentCity.Name}",
+                    DefaultColors.White, DefaultColors.Black);
+                
+                position += new Position(0, 1);
+            }
+
+            if (this._cursorSite != null)
+            {
+                this._surface.DrawString(position, $"{this._cursorSite.TypeDescriptor}: {this._cursorSite.Name}",
                     DefaultColors.White, DefaultColors.Black);
                 
                 position += new Position(0, 1);
