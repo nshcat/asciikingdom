@@ -108,9 +108,18 @@ namespace Engine.Core
             );
         }
 
+        /// <summary>
+        /// Create new position from given string representation
+        /// </summary>
+        public static Position FromString(string value)
+        {
+            var elements = value.Split(',');
+            return new Position(int.Parse(elements[0]), int.Parse(elements[1]));
+        }
+
         public override string ToString()
         {
-            return $"({X}, {Y})";
+            return $"{X},{Y}";
         }
 
         #region Equality Implementation

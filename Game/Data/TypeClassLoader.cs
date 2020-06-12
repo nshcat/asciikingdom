@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -53,6 +54,18 @@ namespace Game.Data
                 
                 this.Types.Add(type.Identifier, type);
             }
+        }
+
+        /// <summary>
+        /// Retrieve type class instance by identifier
+        /// </summary>
+        /// <param name="identifier">Unique identifier of the requested type class instance</param>
+        public T GetType(string identifier)
+        {
+            if(!this.Types.ContainsKey(identifier))
+                throw new ArgumentException($"Unknown type class identifier: {identifier}");
+
+            return this.Types[identifier];
         }
     }
 }

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
+using Game.Serialization;
+using OpenToolkit.Graphics.OpenGL;
 
 namespace Game.Simulation
 {
@@ -222,6 +225,13 @@ namespace Game.Simulation
                     writer.Write((byte)entry.Value.Type);
                 }
             }
+
+            // Save resources
+            var resourcePath = Path.Combine(prefix, "resources.json");
+            var resources = this.DetailedMap.Resources
+                .ToDictionary(x => x.Key.ToString(), x => x.Value.Identifier);
+            
+            File.WriteAllText(resourcePath, JsonSerializer.Serialize(resources, Serialization.Serialization.DefaultOptions));
         }
 
         /// <summary>
@@ -268,6 +278,18 @@ namespace Game.Simulation
                     world.DetailedMap.RiverTileInfo.Add(new Position(x, y), new RiverTileInfo(type, size));
                 }
             }
+            
+            // Load resource info
+            var resourcePath = Path.Combine(prefix, "resources.json");
+            var resources = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                File.ReadAllText(resourcePath),
+                Serialization.Serialization.DefaultOptions
+            );
+
+            world.DetailedMap.Resources = resources.ToDictionary(
+                x => Position.FromString(x.Key),
+                x => ResourceTypeManager.Instance.GetType(x.Value)
+            );
 
             return world;
         }
