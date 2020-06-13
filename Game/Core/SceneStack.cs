@@ -15,6 +15,11 @@ namespace Game.Core
         /// Actual scene stack data structure
         /// </summary>
         protected Stack<Scene> Scenes { get; set; } = new Stack<Scene>();
+
+        /// <summary>
+        /// Whether the scene stack is currently empty
+        /// </summary>
+        public bool IsEmpty => this.Scenes.Count <= 0;
         
         /// <summary>
         /// The scene stack operation to be executed next.
@@ -31,6 +36,7 @@ namespace Game.Core
                 throw new InvalidOperationException("Can't add initial scene to non-empty scene stack");
 
             this.Scenes.Push(initialScene);
+            initialScene.Activate();
         }
 
         /// <summary>
@@ -59,11 +65,15 @@ namespace Game.Core
                     // Remove active scene, if it exists
                     if (this.Scenes.Count > 0)
                         this.Scenes.Pop();
+                    
+                    if(this.Scenes.Count > 0)
+                        this.Scenes.Peek().Activate();
                 },
                 op =>
                 {
                     // Push new scenes onto the scene stack
                     this.Scenes.Push(op.NewScene);
+                    op.NewScene.Activate();
                 },
                 op =>
                 {
@@ -71,6 +81,7 @@ namespace Game.Core
                         this.Scenes.Pop();
                     
                     this.Scenes.Push(op.NewScene);
+                    op.NewScene.Activate();
                 }
             );
             

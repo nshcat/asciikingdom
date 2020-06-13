@@ -59,5 +59,13 @@ namespace Game.Core
         {
             this.ScreenDimensions = newSize;
         }
+
+        /// <summary>
+        /// Called everytime the scene gains focus
+        /// </summary>
+        public virtual void Activate()
+        {
+            
+        }
     }
 }

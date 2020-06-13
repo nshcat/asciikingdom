@@ -13,6 +13,33 @@ namespace Game.Simulation
     public class WorldManager
     {
         /// <summary>
+        /// The singleton instance
+        /// </summary>
+        private static WorldManager _instance;
+
+        /// <summary>
+        /// The global world manager instance
+        /// </summary>
+        public static WorldManager Instance
+        {
+            get
+            {
+                if(_instance == null)
+                    _instance = new WorldManager();
+
+                return _instance;
+            }
+        }
+
+        /// <summary>
+        /// Disallow construction from outside
+        /// </summary>
+        private WorldManager()
+        {
+            
+        }
+        
+        /// <summary>
         /// List of all known worlds, specified by their index and name
         /// </summary>
         public List<(int, string)> Worlds { get; set; }
@@ -31,7 +58,7 @@ namespace Game.Simulation
 
             foreach (var directory in Directory.GetDirectories(GameDirectories.SaveGames))
             {
-                var name = Path.GetDirectoryName(directory);
+                var name = Path.GetFileName(directory);
                 
                 if (name.StartsWith("world"))
                 {
@@ -48,23 +75,23 @@ namespace Game.Simulation
         /// <summary>
         /// Save the given world to disk.
         /// </summary>
-        public void SaveWorld(World world)
+        public void SaveWorld(SimulationState state)
         {
-            // Check if it hasnt already been saved before and thus lacks an index
-            if (world.Index == -1)
+            // Check if it hasn't already been saved before and thus lacks an index
+            if (state.World.Index == -1)
             {
-                world.Index = this.GetNextWorldIndex();
+                state.World.Index = this.GetNextWorldIndex();
             }
             
-            world.Save(this.BuildPrefix(world.Index));
+            state.Save(this.BuildPrefix(state.World.Index));
         }
 
         /// <summary>
         /// Load world with given index
         /// </summary>
-        public World LoadWorld(int index)
+        public SimulationState LoadWorld(int index)
         {
-            return World.Load(this.BuildPrefix(index));
+            return SimulationState.Load(this.BuildPrefix(index));
         }
 
         /// <summary>

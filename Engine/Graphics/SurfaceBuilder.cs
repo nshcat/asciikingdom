@@ -176,6 +176,15 @@ namespace Engine.Graphics
         {
             return this.PixelDimensions(new Size(width, height));
         }
+
+        /// <summary>
+        /// Mark this surface to have a transparent background.
+        /// </summary>
+        public SurfaceBuilder Transparent()
+        {
+            this._transparent = true;
+            return this;
+        }
         
         /// <summary>
         /// Finish surface creation and return instance

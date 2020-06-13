@@ -38,7 +38,7 @@ namespace Game
             // Load data files
             this.LoadData();
             
-            var initialScene = new MapViewerScene(this.SceneStack, this.Input, this.Resources);
+            var initialScene = new MainMenuScene(this.SceneStack, this.Input, this.Resources);
             this.SceneStack.AddInitialScene(initialScene);
         }
 
@@ -75,6 +75,9 @@ namespace Game
         protected override void OnLogic(double deltaTime)
         {
             this.SceneStack.Update(deltaTime);
+            
+            if(this.SceneStack.IsEmpty)
+                this.Close();
         }
     }
 }
