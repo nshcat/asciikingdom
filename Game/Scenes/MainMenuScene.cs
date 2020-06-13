@@ -227,6 +227,8 @@ namespace Game.Scenes
         /// </summary>
         private void DrawWorldSelection()
         {
+            // TODO: Scroll bar
+            
             var bounds = this._titleSurface.Bounds.Centered(
                 this._titleSurface.Dimensions * 0.35f
             );
@@ -264,6 +266,9 @@ namespace Game.Scenes
             switch (this._menuSelection)
             {
                 case 0:
+                    this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
+                        new MapViewerScene(this.SceneStack, this.Input, this.Resources)
+                    );
                     break;
                 case 1:
                     this._selectWorld = true;

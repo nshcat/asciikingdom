@@ -29,7 +29,7 @@ namespace Game.Core
         /// <summary>
         /// The dimensions of the screen, in tiles.
         /// </summary>
-        protected Size ScreenDimensions { get; set; }
+        public Size ScreenDimensions { get; set; }
 
         /// <summary>
         /// Create new scene, populating the engine component references from given parent scene.

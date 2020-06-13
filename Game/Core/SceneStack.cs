@@ -71,6 +71,13 @@ namespace Game.Core
                 },
                 op =>
                 {
+                    // This is required since new scenes pushed onto the scene stack might not get a screen
+                    // reshape event if the window isnt resized, and thus might run into nun-initialized surfaces
+                    if (this.Scenes.Count > 0)
+                    {
+                        op.NewScene.Reshape(this.Scenes.Peek().ScreenDimensions);
+                    }
+                    
                     // Push new scenes onto the scene stack
                     this.Scenes.Push(op.NewScene);
                     op.NewScene.Activate();

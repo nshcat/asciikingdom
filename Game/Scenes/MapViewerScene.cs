@@ -131,7 +131,7 @@ namespace Game.Scenes
                 
                 this._state.Provinces.Add(province);
                 
-                this._state.Save(Path.Combine(GameDirectories.SaveGames, "world1"));
+                WorldManager.Instance.SaveWorld(this._state);
             };
 
             this._isGeneratingMap = true;
