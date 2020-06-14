@@ -21,6 +21,11 @@ namespace Game.Simulation
         public World World { get; set; }
         
         /// <summary>
+        /// The current date in the simulated world
+        /// </summary>
+        public Date Date { get; set; }
+        
+        /// <summary>
         /// All provinces of the kingdom
         /// </summary>
         public List<Province> Provinces { get; set; }
@@ -32,6 +37,7 @@ namespace Game.Simulation
         public SimulationState(World world)
         {
             this.World = world;
+            this.Date = new Date();
         }
         
         /// <summary>
@@ -75,7 +81,8 @@ namespace Game.Simulation
 
             return new SimulationStateView
             {
-                Provinces = provinces
+                Provinces = provinces,
+                Date = Date
             };
         }
 

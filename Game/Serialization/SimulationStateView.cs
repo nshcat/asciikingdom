@@ -10,6 +10,8 @@ namespace Game.Serialization
     public class SimulationStateView
     {
         public List<ProvinceView> Provinces { get; set; }
+        
+        public Date Date { get; set; }
 
         public SimulationState MakeObject(World world)
         {

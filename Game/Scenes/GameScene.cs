@@ -113,6 +113,14 @@ namespace Game.Scenes
         private bool HasAnyProvinces() => this._state.Provinces.Count > 0;
         
         /// <summary>
+        /// The top left corner of the game menu
+        /// </summary>
+        private Position MenuTopLeft => new Position(
+            this._terrainView.Position.X + this._terrainView.Dimensions.Width + 2,
+            2
+        );
+        
+        /// <summary>
         /// Create new game scene based on given simulation state 
         /// </summary>
         public GameScene(Scene parent, SimulationState state)
@@ -208,10 +216,7 @@ namespace Game.Scenes
         /// </summary>
         private void DrawMenu()
         {
-            var position = new Position(
-                this._terrainView.Position.X + this._terrainView.Dimensions.Width + 2,
-                2
-            );
+            var position = this.MenuTopLeft;
 
             foreach (var entry in this._gameMenu)
                 position = entry.Render(this._surface, this._uiState, position);
@@ -235,6 +240,14 @@ namespace Game.Scenes
                 UiColors.BorderTitle,
                 UiColors.BorderBack
             );
+
+            var dateString = this._state.Date.ToString();
+            this._surface.DrawString(
+                new Position(this._surface.Dimensions.Width - dateString.Length - 2, 0),
+                dateString,
+                UiColors.BorderTitle,
+                UiColors.BorderBack
+            );
         }
         
         /// <summary>
@@ -242,36 +255,34 @@ namespace Game.Scenes
         /// </summary>
         private void DrawTileInfo()
         {
-            /*var position = new Position(
-                this._overviewView.Position.X,
-                this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
+            var position = this.MenuTopLeft + new Position(0, (int)(this._surface.Dimensions.Height * 0.75f));
 
-            if (this._currentCity != null)
+            if (this._currentCity.HasValue)
             {
-                this._surface.DrawString(position, $"In Territory: {this._currentCity.Name}",
-                    DefaultColors.White, DefaultColors.Black);
+                this._surface.DrawString(position, $"In Territory: {this._currentCity.Value.Name}",
+                    UiColors.ActiveText, DefaultColors.Black);
                 
                 position += new Position(0, 1);
             }
 
-            if (this._cursorSite != null)
+            if (this._cursorSite.HasValue)
             {
-                this._surface.DrawString(position, $"{this._cursorSite.TypeDescriptor}: {this._cursorSite.Name}",
-                    DefaultColors.White, DefaultColors.Black);
+                this._surface.DrawString(position, $"{this._cursorSite.Value.TypeDescriptor}: {this._cursorSite.Value.Name}",
+                    UiColors.ActiveText, DefaultColors.Black);
                 
                 position += new Position(0, 1);
             }
             
-            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
-                DefaultColors.White, DefaultColors.Black);
+            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._terrainView.CursorPosition)).Name,
+                UiColors.ActiveText, DefaultColors.Black);
 
-            if (this._detailedView.ShowResources &&
-                this._state.World.DetailedMap.Resources.ContainsKey(this._detailedView.CursorPosition))
+            if (this._terrainView.ShowResources &&
+                this._state.World.DetailedMap.Resources.ContainsKey(this._terrainView.CursorPosition))
             {
-                var resourceType = this._state.World.DetailedMap.Resources[this._detailedView.CursorPosition];
+                var resourceType = this._state.World.DetailedMap.Resources[this._terrainView.CursorPosition];
                 this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
-                    DefaultColors.White, DefaultColors.Black);
-            }*/
+                    UiColors.ActiveText, DefaultColors.Black);
+            }
         }
 
         /// <summary>
@@ -348,6 +359,8 @@ namespace Game.Scenes
                         this._uiState = GameUiState.PlaceCity;
                         this._newProvince = !this.HasAnyProvinces();
                     }
+                    else if (this._uiState == GameUiState.PlaceCity)
+                        this._uiState = GameUiState.Main;
 
                     break;
                 }
