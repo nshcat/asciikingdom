@@ -2,4 +2,5 @@
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;
   &lt;Assembly Path="/home/katharina/.nuget/packages/opentoolkit.core/4.0.0-pre9.1/lib/netstandard2.0/OpenToolkit.Core.dll" /&gt;
   &lt;Assembly Path="/home/katharina/.nuget/packages/opentoolkit.graphics/4.0.0-pre9.1/lib/netstandard2.0/OpenToolkit.Graphics.dll" /&gt;
+  &lt;Assembly Path="/usr/share/dotnet/packs/Microsoft.NETCore.App.Ref/3.1.0/ref/netcoreapp3.1/System.Reflection.Metadata.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String></wpf:ResourceDictionary>
