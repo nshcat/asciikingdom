@@ -112,7 +112,8 @@ namespace Game.Scenes
                 new InputAction<MainMenuAction>(MainMenuAction.MenuUp, KeyPressType.Down, Key.Up),
                 new InputAction<MainMenuAction>(MainMenuAction.MenuDown, KeyPressType.Down, Key.Down),
                 new InputAction<MainMenuAction>(MainMenuAction.MenuSelect, KeyPressType.Pressed, Key.Enter),
-                new InputAction<MainMenuAction>(MainMenuAction.Exit, KeyPressType.Pressed, Key.Escape)
+                new InputAction<MainMenuAction>(MainMenuAction.Exit, KeyPressType.Pressed, Key.Escape),
+                new InputAction<MainMenuAction>(MainMenuAction.Exit, KeyPressType.Down, Key.Q, Key.ShiftLeft)
             );
         }
 
@@ -170,7 +171,10 @@ namespace Game.Scenes
                         this.NextMenuSelectionIndex(1);
                     break;
                 case MainMenuAction.MenuSelect:
-                    this.HandleMenuSelection();
+                    if (this._selectWorld)
+                        this.HandleWorldSelection();
+                    else
+                        this.HandleMenuSelection();
                     break;
                 case MainMenuAction.Exit:
                     if (this._selectWorld)
@@ -183,6 +187,26 @@ namespace Game.Scenes
             }
         }
 
+        /// <summary>
+        /// Handle world selection by user
+        /// </summary>
+        private void HandleWorldSelection()
+        {
+            // Get world index
+            var index = WorldManager.Instance.Worlds[this._worldSelection].Item1;
+            
+            // Load world
+            var state = WorldManager.Instance.LoadWorld(index);
+            
+            // Switch to game scene
+            var gameScene = new GameScene(this, state);
+            this.SceneStack.NextOperation = new SceneStackOperation.PushScene(gameScene);
+            
+            // Reset main menu state
+            this._selectWorld = false;
+            this._menuSelection = 0;
+        }
+        
         /// <summary>
         /// Draw the title banner
         /// </summary>

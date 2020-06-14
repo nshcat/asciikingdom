@@ -88,7 +88,9 @@ namespace Game.Simulation
         /// </summary>
         public SimulationState LoadWorld(int index)
         {
-            return SimulationState.Load(this.BuildPrefix(index));
+            var state = SimulationState.Load(this.BuildPrefix(index));
+            state.World.Index = index;
+            return state;
         }
 
         /// <summary>
