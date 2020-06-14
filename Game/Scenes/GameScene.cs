@@ -20,7 +20,7 @@ namespace Game.Scenes
     /// <summary>
     /// The main game scene
     /// </summary>
-    public class GameScene : Scene
+    public partial class GameScene : Scene
     {
         /// <summary>
         /// The input actions the user can use in the scene
@@ -39,6 +39,8 @@ namespace Game.Scenes
             RegenerateMap,
             ShowResources,
             SaveAndQuit,
+            PlaceCity,
+            ToggleNewProvince
         }
 
         /// <summary>
@@ -50,6 +52,7 @@ namespace Game.Scenes
             /// No sub UI active, just the main screen.
             /// </summary>
             Main = 0,
+            PlaceCity = 1
         }
         
         /// <summary>
@@ -87,6 +90,11 @@ namespace Game.Scenes
         /// Whether the site view is currently showing the influence range of cities
         /// </summary>
         private bool _showInfluence = false;
+
+        /// <summary>
+        /// Whether placing a new city should also create a new province
+        /// </summary>
+        private bool _newProvince = false;
         
         /// <summary>
         /// City in whose influence radius the cursor is currently in, if any
@@ -155,6 +163,7 @@ namespace Game.Scenes
             this._state = state;
             this.InitializeViews();
             this.InitializeMapper();
+            this.InitializeMenu();
         }
         
         /// <summary>
@@ -172,7 +181,9 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.MoveLeftFast, KeyPressType.Down, Key.Left, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.MoveRightFast, KeyPressType.Down, Key.Right, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft),
-                new InputAction<GameAction>(GameAction.SaveAndQuit, KeyPressType.Down, Key.Q, Key.ShiftLeft)
+                new InputAction<GameAction>(GameAction.SaveAndQuit, KeyPressType.Down, Key.Q, Key.ShiftLeft),
+                new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
+                new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P)
             );
         }
 
@@ -185,6 +196,17 @@ namespace Game.Scenes
             this._siteView.Render(this._surface);
         }
 
+        /// <summary>
+        /// Draw the game action menu
+        /// </summary>
+        private void DrawMenu()
+        {
+            var position = new Position((int)(this._surface.Dimensions.Width * 0.75f + 3.0f), 2);
+
+            foreach (var entry in this._gameMenu)
+                position = entry.Render(this._surface, this._uiState, position);
+        }
+        
         /// <summary>
         /// Draw information about the current tile
         /// </summary>
@@ -287,6 +309,25 @@ namespace Game.Scenes
 
                     break;
                 }
+                case GameAction.PlaceCity:
+                {
+                    if (this._uiState == GameUiState.Main)
+                    {
+                        this._uiState = GameUiState.PlaceCity;
+                        this._newProvince = false;
+                    }
+
+                    break;
+                }
+                case GameAction.ToggleNewProvince:
+                {
+                    if (this._uiState == GameUiState.PlaceCity)
+                    {
+                        this._newProvince = !this._newProvince;
+                    }
+
+                    break;
+                }
             }
         }
         
@@ -298,6 +339,7 @@ namespace Game.Scenes
             this._surface.Clear();
             this.DrawViews();
             this.DrawTileInfo();
+            this.DrawMenu();
             
             this._surface.Render(rp);
         }
