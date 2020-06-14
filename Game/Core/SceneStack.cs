@@ -92,6 +92,8 @@ namespace Game.Core
                 }
             );
             
+            this.NextOperation = new SceneStackOperation.None();
+            
             if(this.Scenes.Count > 0)
                 this.Scenes.Peek().Update(deltaTime);
         }
