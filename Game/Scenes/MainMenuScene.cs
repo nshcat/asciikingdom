@@ -267,7 +267,7 @@ namespace Game.Scenes
             {
                 case 0:
                     this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
-                        new MapViewerScene(this.SceneStack, this.Input, this.Resources)
+                        new WorldGenScene(this.SceneStack, this.Input, this.Resources)
                     );
                     break;
                 case 1:

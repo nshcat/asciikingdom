@@ -107,7 +107,7 @@ namespace Game.Simulation
         /// </remarks>
         protected int GetNextWorldIndex()
         {
-            var index = 0;
+            var index = 1;
 
             while (Directory.Exists(this.BuildPrefix(index)))
             {
