@@ -40,7 +40,8 @@ namespace Game.Scenes
             ShowResources,
             SaveAndQuit,
             PlaceCity,
-            ToggleNewProvince
+            ToggleNewProvince,
+            Return
         }
 
         /// <summary>
@@ -105,6 +106,11 @@ namespace Game.Scenes
         /// The world site the cursor is currently on, if any
         /// </summary>
         private Optional<IWorldSite> _cursorSite = Optional<IWorldSite>.Empty;
+
+        /// <summary>
+        /// Whether there are any provinces in the current state
+        /// </summary>
+        private bool HasAnyProvinces() => this._state.Provinces.Count > 0;
         
         /// <summary>
         /// Create new game scene based on given simulation state 
@@ -183,7 +189,8 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.SaveAndQuit, KeyPressType.Down, Key.Q, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
-                new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P)
+                new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P),
+                new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape)
             );
         }
 
@@ -201,10 +208,33 @@ namespace Game.Scenes
         /// </summary>
         private void DrawMenu()
         {
-            var position = new Position((int)(this._surface.Dimensions.Width * 0.75f + 3.0f), 2);
+            var position = new Position(
+                this._terrainView.Position.X + this._terrainView.Dimensions.Width + 2,
+                2
+            );
 
             foreach (var entry in this._gameMenu)
                 position = entry.Render(this._surface, this._uiState, position);
+        }
+
+        /// <summary>
+        /// Draw the decorative borders around the game view and menu
+        /// </summary>
+        private void DrawBorders()
+        {
+            var menuBounds = new Rectangle(
+                new Position(this._terrainView.Position.X + this._terrainView.Dimensions.Width, 0),
+                (Position)this._surface.Dimensions - new Position(1, 1)
+            );
+            
+            this._surface.DrawRectangle(menuBounds, 219, UiColors.BorderBack, DefaultColors.Black);
+            this._surface.DrawRectangle(new Rectangle(this._surface.Dimensions), 219, UiColors.BorderBack, DefaultColors.Black);
+            this._surface.DrawStringCentered(
+                new Position(this._surface.Dimensions.Width / 2, 0),
+                "  Ascii Kingdom  ",
+                UiColors.BorderTitle,
+                UiColors.BorderBack
+            );
         }
         
         /// <summary>
@@ -293,7 +323,9 @@ namespace Game.Scenes
                 }
                 case GameAction.ShowResources:
                 {
-                    this._terrainView.ShowResources = !this._terrainView.ShowResources;
+                    if(this._uiState == GameUiState.Main)
+                        this._terrainView.ShowResources = !this._terrainView.ShowResources;
+                    
                     break;
                 }
                 case GameAction.SaveAndQuit:
@@ -314,17 +346,24 @@ namespace Game.Scenes
                     if (this._uiState == GameUiState.Main)
                     {
                         this._uiState = GameUiState.PlaceCity;
-                        this._newProvince = false;
+                        this._newProvince = !this.HasAnyProvinces();
                     }
 
                     break;
                 }
                 case GameAction.ToggleNewProvince:
                 {
-                    if (this._uiState == GameUiState.PlaceCity)
+                    if (this._uiState == GameUiState.PlaceCity && this.HasAnyProvinces())
                     {
                         this._newProvince = !this._newProvince;
                     }
+
+                    break;
+                }
+                case GameAction.Return:
+                {
+                    if (this._uiState == GameUiState.PlaceCity)
+                        this._uiState = GameUiState.Main;
 
                     break;
                 }
@@ -340,6 +379,7 @@ namespace Game.Scenes
             this.DrawViews();
             this.DrawTileInfo();
             this.DrawMenu();
+            this.DrawBorders();
             
             this._surface.Render(rp);
         }
@@ -393,7 +433,7 @@ namespace Game.Scenes
             this._surface?.Destroy();
             
             this._surface = Surface.New()
-                .Tileset(this.Resources, "myne.png")
+                .Tileset(this.Resources, "myne_rect.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
             

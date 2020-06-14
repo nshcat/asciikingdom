@@ -42,7 +42,8 @@ namespace Game.Scenes
             ShowTemperature,
             ShowDrainage,
             ShowResources,
-            SaveWorld
+            SaveWorld,
+            Cancel
         }
 
         /// <summary>
@@ -230,7 +231,8 @@ namespace Game.Scenes
                 new InputAction<WorldGenAction>(WorldGenAction.ShowDrainage, KeyPressType.Pressed, Key.D),
                 new InputAction<WorldGenAction>(WorldGenAction.ShowTemperature, KeyPressType.Pressed, Key.T),
                 new InputAction<WorldGenAction>(WorldGenAction.SaveWorld, KeyPressType.Pressed, Key.U),
-                new InputAction<WorldGenAction>(WorldGenAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft)
+                new InputAction<WorldGenAction>(WorldGenAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft),
+                new InputAction<WorldGenAction>(WorldGenAction.Cancel, KeyPressType.Down, Key.Q, Key.ShiftLeft)
             );
         }
 
@@ -381,6 +383,11 @@ namespace Game.Scenes
                         this.SaveWorld();
                         this.SceneStack.NextOperation = new SceneStackOperation.PopScene();
                     }
+                    break;
+                }
+                case WorldGenAction.Cancel:
+                {
+                    this.SceneStack.NextOperation = new SceneStackOperation.PopScene();
                     break;
                 }
             }

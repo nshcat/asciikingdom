@@ -193,6 +193,36 @@ namespace Engine.Graphics
         }
 
         /// <summary>
+        /// Draw a rectangle of given glyph with given colors
+        /// </summary>
+        public static void DrawRectangle(
+            this Surface surface,
+            Rectangle bounds,
+            int glyph,
+            Color front,
+            Color back
+        )
+        {
+            var tile = new Tile(glyph, front, back);
+            var topLeft = bounds.TopLeft;
+            var topRight = bounds.TopRight;
+            var bottomLeft = bounds.BottomLeft;
+            var bottomRight = bounds.BottomRight;
+            
+            for (var ix = topLeft.X; ix <= topRight.X; ++ix)
+            {
+                surface.SetTile(new Position(ix, topLeft.Y), tile);
+                surface.SetTile(new Position(ix, bottomRight.Y), tile);
+            }
+            
+            for (var iy = topLeft.Y; iy <= bottomLeft.Y; ++iy)
+            {
+                surface.SetTile(new Position(topLeft.X, iy), tile);
+                surface.SetTile(new Position(topRight.X, iy), tile);
+            }
+        }
+
+        /// <summary>
         /// Draw a progress bar in given bounds.
         /// </summary>
         /// <param name="surface">Target surface</param>
