@@ -151,6 +151,11 @@ namespace Game.Scenes
                 },
                 new MenuEntry
                 {
+                    Keybind = 'T',
+                    Label = "Gen Test Data"
+                },
+                new MenuEntry
+                {
                     Keybind = 'Q',
                     Label = "Save and quit"
                 }

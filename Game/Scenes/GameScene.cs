@@ -41,7 +41,8 @@ namespace Game.Scenes
             SaveAndQuit,
             PlaceCity,
             ToggleNewProvince,
-            Return
+            Return,
+            GenerateTestData
         }
 
         /// <summary>
@@ -198,7 +199,8 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.SaveAndQuit, KeyPressType.Down, Key.Q, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P),
-                new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape)
+                new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape),
+                new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft)
             );
         }
 
@@ -380,6 +382,13 @@ namespace Game.Scenes
 
                     break;
                 }
+                case GameAction.GenerateTestData:
+                {
+                    if (this._uiState == GameUiState.Main)
+                        this.GenerateTestData();
+                        
+                    break;
+                }
             }
         }
         
@@ -434,6 +443,30 @@ namespace Game.Scenes
                 this._siteView.CursorMode = (this._showInfluence ? CursorMode.Invalid : CursorMode.Normal);
                 this._currentCity = Optional<City>.Empty;
             }
+        }
+
+        /// <summary>
+        /// Generate test data
+        /// </summary>
+        private void GenerateTestData()
+        {
+            if (this.HasAnyProvinces())
+                return;
+            
+            var city = new City("Weymouth", new Position(162, 111), 65000);
+            var village1 = new Village("", new Position(160, 108), 103, city);
+            var village2 = new Village("", new Position(157, 113), 46, city);
+            var village3 = new Village("", new Position(158, 109), 16, city);
+            city.AssociatedVillages.Add(village1);
+            city.AssociatedVillages.Add(village2);
+            city.AssociatedVillages.Add(village3);
+                
+            var province = new Province(city);
+                
+            var city2 = new City("Bristol", new Position(191, 98), 150000);
+            province.AssociatedCities.Add(city2);
+                
+            this._state.Provinces.Add(province);
         }
 
         /// <summary>
