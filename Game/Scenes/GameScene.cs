@@ -172,10 +172,18 @@ namespace Game.Scenes
                 GameSpeed.Paused => 0,
                 GameSpeed.Slow => 1,
                 GameSpeed.Normal => 4,
-                GameSpeed.Fast => 3,
+                GameSpeed.Fast => 12,
             };
         }
 
+        /// <summary>
+        /// Pause the game
+        /// </summary>
+        private void PauseGame()
+        {
+            this._gameSpeed = GameSpeed.Paused;
+        }
+        
         /// <summary>
         /// Initialize the game views that are part of this scene
         /// </summary>
@@ -437,6 +445,7 @@ namespace Game.Scenes
                 {
                     if (this._uiState == GameUiState.Main)
                     {
+                        this.PauseGame();
                         this._uiState = GameUiState.PlaceCity;
                         this._newProvince = !this.HasAnyProvinces();
                     }
