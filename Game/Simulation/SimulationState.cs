@@ -45,6 +45,8 @@ namespace Game.Simulation
         /// </summary>
         public void Update(int weeks)
         {
+            this.Date.Weeks += weeks;
+            
             foreach(var province in this.Provinces)
                 province.Update(weeks);
         }

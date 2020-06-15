@@ -18,6 +18,7 @@ namespace Game.Serialization
             var provinces = this.Provinces.Select(x => x.MakeObject()).ToList();
             var simulation = new SimulationState(world);
             simulation.Provinces = provinces;
+            simulation.Date = this.Date;
             return simulation;
         }
     }

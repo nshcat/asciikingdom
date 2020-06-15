@@ -23,6 +23,17 @@ namespace Game.Scenes
     public partial class GameScene : Scene
     {
         /// <summary>
+        /// Represents the various simulation speeds
+        /// </summary>
+        private enum GameSpeed
+        {
+            Paused = 0,
+            Slow,
+            Normal,
+            Fast
+        }
+
+        /// <summary>
         /// The input actions the user can use in the scene
         /// </summary>
         private enum GameAction
@@ -42,7 +53,9 @@ namespace Game.Scenes
             PlaceCity,
             ToggleNewProvince,
             Return,
-            GenerateTestData
+            GenerateTestData,
+            IncreaseGameSpeed,
+            DecreaseGameSpeed
         }
 
         /// <summary>
@@ -82,6 +95,11 @@ namespace Game.Scenes
         /// World terrain view
         /// </summary>
         private MapView _terrainView;
+
+        /// <summary>
+        /// Elapsed seconds that weren't used up for weeks
+        /// </summary>
+        private double _elapsedTimeBuffer;
         
         /// <summary>
         /// World site view
@@ -97,6 +115,11 @@ namespace Game.Scenes
         /// Whether placing a new city should also create a new province
         /// </summary>
         private bool _newProvince = false;
+
+        /// <summary>
+        /// The current game speed
+        /// </summary>
+        private GameSpeed _gameSpeed = GameSpeed.Paused;
         
         /// <summary>
         /// City in whose influence radius the cursor is currently in, if any
@@ -138,6 +161,20 @@ namespace Game.Scenes
         {
             this.Initialize(state);
         }
+        
+        /// <summary>
+        /// Determine the number of weeks elapsing per second based on given game speed setting
+        /// </summary>
+        private int WeeksPerSecond(GameSpeed speed)
+        {
+            return speed switch
+            {
+                GameSpeed.Paused => 0,
+                GameSpeed.Slow => 1,
+                GameSpeed.Normal => 4,
+                GameSpeed.Fast => 3,
+            };
+        }
 
         /// <summary>
         /// Initialize the game views that are part of this scene
@@ -171,6 +208,18 @@ namespace Game.Scenes
         }
 
         /// <summary>
+        /// Calculate how many weeks elapsed depending on the game speed
+        /// </summary>
+        private int CalculateElapsedWeeks(double seconds)
+        {
+            var total = this._elapsedTimeBuffer + seconds;
+            var elapsedSeconds = Math.Truncate(total);
+            this._elapsedTimeBuffer = total - elapsedSeconds;
+
+            return this.WeeksPerSecond(this._gameSpeed) * (int) elapsedSeconds;
+        }
+
+        /// <summary>
         /// Initialize the scene
         /// </summary>
         private void Initialize(SimulationState state)
@@ -200,7 +249,9 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P),
                 new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape),
-                new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft)
+                new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft),
+                new InputAction<GameAction>(GameAction.IncreaseGameSpeed, KeyPressType.Pressed, Key.KeypadPlus),
+                new InputAction<GameAction>(GameAction.DecreaseGameSpeed, KeyPressType.Pressed, Key.KeypadMinus)
             );
         }
 
@@ -224,6 +275,23 @@ namespace Game.Scenes
                 position = entry.Render(this._surface, this._uiState, position);
         }
 
+        /// <summary>
+        /// Modify the current game speed
+        /// </summary>
+        private void ModifyGameSpeed(int direction)
+        {
+            var val = (int) this._gameSpeed;
+            val += direction;
+
+            if (val < 0)
+                val = 0;
+
+            if (val > 3)
+                val = 3;
+
+            this._gameSpeed = (GameSpeed) val;
+        }
+        
         /// <summary>
         /// Draw the decorative borders around the game view and menu
         /// </summary>
@@ -249,6 +317,17 @@ namespace Game.Scenes
                 dateString,
                 UiColors.BorderTitle,
                 UiColors.BorderBack
+            );
+
+            var speedStr = $"Speed: {this._gameSpeed.ToString()}";
+            if (this._gameSpeed == GameSpeed.Paused)
+                speedStr = "*PAUSED*";
+            
+            this._surface.DrawString(
+                new Position(2, 0),
+                speedStr,
+                UiColors.BorderTitle,
+                (this._gameSpeed == GameSpeed.Paused) ? Color.FromHex("#238300") : UiColors.BorderBack
             );
         }
         
@@ -389,6 +468,16 @@ namespace Game.Scenes
                         
                     break;
                 }
+                case GameAction.IncreaseGameSpeed:
+                {
+                    this.ModifyGameSpeed(1);
+                    break;
+                }
+                case GameAction.DecreaseGameSpeed:
+                {
+                    this.ModifyGameSpeed(-1);
+                    break;
+                }
             }
         }
         
@@ -421,8 +510,9 @@ namespace Game.Scenes
             this._terrainView.Update(deltaTime);
             this._siteView.Update(deltaTime);
             
-
             UpdateCursorInfluence();
+            
+            this._state.Update(this.CalculateElapsedWeeks(deltaTime));
         }
 
         /// <summary>
