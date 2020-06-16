@@ -157,6 +157,12 @@ namespace Game.Scenes
                 },
                 new MenuEntry
                 {
+                    Keybind = 'l',
+                    Label = "Show map labels",
+                    IsActive = () => this._siteView.DrawMapLabels
+                },
+                new MenuEntry
+                {
                     Keybind = 'T',
                     Label = "Gen Test Data"
                 },

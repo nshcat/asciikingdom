@@ -45,6 +45,11 @@ namespace Game.Ui
         public SimulationState State { get; set; }
 
         /// <summary>
+        /// Whether to draw the map labels, such as city names
+        /// </summary>
+        public bool DrawMapLabels { get; set; } = true;
+
+        /// <summary>
         /// Whether there currently is a simulation state instance associated with this view
         /// </summary>
         public bool HasState => this.State != null;
@@ -124,7 +129,8 @@ namespace Game.Ui
                 // Draw site name if requested and cursor is some specific distance away
                 var distance = Position.GetDistance(worldPosition, this.CursorPosition);
                 
-                if (site.ShowName &&
+                if (this.DrawMapLabels &&
+                    site.ShowName &&
                     !string.IsNullOrEmpty(site.Name) &&
                     distance >= this.LabelMinDistance)
                 {

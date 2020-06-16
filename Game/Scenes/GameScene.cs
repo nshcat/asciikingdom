@@ -53,6 +53,7 @@ namespace Game.Scenes
             PlaceCity,
             PlaceVillage,
             ToggleNewProvince,
+            ToggleMapLabels,
             Return,
             Select,
             GenerateTestData,
@@ -131,11 +132,6 @@ namespace Game.Scenes
         /// World site view
         /// </summary>
         private SiteView _siteView;
-
-        /// <summary>
-        /// Whether the site view is currently showing the influence range of cities
-        /// </summary>
-        private bool _showInfluence = false;
 
         /// <summary>
         /// Whether placing a new city should also create a new province
@@ -317,6 +313,7 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.MoveLeftFast, KeyPressType.Down, Key.Left, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.MoveRightFast, KeyPressType.Down, Key.Right, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft),
+                new InputAction<GameAction>(GameAction.ToggleMapLabels, KeyPressType.Down, Key.L),
                 new InputAction<GameAction>(GameAction.SaveAndQuit, KeyPressType.Down, Key.Q, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.PlaceVillage, KeyPressType.Down, Key.V, Key.ShiftLeft),
@@ -559,6 +556,13 @@ namespace Game.Scenes
                 {
                     if(this._uiState == GameUiState.Main)
                         this._terrainView.ShowResources = !this._terrainView.ShowResources;
+                    
+                    break;
+                }
+                case GameAction.ToggleMapLabels:
+                {
+                    if(this._uiState == GameUiState.Main)
+                        this._siteView.DrawMapLabels = !this._siteView.DrawMapLabels;
                     
                     break;
                 }
