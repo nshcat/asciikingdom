@@ -113,10 +113,10 @@ namespace Engine
         /// </summary>
         protected override void OnLoad()
         {
-            GL.Enable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             
             this.OnSetup();
         }

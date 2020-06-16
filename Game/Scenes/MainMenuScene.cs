@@ -327,7 +327,6 @@ namespace Game.Scenes
             
             if(this._selectWorld)
                 this.DrawWorldSelection();
-
             
             this._titleSurface.Render(rp);
             this._mainSurface.Render(rp);
@@ -359,12 +358,12 @@ namespace Game.Scenes
             this._titleSurface = Surface.New()
                 .Tileset(this.Resources, "myne.png")
                 .PixelDimensions(this.ScreenDimensions)
-                .Transparent()
                 .Build();
             
             this._mainSurface = Surface.New()
                 .Tileset(this.Resources, "default.png")
                 .PixelDimensions(this.ScreenDimensions)
+                .Transparent()
                 .Build();
         }
 
