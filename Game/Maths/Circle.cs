@@ -17,6 +17,11 @@ namespace Game.Maths
         public List<Position> Points { get; }
 
         /// <summary>
+        /// A hash set of all points for fast "is inside" checks
+        /// </summary>
+        private HashSet<Position> _points;
+
+        /// <summary>
         /// The radius of the circle, in tiles
         /// </summary>
         public int Radius { get; }
@@ -32,6 +37,7 @@ namespace Game.Maths
         public Circle(Position center, int radius)
         {
             this.Points = new List<Position>();
+            this._points = new HashSet<Position>();
             this.Radius = radius;
             this.Center = center;
 
@@ -43,7 +49,7 @@ namespace Game.Maths
         /// </summary>
         public bool ContainsPoint(Position point)
         {
-            return this.Points.Contains(point);
+            return this._points.Contains(point);
         }
 
         /// <summary>
@@ -60,8 +66,12 @@ namespace Game.Maths
                 var h = (int)Math.Sqrt(radiusSquared - (ix*ix));
 
                 // "Draw" vertical line to fill this segment of the circle
-                for(int iy = -h; iy <= h; ++iy)
-                    this.Points.Add(new Position(ix + this.Center.X, iy + this.Center.Y));
+                for (int iy = -h; iy <= h; ++iy)
+                {
+                    var position = new Position(ix + this.Center.X, iy + this.Center.Y);
+                    this.Points.Add(position);
+                    this._points.Add(position);
+                }
             }
         }
 
