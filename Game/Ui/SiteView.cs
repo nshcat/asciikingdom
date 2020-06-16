@@ -95,9 +95,18 @@ namespace Game.Ui
                     !string.IsNullOrEmpty(site.Name) &&
                     distance >= this.LabelMinDistance)
                 {
+                    // Append special marker for province capitals
+                    var name = site.Name;
+
+                    if (site is City city_ && city_.IsProvinceCapital)
+                    {
+                        var marker = (char) 15;
+                        name = $"{marker}{name}{marker}";
+                    }
+                    
                     surface.DrawStringCentered(
                         new Position(screenPosition.X, screenPosition.Y - 2),
-                        site.Name,
+                        name,
                         DefaultColors.Black,
                         UiColors.MapLabel
                     );
