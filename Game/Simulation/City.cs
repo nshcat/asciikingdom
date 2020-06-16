@@ -47,6 +47,11 @@ namespace Game.Simulation
         public int VillageCapacity => 3 + (this.Population / 35000);
 
         /// <summary>
+        /// Whether this city can support an additional village
+        /// </summary>
+        public bool CanSupportNewVillage => this.AssociatedVillages.Count < this.VillageCapacity;
+
+        /// <summary>
         /// The radius of the influence sphere this city has. Associated villages
         /// can only be placed inside this sphere.
         /// </summary>
@@ -56,6 +61,11 @@ namespace Game.Simulation
         /// The current influence circle
         /// </summary>
         public Circle InfluenceCircle => new Circle(this.Position, this.InfluenceRadius);
+
+        /// <summary>
+        /// Whether this citiy is the capital of its associated province
+        /// </summary>
+        public bool IsProvinceCapital => (this.AssociatedProvince != null) && (this.AssociatedProvince.Capital == this);
         
         /// <summary>
         /// All villages associated with this city

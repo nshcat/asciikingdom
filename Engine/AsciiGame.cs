@@ -116,7 +116,7 @@ namespace Engine
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
             
             this.OnSetup();
         }

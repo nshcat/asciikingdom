@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game.Maths;
 using Game.Serialization;
 
 namespace Game.Simulation
@@ -36,10 +37,25 @@ namespace Game.Simulation
         public City Capital { get; set; }
         
         /// <summary>
+        /// This provinces influence radius. It determines where new cities can be built.
+        /// </summary>
+        public int InfluenceRadius => (int)(
+                (0.65f * (this.Capital.Population / 100000.0f)     // How big the capital is, up to 100k
+                + 0.35f * (this.AssociatedCities.Count / 10.0f))   // How many cities there are, up to 10
+                * 35 + 10                                          // 10 is minimum, 45 is max
+            );
+
+        /// <summary>
+        /// The circle representing this provinces influence radius
+        /// </summary>
+        public Circle InfluenceCircle => new Circle(this.Capital.Position, this.InfluenceRadius);
+        
+        /// <summary>
         /// Create a new province with given capital
         /// </summary>
-        public Province(City capital)
+        public Province(string name, City capital)
         {
+            this.Name = name;
             this.AssociatedCities.Add(capital);
             this.Capital = capital;
             capital.AssociatedProvince = this;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Engine.Graphics;
 using Game.Core;
@@ -249,6 +250,25 @@ namespace Game.Data
         };
 
         /// <summary>
+        /// Set of terrain types that do not allow sites
+        /// </summary>
+        private static HashSet<TerrainType> ForbidsSites = new HashSet<TerrainType>
+        {
+            TerrainType.Glacier,
+            TerrainType.Lake,
+            TerrainType.Marsh,
+            TerrainType.Ocean,
+            TerrainType.River,
+            TerrainType.Swamp,
+            TerrainType.Unknown,
+            TerrainType.MountainPeak,
+            TerrainType.MountainsHigh,
+            TerrainType.MountainsMed,
+            TerrainType.MountainsLow,
+            TerrainType.SeaIce
+        };
+
+        /// <summary>
         /// Tiles used to display terrain types on the world map
         /// </summary>
         public static Dictionary<TerrainType, TerrainTypeInfo> TerrainInfo { get; }
@@ -474,6 +494,14 @@ namespace Game.Data
             if (TerrainInfo.ContainsKey(terrainType))
                 return TerrainInfo[terrainType];
             else return UnknownTerrain;
+        }
+
+        /// <summary>
+        /// Checks whether given terrain type accepts sites built on them
+        /// </summary>
+        public static bool AcceptsSites(TerrainType terrainType)
+        {
+            return !ForbidsSites.Contains(terrainType);
         }
 
         /// <summary>

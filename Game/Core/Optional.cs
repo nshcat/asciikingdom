@@ -97,6 +97,16 @@ namespace Game.Core
         {
             return new Optional<T>(value);
         }
+
+        /// <summary>
+        /// Create optional value with given stored value, if value is not null. Otherwise, create empty optional instance.
+        /// </summary>
+        public static Optional<T> SafeOf(T value)
+        {
+            if (value == null)
+                return Empty;
+            else return Of(value);
+        }
         
         /// <summary>
         /// Allow explicit conversion from optional value to contained value.

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
+using Game.Maths;
 using Game.Simulation;
 
 namespace Game.Ui
@@ -11,6 +12,33 @@ namespace Game.Ui
     /// </summary>
     public class SiteView : GameView
     {
+        /// <summary>
+        /// Represents the different types of influence radii this view can display
+        /// </summary>
+        public enum InfluenceDrawMode
+        {
+            /// <summary>
+            /// No influence radius is displayed
+            /// </summary>
+            None,
+            
+            /// <summary>
+            /// Influence radii of cities are displayed
+            /// </summary>
+            City,
+            
+            /// <summary>
+            /// Influence radii of provinces are displayed
+            /// </summary>
+            Province,
+            
+            /// <summary>
+            /// All influence radii of provinces are dark. This is used when the player
+            /// wants to place a new province.
+            /// </summary>
+            InverseProvince
+        }
+        
         /// <summary>
         /// The current simulation state
         /// </summary>
@@ -25,11 +53,11 @@ namespace Game.Ui
         /// How far the cursor has to be away from a site for its map label to be drawn
         /// </summary>
         public float LabelMinDistance { get; set; } = 5.0f;
-        
+
         /// <summary>
-        /// Whether to draw city influence ranges
+        /// Whether to draw influence ranges, and which types
         /// </summary>
-        public bool DrawCityInfluence { get; set; } = false;
+        public InfluenceDrawMode InfluenceMode { get; set; } = InfluenceDrawMode.None;
 
         /// <summary>
         /// List used to remember all cities in view. This is used to draw certain overlays like influence range
@@ -42,6 +70,11 @@ namespace Game.Ui
         /// All sites in the world
         /// </summary>
         protected Dictionary<Position, IWorldSite> Sites { get; set; }
+
+        /// <summary>
+        /// All cities in the world
+        /// </summary>
+        protected List<City> Cities { get; set; }
         
         /// <summary>
         /// Create new site view based on given simulation state
@@ -126,18 +159,28 @@ namespace Game.Ui
         /// </summary>
         protected void DrawInfluenceCircles(Surface surface)
         {
-            if (!this.DrawCityInfluence)
+            if (this.InfluenceMode == InfluenceDrawMode.None)
                 return;
             
-            var circles = this.CitiesInView.Select(x => x.InfluenceCircle).ToList();
-            
+            var circles = this.InfluenceMode switch
+            {
+                InfluenceDrawMode.City => this.Cities.Select(x => x.InfluenceCircle).ToList(),
+                _ => this.Cities.Where(x => x.IsProvinceCapital).Select(x => x.AssociatedProvince.InfluenceCircle).ToList()
+            };
+
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
                 {
+                    var position = new Position(ix, iy) + this.Position;
+                    
                     if (!circles.Any(x => x.ContainsPoint(new Position(ix, iy) + this.TopLeft)))
                     {
-                        surface.SetUiShadow(new Position(ix, iy) + this.Position, true);
+                        surface.SetUiShadow(position, (this.InfluenceMode != InfluenceDrawMode.InverseProvince));
+                    }
+                    else if (this.InfluenceMode == InfluenceDrawMode.InverseProvince)
+                    {
+                        surface.SetUiShadow(position, true);
                     }
                 }
             }
@@ -149,6 +192,7 @@ namespace Game.Ui
         protected override void BeforeRender(Surface surface)
         {
             this.Sites = this.State.GetAllSites();
+            this.Cities = this.Sites.Where(x => x.Value is City).Select(x => x.Value as City).ToList();
             this.CitiesInView.Clear();
         }
         

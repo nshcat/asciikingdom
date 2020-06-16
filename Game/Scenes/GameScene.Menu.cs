@@ -145,6 +145,12 @@ namespace Game.Scenes
                 },
                 new MenuEntry
                 {
+                    Keybind = 'V',
+                    Label = "Place village",
+                    UiState = GameUiState.PlaceVillage
+                },
+                new MenuEntry
+                {
                     Keybind = 'R',
                     Label = "Show resources",
                     IsActive = () => this._terrainView.ShowResources

@@ -22,8 +22,7 @@ namespace Game.Serialization
 
             var capital = cities.First(x => x.Id == this.Capital);
 
-            var province = new Province(capital);
-            province.Name = this.Name;
+            var province = new Province(this.Name, capital);
             province.AssociatedCities = cities;
             province.Id = this.Id;
 

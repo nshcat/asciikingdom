@@ -124,7 +124,7 @@ namespace Game.Scenes
                 city.AssociatedVillages.Add(village2);
                 city.AssociatedVillages.Add(village3);
                 
-                var province = new Province(city);
+                var province = new Province("", city);
                 
                 var city2 = new City("Bristol", new Position(191, 98), 150000);
                 province.AssociatedCities.Add(city2);
@@ -313,7 +313,7 @@ namespace Game.Scenes
                 case MapViewerAction.ShowInfluence:
                 {
                     this._showInfluence = !this._showInfluence;
-                    this._siteView.DrawCityInfluence = this._showInfluence;
+                    //this._siteView.DrawCityInfluence = this._showInfluence;
 
                     if (!this._showInfluence)
                         this._siteView.CursorMode = CursorMode.Normal;
