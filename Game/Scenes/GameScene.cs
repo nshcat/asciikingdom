@@ -69,8 +69,21 @@ namespace Game.Scenes
             /// No sub UI active, just the main screen.
             /// </summary>
             Main = 0,
+            
+            /// <summary>
+            /// Placing a city or province capital
+            /// </summary>
             PlaceCity,
-            PlaceVillage
+            
+            /// <summary>
+            /// Placing a village
+            /// </summary>
+            PlaceVillage,
+            
+            /// <summary>
+            /// Naming the site that is currently being placed
+            /// </summary>
+            NamePlacement
         }
 
         /// <summary>
@@ -133,6 +146,11 @@ namespace Game.Scenes
         /// The current game speed
         /// </summary>
         private GameSpeed _gameSpeed = GameSpeed.Paused;
+        
+        /// <summary>
+        /// Window used to prompt the user for a site name after placement
+        /// </summary>
+        private TextInputWindow _placementNameWindow = new TextInputWindow("Enter Name", 0.25f);
 
         /// <summary>
         /// The type of the site that is currently being placed
@@ -321,6 +339,15 @@ namespace Game.Scenes
         }
 
         /// <summary>
+        /// Update the text input window with user text input, if needed
+        /// </summary>
+        private void UpdateTextInputWindow()
+        {
+            if(this._uiState == GameUiState.NamePlacement)
+                this._placementNameWindow.Update(this.Input);
+        }
+        
+        /// <summary>
         /// Draw the game action menu
         /// </summary>
         private void DrawMenu()
@@ -469,6 +496,19 @@ namespace Game.Scenes
         }
 
         /// <summary>
+        /// Handle game view cursor movement input actions
+        /// </summary>
+        private void HandleCursorMove(MovementDirection direction, int amount = 1)
+        {
+            if (this._uiState == GameUiState.Main
+                || this._uiState == GameUiState.PlaceCity
+                || this._uiState == GameUiState.PlaceVillage)
+            {
+                this._terrainView.MoveCursor(direction, amount);
+            }
+        }
+        
+        /// <summary>
         /// Handle user input actions
         /// </summary>
         private void HandleInput(GameAction action)
@@ -477,42 +517,42 @@ namespace Game.Scenes
             {
                 case GameAction.MoveDown:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Down);
+                    this.HandleCursorMove(MovementDirection.Down);
                     break;
                 }
                 case GameAction.MoveUp:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Up);
+                    this.HandleCursorMove(MovementDirection.Up);
                     break;
                 }
                 case GameAction.MoveLeft:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Left);
+                    this.HandleCursorMove(MovementDirection.Left);
                     break;
                 }
                 case GameAction.MoveRight:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Right);
+                    this.HandleCursorMove(MovementDirection.Right);
                     break;
                 }
                 case GameAction.MoveDownFast:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Down, 5);
+                    this.HandleCursorMove(MovementDirection.Down, 5);
                     break;
                 }
                 case GameAction.MoveUpFast:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Up, 5);
+                    this.HandleCursorMove(MovementDirection.Up, 5);
                     break;
                 }
                 case GameAction.MoveLeftFast:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Left, 5);
+                    this.HandleCursorMove(MovementDirection.Left, 5);
                     break;
                 }
                 case GameAction.MoveRightFast:
                 {
-                    this._terrainView.MoveCursor(MovementDirection.Right, 5);
+                    this.HandleCursorMove(MovementDirection.Right, 5);
                     break;
                 }
                 case GameAction.ShowResources:
@@ -586,10 +626,37 @@ namespace Game.Scenes
                 }
                 case GameAction.Return:
                 {
-                    if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
+                    if (this._uiState == GameUiState.PlaceCity
+                        || this._uiState == GameUiState.PlaceVillage
+                        || this._uiState == GameUiState.NamePlacement)
                     {
                         this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
                         this._terrainView.CursorMode = CursorMode.Normal;
+                        this._uiState = GameUiState.Main;
+                    }
+
+                    break;
+                }
+                case GameAction.Select:
+                {
+                    if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
+                    {
+                        if (this._canPlace)
+                        {
+                            this._placementPosition = this._terrainView.CursorPosition;
+                            this._currentPlacement = (this._uiState == GameUiState.PlaceCity)
+                                ? PlacementType.City
+                                : PlacementType.Village;
+                            this._uiState = GameUiState.NamePlacement;
+                            this._placementNameWindow.Begin();
+                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
+                            this._terrainView.CursorMode = CursorMode.Normal;
+                        }
+                    }
+                    else if (this._uiState == GameUiState.NamePlacement &&
+                             !string.IsNullOrEmpty(this._placementNameWindow.Text))
+                    {
+                        this.PlaceSite();
                         this._uiState = GameUiState.Main;
                     }
 
@@ -625,8 +692,55 @@ namespace Game.Scenes
             this.DrawTileInfo();
             this.DrawMenu();
             this.DrawBorders();
+            this.DrawNameSiteWindow();
             
             this._surface.Render(rp);
+        }
+
+        /// <summary>
+        /// Finalize size placement
+        /// </summary>
+        private void PlaceSite()
+        {
+            switch (this._currentPlacement)
+            {
+                case PlacementType.Village:
+                {
+                    var city = this._currentCity.Value;
+                    var village = new Village(this._placementNameWindow.Text, this._placementPosition, 10, city);
+                    city.AssociatedVillages.Add(village);
+                    break;
+                }
+                case PlacementType.City:
+                {
+                    var city = new City(this._placementNameWindow.Text, this._placementPosition, 50);
+
+                    if (this._newProvince)
+                    {
+                        var province = new Province("", city);
+                        city.AssociatedProvince = province;
+                        this._state.Provinces.Add(province);
+                    }
+                    else
+                    {
+                        var province = this._currentProvince.Value;
+                        city.AssociatedProvince = province;
+                        province.AssociatedCities.Add(city);
+                    }
+                    break;
+                }
+                default:
+                    return;
+            }
+        }
+        
+        /// <summary>
+        /// Render the window used to name newly placed sites, if needed
+        /// </summary>
+        private void DrawNameSiteWindow()
+        {
+            if(this._uiState == GameUiState.NamePlacement)
+                this._placementNameWindow.Render(this._surface);
         }
 
         /// <summary>
@@ -640,7 +754,8 @@ namespace Game.Scenes
             {
                 this.HandleInput(this._actionMapper.TriggeredAction);
             }
-            
+
+            this.UpdateTextInputWindow();
             this._terrainView.Update(deltaTime);
             this._siteView.Update(deltaTime);
             
@@ -720,6 +835,8 @@ namespace Game.Scenes
             
             this._terrainView.RecalulatePositions();
             this._siteView.RecalulatePositions();
+            
+            this._placementNameWindow.Reshape(this._surface);
         }
     }
 }

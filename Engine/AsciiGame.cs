@@ -86,6 +86,7 @@ namespace Engine
             base.OnUpdateFrame(args);
             this.Input.Update();
             this.OnLogic(args.Time);
+            this.Input.ClearText();
         }
 
         /// <summary>
