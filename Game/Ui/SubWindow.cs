@@ -27,7 +27,7 @@ namespace Game.Ui
         /// <summary>
         /// The title of the sub window
         /// </summary>
-        public string Title { get; }
+        public string Title { get; set; }
 
         /// <summary>
         /// The calculated outer bounds of the sub window

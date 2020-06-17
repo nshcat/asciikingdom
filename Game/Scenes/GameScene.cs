@@ -172,6 +172,15 @@ namespace Game.Scenes
         private Optional<string> _placementError = Optional<string>.Empty;
         
         /// <summary>
+        /// Name for the new province.
+        /// </summary>
+        /// <remarks>
+        /// This is needed since we need to ask for two names when placing a new province: The province name,
+        /// and the capital name, but the <see cref="_placementNameWindow"/> can only store one string.
+        /// </remarks>
+        private Optional<string> _provinceName = Optional<string>.Empty;
+        
+        /// <summary>
         /// City in whose influence radius the cursor is currently in, if any
         /// </summary>
         private Optional<City> _currentCity = Optional<City>.Empty;
@@ -726,7 +735,16 @@ namespace Game.Scenes
                                 ? PlacementType.City
                                 : PlacementType.Village;
                             this._uiState = GameUiState.NamePlacement;
+                            
                             this._placementNameWindow.Begin();
+                            this._placementNameWindow.Title = this._currentPlacement switch
+                            {
+                                PlacementType.City when this._newProvince => "Name Province",
+                                PlacementType.City => "Name City",
+                                _ => "Name Village"
+                            };
+                            
+                            this._provinceName = Optional<string>.Empty;
                             this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
                             this._terrainView.CursorMode = CursorMode.Normal;
                         }
@@ -734,8 +752,18 @@ namespace Game.Scenes
                     else if (this._uiState == GameUiState.NamePlacement &&
                              !string.IsNullOrEmpty(this._placementNameWindow.Text))
                     {
-                        this.PlaceSite();
-                        this._uiState = GameUiState.Main;
+                        // Do we still need the city name?
+                        if (!this._provinceName.HasValue && this._newProvince)
+                        {
+                            this._provinceName = this._placementNameWindow.Text;
+                            this._placementNameWindow.Text = "";
+                            this._placementNameWindow.Title = "Name City";
+                        }
+                        else
+                        {
+                            this.PlaceSite();
+                            this._uiState = GameUiState.Main;
+                        }
                     }
 
                     break;
@@ -795,7 +823,7 @@ namespace Game.Scenes
 
                     if (this._newProvince)
                     {
-                        var province = new Province("", city);
+                        var province = new Province(this._provinceName.Value, city);
                         city.AssociatedProvince = province;
                         this._state.Provinces.Add(province);
                     }
