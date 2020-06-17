@@ -367,7 +367,7 @@ namespace Game.Scenes
                     var invalid =
                         (this._newProvince && this._currentProvince.HasValue)
                         || !TerrainTypeData.AcceptsSites(this._cursorTerrainType)
-                        || !this._newProvince && (!this._currentProvince.HasValue)
+                        || !this._newProvince && (!this._currentProvince.HasValue || !this._currentProvince.Value.CanSupportNewCity)
                         || this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition);
 
                     this._siteView.CursorMode = invalid ? CursorMode.Invalid : CursorMode.Normal;
@@ -377,9 +377,10 @@ namespace Game.Scenes
                 }
                 case GameUiState.PlaceVillage:
                 {
-                    var invalid = !this._currentCity.HasValue
-                        || !TerrainTypeData.AcceptsSites(this._cursorTerrainType)
-                        || this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition);
+                    var invalid = !this._currentCity.HasValue 
+                                  || !this._currentCity.Value.CanSupportNewVillage 
+                                  || !TerrainTypeData.AcceptsSites(this._cursorTerrainType)
+                                  || this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition);
                     
                     this._siteView.CursorMode = invalid ? CursorMode.Invalid : CursorMode.Normal;
                     this._canPlace = !invalid;

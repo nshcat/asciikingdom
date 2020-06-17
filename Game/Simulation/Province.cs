@@ -37,12 +37,22 @@ namespace Game.Simulation
         public City Capital { get; set; }
         
         /// <summary>
+        /// Whether this probince can support an additional city
+        /// </summary>
+        public bool CanSupportNewCity => this.AssociatedCities.Count < this.CityCapacity;
+
+        /// <summary>
+        /// How many associated cities this province can manage
+        /// </summary>
+        public int CityCapacity => 3 + (int)(Math.Min(1.0f, this.Capital.Population / 100000.0f)*7);
+        
+        /// <summary>
         /// This provinces influence radius. It determines where new cities can be built.
         /// </summary>
         public int InfluenceRadius => (int)(
-                (0.65f * (this.Capital.Population / 100000.0f)     // How big the capital is, up to 100k
-                + 0.35f * (this.AssociatedCities.Count / 10.0f))   // How many cities there are, up to 10
-                * 35 + 10                                          // 10 is minimum, 45 is max
+                (0.65f * Math.Min(1.0f, this.Capital.Population / 100000.0f)     // How big the capital is, up to 100k
+                + 0.35f * Math.Min(1.0f, this.AssociatedCities.Count / 10.0f))   // How many cities there are, up to 10
+                * 35 + 10                                                        // 10 is minimum, 45 is max
             );
 
         /// <summary>
