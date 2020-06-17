@@ -44,7 +44,7 @@ namespace Game.Simulation
         /// <summary>
         /// How many associated villages this city can support
         /// </summary>
-        public int VillageCapacity => 3 + (this.Population / 35000);
+        public int VillageCapacity => 3 + (int)(3 * Math.Min(1.0f, this.Population / 75000.0f));
 
         /// <summary>
         /// Whether this city can support an additional village

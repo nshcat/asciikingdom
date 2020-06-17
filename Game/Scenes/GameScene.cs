@@ -167,6 +167,11 @@ namespace Game.Scenes
         private bool _canPlace = false;
         
         /// <summary>
+        /// The current reason why a site cannot be placed under the cursor, if any
+        /// </summary>
+        private Optional<string> _placementError = Optional<string>.Empty;
+        
+        /// <summary>
         /// City in whose influence radius the cursor is currently in, if any
         /// </summary>
         private Optional<City> _currentCity = Optional<City>.Empty;
@@ -353,6 +358,48 @@ namespace Game.Scenes
 
             foreach (var entry in this._gameMenu)
                 position = entry.Render(this._surface, this._uiState, position);
+            
+            if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
+            {
+                position += new Position(0, 2);
+                
+                this._surface.DrawString(
+                    position,
+                    $"Placing {(this._uiState == GameUiState.PlaceCity ? "City" : "Village")}",
+                    UiColors.ActiveText,
+                    DefaultColors.Black
+                );
+
+                if (this._placementError.HasValue)
+                {
+                    position += new Position(0, 1);
+                    
+                    this._surface.DrawString(
+                        position,
+                        this._placementError.Value,
+                        DefaultColors.Red,
+                        DefaultColors.Black
+                    );
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check for general site placement rules, such as allowed terrain and avoiding
+        /// existing sites
+        /// </summary>
+        private void CheckGeneralSitePlacement()
+        {
+            if (!TerrainTypeData.AcceptsSites(this._cursorTerrainType))
+            {
+                this._canPlace = false;
+                this._placementError = Optional<string>.Of("Bad terrain");
+            }
+            else if (this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition))
+            {
+                this._canPlace = false;
+                this._placementError = Optional<string>.Of("Site present");
+            }
         }
 
         /// <summary>
@@ -360,31 +407,57 @@ namespace Game.Scenes
         /// </summary>
         private void UpdateCursorMode()
         {
+            this._placementError = Optional<string>.Empty;
+            this._canPlace = true;
+            
             switch (this._uiState)
             {
                 case GameUiState.PlaceCity:
                 {
-                    var invalid =
-                        (this._newProvince && this._currentProvince.HasValue)
-                        || !TerrainTypeData.AcceptsSites(this._cursorTerrainType)
-                        || !this._newProvince && (!this._currentProvince.HasValue || !this._currentProvince.Value.CanSupportNewCity)
-                        || this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition);
+                    if (this._newProvince && this._currentProvince.HasValue)
+                    {
+                        this._canPlace = false;
+                        this._placementError= Optional<string>.Of("Inside other province");
+                    }
+                    else if (!this._newProvince)
+                    {
+                        if (!this._currentProvince.HasValue)
+                        {
+                            this._canPlace = false;
+                            this._placementError= Optional<string>.Of("Outside province");
+                        }
+                        else if (!this._currentProvince.Value.CanSupportNewCity)
+                        {
+                            this._canPlace = false;
+                            this._placementError= Optional<string>.Of("City limit reached");
+                        }
+                    }
+                    
+                    if(this._canPlace)
+                        this.CheckGeneralSitePlacement();
 
-                    this._siteView.CursorMode = invalid ? CursorMode.Invalid : CursorMode.Normal;
-                    this._canPlace = !invalid;
-                        
+                    this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
                     break;
                 }
                 case GameUiState.PlaceVillage:
                 {
-                    var invalid = !this._currentCity.HasValue 
-                                  || !this._currentCity.Value.CanSupportNewVillage 
-                                  || !TerrainTypeData.AcceptsSites(this._cursorTerrainType)
-                                  || this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition);
+                    if (!this._currentCity.HasValue)
+                    {
+                        this._canPlace = false;
+                        this._placementError = Optional<string>.Of("Outside city");
+                    }
+                    else if (!this._currentCity.Value.CanSupportNewVillage)
+                    {
+                        this._canPlace = false;
+                        this._placementError = Optional<string>.Of("Village limit reached");
+                    }
+                    else
+                    {
+                        this.CheckGeneralSitePlacement();
+                    }
                     
-                    this._siteView.CursorMode = invalid ? CursorMode.Invalid : CursorMode.Normal;
-                    this._canPlace = !invalid;
-                    
+                    this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
+
                     break;
                 }
                 default:

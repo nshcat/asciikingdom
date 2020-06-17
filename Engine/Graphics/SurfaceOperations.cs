@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Transactions;
 using System.Xml;
 using Engine.Core;
 using Engine.Graphics;
@@ -189,6 +190,16 @@ namespace Engine.Graphics
             {
                 var position = new Position(bounds.TopRight.X + 1, bounds.TopLeft.Y + 1 + iy);
                 surface.SetUiShadow(position, true);
+            }
+            
+            // Make sure no left over UI shadow is placed on this window from previous drawing operations
+            // this window is overlaying
+            for (var ix = bounds.BottomLeft.X; ix <= bounds.BottomRight.X; ++ix)
+            {
+                for (var iy = bounds.TopLeft.Y; iy <= bounds.BottomRight.Y; ++iy)
+                {
+                    surface.SetUiShadow(new Position(ix, iy), false);
+                }
             }
         }
 
