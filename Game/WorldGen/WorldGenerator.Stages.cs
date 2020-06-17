@@ -58,8 +58,13 @@ namespace Game.WorldGen
             this.SignalNextStage("Updating terrain tiles..", 0.85);
             world.UpdateTiles();
             
-            this.SignalNextStage("Building overview map..", 0.90);
+            this.SignalNextStage("Finding start continent..", 0.90);
+            world.DiscoverInitialContinent();
+            
+            this.SignalNextStage("Building overview map..", 1.0);
             world.BuildOverview();
+            
+            
 
             // Signal that world generation has finished
             this.SignalFinished(world);

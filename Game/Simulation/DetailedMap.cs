@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Engine.Core;
 using Game.Data;
+using Game.Maths;
 
 namespace Game.Simulation
 {
@@ -19,7 +21,7 @@ namespace Game.Simulation
         /// Resources present on the map
         /// </summary>
         public Dictionary<Position, ResourceType> Resources { get; set; }
-        
+
         /// <summary>
         /// Construct a new detailed map instance
         /// </summary>

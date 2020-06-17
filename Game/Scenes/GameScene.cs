@@ -287,6 +287,10 @@ namespace Game.Scenes
                     this._cursorSite.Reset();
                 }
             };
+            
+            this._terrainView.CursorPosition = this._state.World.Metadata.InitialLocation;
+            this._terrainView.RecalulatePositions();
+            this._terrainView.FireCursorMovedEvent();
         }
 
         /// <summary>

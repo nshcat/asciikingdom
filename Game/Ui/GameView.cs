@@ -134,6 +134,14 @@ namespace Game.Ui
         }
 
         /// <summary>
+        /// Force firing of the cursor moved event
+        /// </summary>
+        public void FireCursorMovedEvent()
+        {
+            this.CursorMoved?.Invoke(this.CursorPosition);
+        }
+
+        /// <summary>
         /// Recalculate various positions based on the current value of <see cref="CursorPosition"/>
         /// </summary>
         /// <remarks>

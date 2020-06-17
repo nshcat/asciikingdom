@@ -47,6 +47,11 @@ namespace Game.Ui
         public bool ShowResources { get; set; } = true;
 
         /// <summary>
+        /// Whether areas affected by fog of war should not be drawn
+        /// </summary>
+        public bool DrawFogOfWar { get; set; } = true;
+
+        /// <summary>
         /// The map data to visualize. This depends on the current <see cref="DisplayMode"/>.
         /// </summary>
         protected Tile[,] MapData
@@ -100,6 +105,9 @@ namespace Game.Ui
         /// </summary>
         protected override void RenderCell(Surface surface, Position worldPosition, Position screenPosition)
         {
+            if (this.DrawFogOfWar && !this.Map.Discovered[worldPosition.X, worldPosition.Y])
+                return;
+            
             if (this.Map is DetailedMap detailedMap
                 && this.DisplayMode == MapViewMode.Terrain
                 && this.ShowResources
