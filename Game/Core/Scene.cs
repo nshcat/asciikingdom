@@ -27,7 +27,7 @@ namespace Game.Core
         protected ResourceManager Resources { get; set; }
         
         /// <summary>
-        /// The dimensions of the screen, in tiles.
+        /// The dimensions of the screen, in pixels.
         /// </summary>
         public Size ScreenDimensions { get; set; }
 

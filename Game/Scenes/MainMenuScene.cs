@@ -337,6 +337,11 @@ namespace Game.Scenes
         /// </summary>
         public override void Update(double deltaTime)
         {
+            if(this.Input.AreKeysDown(KeyPressType.Pressed, Key.T))
+                this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
+                    new TestTabContainer(this)
+                    );
+            
             this._actionMapper.Update();
             
             if (this._actionMapper.HasTriggeredAction)
