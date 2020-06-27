@@ -25,6 +25,11 @@ namespace Game.Simulation
         public TerrainType[,] Terrain { get; set; }
         
         /// <summary>
+        /// Terrain discovery status
+        /// </summary>
+        public bool[,] Discovered { get; set; }
+        
+        /// <summary>
         /// Rendering of the map
         /// </summary>
         public Tile[,] Tiles { get; }
@@ -63,6 +68,7 @@ namespace Game.Simulation
             this.Rainfall = new Tile[dimensions.Width, dimensions.Height];
             this.Temperature = new Tile[dimensions.Width, dimensions.Height];
             this.Drainage = new Tile[dimensions.Width, dimensions.Height];
+            this.Discovered = new bool[dimensions.Width, dimensions.Height];
         }
         
         /// <summary>
@@ -81,6 +87,14 @@ namespace Game.Simulation
             return TerrainTypeData.GetInfo(this.GetTerrainType(position));
         }
 
+        /// <summary>
+        /// Check if given map cell is discovered, i.e. lies outside the fog of war
+        /// </summary>
+        public bool IsDiscovered(Position position)
+        {
+            return this.Discovered[position.X, position.Y];
+        }
+        
         /// <summary>
         /// Build new tile array from terrain array
         /// </summary>

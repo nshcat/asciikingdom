@@ -14,6 +14,11 @@ namespace Game.Simulation
         public Size Dimensions { get; set; }
         
         /// <summary>
+        /// The initial "spawn" location that is on the initially discovered continent
+        /// </summary>
+        public Position InitialLocation { get; set; }
+        
+        /// <summary>
         /// The seed used to generate this world
         /// </summary>
         public int Seed { get; set; }

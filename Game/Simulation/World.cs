@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
 using Game.Serialization;
+using Game.Utility;
 using OpenToolkit.Graphics.OpenGL;
 
 namespace Game.Simulation
@@ -46,7 +47,7 @@ namespace Game.Simulation
         /// The seed used to generate the current map
         /// </summary>
         public int Seed => this.Metadata.Seed;
-        
+
         /// <summary>
         /// The detailed play map
         /// </summary>
@@ -97,6 +98,7 @@ namespace Game.Simulation
             this.BuildOverviewRainfall();
             this.BuildOverviewTemperature();
             this.BuildOverviewDrainage();
+            this.BuildOverviewDiscovered();
         }
         
         /// <summary>
@@ -135,6 +137,14 @@ namespace Game.Simulation
         protected void BuildOverviewTemperature()
         {
             this.BuildOverviewHelper(this.DetailedMap.Temperature, this.OverviewMap.Temperature);
+        }
+
+        /// <summary>
+        /// Build discovery map based on detailed map
+        /// </summary>
+        protected void BuildOverviewDiscovered()
+        {
+            this.BuildOverviewHelper(this.DetailedMap.Discovered, this.OverviewMap.Discovered);
         }
 
         /// <summary>
@@ -208,6 +218,20 @@ namespace Game.Simulation
                 }
             }
             
+            // Write discovery data
+            var discoveryPath = Path.Combine(prefix, "discovery.bin");
+            using (var writer = new BinaryWriter(File.Open(discoveryPath, FileMode.Create)))
+            {
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                    {
+                        var value = (byte) (this.DetailedMap.Discovered[ix, iy] ? 1 : 0);
+                        writer.Write(value);
+                    }
+                }
+            }
+            
             // Write extra river data
             var riverPath = Path.Combine(prefix, "rivers.bin");
             using (var writer = new BinaryWriter(File.Open(riverPath, FileMode.Create)))
@@ -255,6 +279,20 @@ namespace Game.Simulation
                     }
                 }
             }
+            
+            // Load discovery state
+            var discoveryPath = Path.Combine(prefix, "discovery.bin");
+            using (var reader = new BinaryReader(File.Open(discoveryPath, FileMode.Open)))
+            {
+                for (var ix = 0; ix < metadata.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < metadata.Dimensions.Height; ++iy)
+                    {
+                        var value = reader.ReadByte() == 1;
+                        world.DetailedMap.Discovered[ix, iy] = value;
+                    }
+                }
+            }
 
             // Load river info
             var riverPath = Path.Combine(prefix, "rivers.bin");
@@ -291,6 +329,141 @@ namespace Game.Simulation
             world.UpdateTiles();
 
             return world;
+        }
+        
+        /// <summary>
+        /// Find and uncover initial continent for game start
+        /// </summary>
+        public void DiscoverInitialContinent()
+        {
+            var rng = new Random();
+
+            int tries = 0;
+            
+            var points = new List<Position>();
+
+            for (var iy = 0; iy < this.Dimensions.Height / 3; ++iy)
+            {
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    points.Add(new Position(ix, iy));
+                }
+            }
+            
+            points.Shuffle(rng);
+            
+            foreach(var position in points)
+            {
+                if (this.IsLand(position))
+                {
+                    this.DetailedMap.Discovered = new bool[this.Dimensions.Width, this.Dimensions.Height];
+                    var continent = this.DiscoverContinent(position);
+
+                    if (continent.Count > 400) 
+                    {
+                        // Save seed position
+                        this.Metadata.InitialLocation = position;
+                        
+                        // Discover a bit more of the ocean
+                        for (var ix = 0; ix < 3; ++ix)
+                        {
+                            var shore = new HashSet<Position>();
+                            
+                            foreach (var pos in continent)
+                            {
+                                if (!this.IsLand(pos))
+                                {
+                                    foreach (var direction in Directions)
+                                    {
+                                        var newPos = pos + direction;
+
+                                        if (!this.InsideWorldBounds(newPos))
+                                            continue;
+                                        
+                                        if (!this.IsLand(newPos))
+                                        {
+                                            shore.Add(newPos);
+                                            this.DetailedMap.Discovered[newPos.X, newPos.Y] = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            continent = shore;
+                        }
+
+                        return;
+                    }
+                }
+            }
+            
+            throw new Exception("Could not find big enough start continent");
+        }
+        
+        /// <summary>
+        /// The four cardinal directions
+        /// </summary>
+        protected static readonly List<Position> Directions = new List<Position>
+        {
+            new Position(1, 0),
+            new Position(0, 1),
+            new Position(-1, 0),
+            new Position(0, -1)
+        };
+
+        /// <summary>
+        /// Discover the continent the given seed position lies within and return the total continent size, in tiles
+        /// </summary>
+        protected HashSet<Position> DiscoverContinent(Position seed)
+        {
+            var visited = new HashSet<Position>();
+            var toVisit = new Queue<Position>();
+            toVisit.Enqueue(seed);
+            this.DetailedMap.Discovered[seed.X, seed.Y] = true;
+
+            while (toVisit.Count > 0)
+            {
+                var next = toVisit.Dequeue();
+                visited.Add(next);
+                
+                foreach (var direction in Directions)
+                {
+                    var neighbour = next + direction;
+                    
+                    if(!this.InsideWorldBounds(neighbour))
+                        continue;
+
+                    this.DetailedMap.Discovered[neighbour.X, neighbour.Y] = true;
+
+                    if(this.IsLand(neighbour) && !visited.Contains(neighbour) && !toVisit.Contains(neighbour))
+                        toVisit.Enqueue(neighbour);
+
+                    visited.Add(neighbour);
+                }
+            }
+
+            return visited;
+        }
+
+        /// <summary>
+        /// Whether the terrain at given position counts as land
+        /// </summary>
+        protected bool IsLand(Position position)
+        {
+            var terrainType = this.DetailedMap.Terrain[position.X, position.Y];
+
+            return terrainType != TerrainType.Ocean && terrainType != TerrainType.SeaIce && terrainType != TerrainType.Glacier;
+        }
+
+        /// <summary>
+        /// Check whether given position lies within world bounds
+        /// </summary>
+        protected bool InsideWorldBounds(Position position)
+        {
+            return position.X > 0
+                   && position.X < this.Dimensions.Width
+                   && position.Y > 0
+                   && position.Y < this.Dimensions.Height;
         }
     }
 }

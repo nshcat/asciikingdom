@@ -43,6 +43,7 @@ namespace Game.Scenes
             ShowDrainage,
             ShowResources,
             SaveWorld,
+            ToggleFogOfWar,
             Cancel
         }
 
@@ -95,7 +96,7 @@ namespace Game.Scenes
         /// World generator instance
         /// </summary>
         private WorldGenerator _worldGen;
-        
+
         /// <summary>
         /// The current world generator phase
         /// </summary>
@@ -164,7 +165,11 @@ namespace Game.Scenes
             this._worldGen.WorldGenerationFinished += world =>
             {
                 this.ReplaceWorld(world);
-                
+
+                this._detailedView.CursorPosition = world.Metadata.InitialLocation;
+                this._detailedView.RecalulatePositions();
+                this._detailedView.FireCursorMovedEvent();
+
                 this._worldGen = null;
                 this._isGeneratingMap = false;
             };
@@ -232,6 +237,7 @@ namespace Game.Scenes
                 new InputAction<WorldGenAction>(WorldGenAction.ShowTemperature, KeyPressType.Pressed, Key.T),
                 new InputAction<WorldGenAction>(WorldGenAction.SaveWorld, KeyPressType.Pressed, Key.U),
                 new InputAction<WorldGenAction>(WorldGenAction.ShowResources, KeyPressType.Down, Key.R, Key.ShiftLeft),
+                new InputAction<WorldGenAction>(WorldGenAction.ToggleFogOfWar, KeyPressType.Down, Key.F, Key.ShiftLeft),
                 new InputAction<WorldGenAction>(WorldGenAction.Cancel, KeyPressType.Down, Key.Q, Key.ShiftLeft)
             );
         }
@@ -263,6 +269,14 @@ namespace Game.Scenes
             var position = new Position(
                 this._overviewView.Position.X,
                 this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
+
+            if (!this._world.DetailedMap.IsDiscovered(this._detailedView.CursorPosition) && this._detailedView.DrawFogOfWar)
+            {
+                this._surface.DrawString(position, "Unknown",
+                    UiColors.ActiveText, DefaultColors.Black);
+
+                return;
+            }
 
             this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
                 DefaultColors.White, DefaultColors.Black);
@@ -376,6 +390,12 @@ namespace Game.Scenes
                     this._overviewView.DisplayMode = MapViewMode.Temperature;
                     break;
                 }
+                case WorldGenAction.ToggleFogOfWar:
+                {
+                    this._detailedView.DrawFogOfWar = !this._detailedView.DrawFogOfWar;
+                    this._overviewView.DrawFogOfWar = !this._overviewView.DrawFogOfWar;
+                    break;
+                }
                 case WorldGenAction.SaveWorld:
                 {
                     if (this.HasWorld)
@@ -441,6 +461,9 @@ namespace Game.Scenes
                 UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
             
             next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "u", "Use this world",
+                UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
+            
+            next = this._surface.DrawKeybinding(new Position(next + 3, this._surface.Dimensions.Height - 2), "F", "Toggle fog of war",
                 UiColors.Keybinding, UiColors.ActiveText, DefaultColors.Black);
         }
         

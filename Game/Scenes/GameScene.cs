@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -287,6 +288,10 @@ namespace Game.Scenes
                     this._cursorSite.Reset();
                 }
             };
+            
+            this._terrainView.CursorPosition = this._state.World.Metadata.InitialLocation;
+            this._terrainView.RecalulatePositions();
+            this._terrainView.FireCursorMovedEvent();
         }
 
         /// <summary>
@@ -399,12 +404,19 @@ namespace Game.Scenes
         /// </summary>
         private void CheckGeneralSitePlacement()
         {
-            if (!TerrainTypeData.AcceptsSites(this._cursorTerrainType))
+            var position = this._siteView.CursorPosition;
+
+            if (!this._state.World.DetailedMap.IsDiscovered(position))
+            {
+                this._canPlace = false;
+                this._placementError = Optional<string>.Of("Not discovered");
+            }
+            else if (!TerrainTypeData.AcceptsSites(this._cursorTerrainType))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Bad terrain");
             }
-            else if (this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition))
+            else if (this._state.GetAllSites().ContainsKey(position))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Site present");
@@ -538,6 +550,14 @@ namespace Game.Scenes
         private void DrawTileInfo()
         {
             var position = this.MenuTopLeft + new Position(0, (int)(this._surface.Dimensions.Height * 0.75f));
+
+            if (!this._state.World.DetailedMap.IsDiscovered(this._terrainView.CursorPosition))
+            {
+                this._surface.DrawString(position, "Unknown",
+                    UiColors.ActiveText, DefaultColors.Black);
+                
+                return;
+            }
 
             if (this._currentProvince.HasValue)
             {
