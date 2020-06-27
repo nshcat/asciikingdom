@@ -404,12 +404,19 @@ namespace Game.Scenes
         /// </summary>
         private void CheckGeneralSitePlacement()
         {
-            if (!TerrainTypeData.AcceptsSites(this._cursorTerrainType))
+            var position = this._siteView.CursorPosition;
+
+            if (!this._state.World.DetailedMap.IsDiscovered(position))
+            {
+                this._canPlace = false;
+                this._placementError = Optional<string>.Of("Not discovered");
+            }
+            else if (!TerrainTypeData.AcceptsSites(this._cursorTerrainType))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Bad terrain");
             }
-            else if (this._state.GetAllSites().ContainsKey(this._siteView.CursorPosition))
+            else if (this._state.GetAllSites().ContainsKey(position))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Site present");
