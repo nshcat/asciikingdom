@@ -82,6 +82,7 @@ namespace Game.Scenes
             if (this.HasPages)
             {
                 this.CurrentTab.Render(this.PageSurface);
+                this.CurrentTab.RenderOverlay(this.ContainerSurface);
             }
             
             this.ContainerSurface.Render(rp);
@@ -107,6 +108,7 @@ namespace Game.Scenes
                 if (this.Input.AreKeysDown(KeyPressType.Down, this.Pages[i].KeyCombination))
                 {
                     this.CurrentIndex = i;
+                    this.CurrentTab.Activate();
                 }
             }
             
@@ -129,11 +131,11 @@ namespace Game.Scenes
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
 
-            var pageArea = this.ContainerSurface.Dimensions - new Size(2, 6);
+            var pageArea = this.ContainerSurface.Dimensions - new Size(2, 10);
             
             this.PageSurface = Surface.New()
                 .Tileset(this.Resources, "myne_rect.png")
-                .RelativeTo(this.ContainerSurface, new Position(1, 5))
+                .RelativeTo(this.ContainerSurface, new Position(1, 9))
                 .TileDimensions(pageArea)
                 .Build();
 
@@ -178,6 +180,41 @@ namespace Game.Scenes
                 );
                 
                 position += new Position(label.Length + 1, 0);
+            }
+
+            if (this.HasPages)
+            {
+                this.ContainerSurface.DrawString(
+                    new Position(2, 6),
+                    this.CurrentTab.Header,
+                    UiColors.ActiveText,
+                    DefaultColors.Black
+                );
+                
+                var tile = new Tile((int)BoxCharacters.Horizontal, UiColors.BorderFront, DefaultColors.Black);
+
+                for (var ix = 1; ix < this.ContainerSurface.Dimensions.Width - 1; ++ix)
+                {
+                    this.ContainerSurface.SetTile(new Position(ix, 8), tile);
+                }
+                
+                this.ContainerSurface.SetTile(
+                    new Position(0, 8),
+                    new Tile(
+                        (int)BoxCharacters.VerticalRight,
+                        UiColors.BorderFront,
+                        UiColors.BorderBack
+                    )
+                );
+                
+                this.ContainerSurface.SetTile(
+                    new Position(this.ContainerSurface.Dimensions.Width - 1, 8),
+                    new Tile(
+                        (int)BoxCharacters.VerticalLeft,
+                        UiColors.BorderFront,
+                        UiColors.BorderBack
+                    )
+                );
             }
         }
 

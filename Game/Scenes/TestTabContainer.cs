@@ -19,8 +19,8 @@ namespace Game.Scenes
 
         protected void AddPages()
         {
-            this.Pages.Add(new TestTab("Overview", 0, Key.O, Key.ShiftLeft));
-            this.Pages.Add(new TestTab("Production", 0, Key.P, Key.ShiftLeft));
+            this.Pages.Add(new TestTab(this.Input, "Overview", "Site overview", 0, Key.O, Key.ShiftLeft));
+            this.Pages.Add(new TestTab(this.Input, "Production","Production overview", 0, Key.P, Key.ShiftLeft));
         }
 
         protected override string Title { get; } = "Meow";

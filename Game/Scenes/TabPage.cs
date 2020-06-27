@@ -21,6 +21,11 @@ namespace Game.Scenes
         public string Title { get; protected set; }
         
         /// <summary>
+        /// A short descriptive text of this tabs purpose
+        /// </summary>
+        public string Header { get; protected set; }
+        
+        /// <summary>
         /// The index of the marked hot key character in the <see cref="Title"/>
         /// </summary>
         public int MarkedIndex { get; protected set; }
@@ -33,11 +38,13 @@ namespace Game.Scenes
         /// <summary>
         /// Initialize new tab page and its attributes.
         /// </summary>
-        public TabPage(string title, int markedIndex, Key[] keyCombination)
+        public TabPage(InputManager input, string title, string header, int markedIndex, Key[] keyCombination)
         {
             this.Title = title;
+            this.Header = header;
             this.MarkedIndex = markedIndex;
             this.KeyCombination = keyCombination;
+            this.Input = input;
         }
         
         /// <summary>
@@ -53,6 +60,16 @@ namespace Game.Scenes
         public abstract void Render(Surface surface);
 
         /// <summary>
+        /// Perform additional rendering that might cover up screen content that was rendered
+        /// by the associated tab container scene
+        /// </summary>
+        /// <param name="parentSurface">Root surface of the container scene</param>
+        public virtual void RenderOverlay(Surface parentSurface)
+        {
+            
+        }
+
+        /// <summary>
         /// Perform logic update based on given elapsed time.
         /// </summary>
         /// <param name="deltaTime">Number of seconds elapsed since last update.</param>
@@ -64,6 +81,9 @@ namespace Game.Scenes
         /// <summary>
         /// Called when ever this tab page is selected by the user.
         /// </summary>
-        public abstract void Activate();
+        public virtual void Activate()
+        {
+            
+        }
     }
 }

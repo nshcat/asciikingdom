@@ -1,34 +1,19 @@
 using Engine.Core;
 using Engine.Graphics;
+using Engine.Input;
 using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;
 
 namespace Game.Scenes
 {
-    public class TestTab : TabPage
+    public class TestTab : SubTabContainer
     {
-        public TestTab(string title, int markedIndex, params Key[] keyCombination) : base(title, markedIndex, keyCombination)
+        public TestTab(InputManager input, string title, string header, int markedIndex, params Key[] keyCombination)
+            : base(input, title, header, markedIndex, keyCombination)
         {
-        }
-
-        public override void Reshape(Size pageArea)
-        {
-            
-        }
-
-        public override void Render(Surface surface)
-        {
-            surface.DrawString(new Position(0, 0), "Meow", UiColors.ActiveText, DefaultColors.Black);
-        }
-
-        public override void Update(double deltaTime)
-        {
-            
-        }
-
-        public override void Activate()
-        {
-            throw new System.NotImplementedException();
+            this.SubPages.Add(new TestSubTabPage(input, "Summary"));
+            this.SubPages.Add(new TestSubTabPage(input, "Needs"));
+            this.SubPages.Add(new TestSubTabPage(input, "Growth"));
         }
     }
 }
