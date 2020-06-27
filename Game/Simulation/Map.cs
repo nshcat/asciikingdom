@@ -88,6 +88,14 @@ namespace Game.Simulation
         }
 
         /// <summary>
+        /// Check if given map cell is discovered, i.e. lies outside the fog of war
+        /// </summary>
+        public bool IsDiscovered(Position position)
+        {
+            return this.Discovered[position.X, position.Y];
+        }
+        
+        /// <summary>
         /// Build new tile array from terrain array
         /// </summary>
         public virtual void UpdateTiles()

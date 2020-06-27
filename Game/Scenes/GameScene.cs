@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -542,6 +543,14 @@ namespace Game.Scenes
         private void DrawTileInfo()
         {
             var position = this.MenuTopLeft + new Position(0, (int)(this._surface.Dimensions.Height * 0.75f));
+
+            if (!this._state.World.DetailedMap.IsDiscovered(this._terrainView.CursorPosition))
+            {
+                this._surface.DrawString(position, "Unknown",
+                    UiColors.ActiveText, DefaultColors.Black);
+                
+                return;
+            }
 
             if (this._currentProvince.HasValue)
             {

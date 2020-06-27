@@ -270,6 +270,14 @@ namespace Game.Scenes
                 this._overviewView.Position.X,
                 this._overviewView.Position.Y + this._overviewView.Dimensions.Height + 1);
 
+            if (!this._world.DetailedMap.IsDiscovered(this._detailedView.CursorPosition) && this._detailedView.DrawFogOfWar)
+            {
+                this._surface.DrawString(position, "Unknown",
+                    UiColors.ActiveText, DefaultColors.Black);
+
+                return;
+            }
+
             this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
                 DefaultColors.White, DefaultColors.Black);
 
