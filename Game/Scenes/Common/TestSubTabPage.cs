@@ -3,7 +3,7 @@ using Engine.Graphics;
 using Engine.Input;
 using Game.Ui;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     public class TestSubTabPage : SubTabPage
     {

@@ -3,7 +3,7 @@ using Engine.Resources;
 using Game.Core;
 using OpenToolkit.Windowing.Common.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     public class TestTabContainer : TabContainerScene
     {

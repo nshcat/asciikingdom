@@ -2,7 +2,7 @@ using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     /// <summary>
     /// Base class for sub tab pages, which are managed and drawn by a <see cref="SubTabContainer"/>

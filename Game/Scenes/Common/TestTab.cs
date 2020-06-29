@@ -1,10 +1,7 @@
-using Engine.Core;
-using Engine.Graphics;
 using Engine.Input;
-using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     public class TestTab : SubTabContainer
     {

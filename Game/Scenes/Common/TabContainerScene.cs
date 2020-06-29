@@ -9,7 +9,7 @@ using Game.Core;
 using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     
     /// <summary>

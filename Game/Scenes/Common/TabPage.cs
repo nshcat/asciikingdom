@@ -3,7 +3,7 @@ using Engine.Graphics;
 using Engine.Input;
 using OpenToolkit.Windowing.Common.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     /// <summary>
     /// A single tab page, meant to be contained within a <see cref="TabContainerScene"/>

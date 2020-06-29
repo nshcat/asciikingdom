@@ -5,6 +5,7 @@ using Engine.Input;
 using Engine.Rendering;
 using Engine.Resources;
 using Game.Core;
+using Game.Scenes.Common;
 using Game.Simulation;
 using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;

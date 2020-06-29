@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
 using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;
 
-namespace Game.Scenes
+namespace Game.Scenes.Common
 {
     /// <summary>
     /// A tab page that contains a number of <see cref="SubTabPage"/> instances
