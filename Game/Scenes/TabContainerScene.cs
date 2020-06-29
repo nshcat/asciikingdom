@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -102,13 +103,19 @@ namespace Game.Scenes
                 return;
             }
             
-            for (var i = 0; i < this.Pages.Count; ++i)
+            // Sort the pages by the size of their key combination. This implements "greedy matching" of hot keys:
+            // If there multiple pages with the same letter key but different amount of modifiers, the one
+            // with the most modifiers is selected, which is what most users would expect
+            var pages = this.Pages.OrderByDescending(p => p.KeyCombination.Length).ToList();
+
+            for (var i = 0; i < pages.Count; ++i)
             {
                 // Check if the key combination of the i-th tab page was activated by the user
-                if (this.Input.AreKeysDown(KeyPressType.Down, this.Pages[i].KeyCombination))
+                if (this.Input.AreKeysDown(KeyPressType.Down, pages[i].KeyCombination))
                 {
                     this.CurrentIndex = i;
                     this.CurrentTab.Activate();
+                    break;
                 }
             }
             
