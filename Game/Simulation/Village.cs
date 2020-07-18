@@ -12,20 +12,10 @@ namespace Game.Simulation
     public class Village : PopulatedSite
     {
         /// <summary>
-        /// The name of this village
-        /// </summary>
-        public override string Name { get; set; }
-
-        /// <summary>
         /// Village names are not shown on the world map
         /// </summary>
         public override bool ShowName => false;
 
-        /// <summary>
-        /// The position of this village on the world map
-        /// </summary>
-        public override Position Position { get; set; }
-        
         /// <summary>
         /// The city this village is associated with
         /// </summary>
@@ -46,7 +36,7 @@ namespace Game.Simulation
         /// Create a bew village with given name, position, initial population and associated city
         /// </summary>
         public Village(string name, Position position, int initialPopulation, City associatedCity)
-            : base(GrowthStages, initialPopulation)
+            : base(name, position, GrowthStages, initialPopulation)
         {
             this.Name = name;
             this.Position = position;

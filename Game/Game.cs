@@ -48,6 +48,7 @@ namespace Game
         protected void LoadData()
         {
             ResourceTypeManager.Instance.LoadTypes(this.Resources);
+            ProductTypeManager.Instance.LoadTypes(this.Resources);
         }
 
         /// <summary>

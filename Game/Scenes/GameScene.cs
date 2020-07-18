@@ -194,9 +194,10 @@ namespace Game.Scenes
         /// <summary>
         /// The world site the cursor is currently on, if any
         /// </summary>
-        private Optional<IWorldSite> _cursorSite = Optional<IWorldSite>.Empty;
+        private Optional<WorldSite> _cursorSite = Optional<WorldSite>.Empty;
 
         /// <summary>
+        /// 
         /// The world terrain currently under the cursor
         /// </summary>
         private TerrainTypeInfo _cursorTerrainInfo;
@@ -281,7 +282,7 @@ namespace Game.Scenes
 
                 if (sites.ContainsKey(newPosition))
                 {
-                    this._cursorSite = Optional<IWorldSite>.Of(sites[newPosition]);
+                    this._cursorSite = Optional<WorldSite>.Of(sites[newPosition]);
                 }
                 else
                 {
@@ -824,7 +825,7 @@ namespace Game.Scenes
         }
 
         /// <summary>
-        /// Finalize size placement
+        /// Finalize site placement
         /// </summary>
         private void PlaceSite()
         {

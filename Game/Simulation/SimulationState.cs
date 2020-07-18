@@ -54,9 +54,9 @@ namespace Game.Simulation
         /// <summary>
         /// Retrieve all sites on the world map
         /// </summary>
-        public Dictionary<Position, IWorldSite> GetAllSites()
+        public Dictionary<Position, WorldSite> GetAllSites()
         {
-            var result = new Dictionary<Position, IWorldSite>();
+            var result = new Dictionary<Position, WorldSite>();
 
             foreach (var province in this.Provinces)
             {

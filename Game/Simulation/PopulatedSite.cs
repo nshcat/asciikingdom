@@ -10,20 +10,12 @@ namespace Game.Simulation
     /// <summary>
     /// Abstract base class for world sites harboring a population of citizens, that have needs, desires and moods.
     /// </summary>
-    public abstract class PopulatedSite : IWorldSite
+    public abstract class PopulatedSite : WorldSite
     {
-        #region Abstract properties
-        public abstract string Name { get; set; }
-        public abstract Position Position { get; set; }
-        public abstract bool ShowName { get; }
-        #endregion
-        
         #region Implemented interface properties
-        public Guid Id { get; set; }
+        public override string TypeDescriptor => this.GetCurrentDescriptor();
         
-        public string TypeDescriptor => this.GetCurrentDescriptor();
-        
-        public Tile Tile => this.GetCurrentTile();
+        public override Tile Tile => this.GetCurrentTile();
         #endregion
         
         /// <summary>
@@ -49,15 +41,13 @@ namespace Game.Simulation
         /// Base class constructor that sets the identifier to a new Guid
         /// </summary>
         /// <param name="stages">The different growth stages this site can be in</param>
-        public PopulatedSite(IEnumerable<SiteGrowthStage> stages, int initialPopulation)
+        public PopulatedSite(string name, Position position, IEnumerable<SiteGrowthStage> stages, int initialPopulation)
+            : base(name, position)
         {
-            this.Id = Guid.NewGuid();
             this.SiteDescriptors = stages.Select(x => (x.PopulationThreshold, x.Descriptor)).ToList();
             this.SiteTiles = stages.Select(x => (x.PopulationThreshold, x.Tile)).ToList();
             this.Population = initialPopulation;
         }
-
-        public abstract void Update(int weeks);
 
         /// <summary>
         /// Determine the current site type descriptor based on the current population count

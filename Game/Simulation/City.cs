@@ -22,16 +22,6 @@ namespace Game.Simulation
     public class City : PopulatedSite
     {
         /// <summary>
-        /// The name of this city
-        /// </summary>
-        public override string Name { get; set; }
-
-        /// <summary>
-        /// The position of this city on the world map
-        /// </summary>
-        public override Position Position { get; set; }
-        
-        /// <summary>
         /// City names are shown on the world map
         /// </summary>
         public override bool ShowName => true;
@@ -89,10 +79,9 @@ namespace Game.Simulation
         /// <summary>
         /// Create new city with given name
         /// </summary>
-        public City(string name, Position position, int population) : base(GrowthStages, population)
+        public City(string name, Position position, int population)
+            : base(name, position, GrowthStages, population)
         {
-            this.Name = name;
-            this.Position = position;
         }
 
         /// <summary>

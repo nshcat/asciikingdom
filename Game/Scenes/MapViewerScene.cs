@@ -54,7 +54,7 @@ namespace Game.Scenes
         private bool _isGeneratingMap = false;
         private bool _showInfluence = false;
         private City _currentCity = null; // City in whos influence radius the cursor currently is
-        private IWorldSite _cursorSite = null; // The site the cursor currently is on
+        private WorldSite _cursorSite = null; // The site the cursor currently is on
         public MapViewerScene(Scene parent) : base(parent)
         {
             this.Initialize();

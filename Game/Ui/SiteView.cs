@@ -74,7 +74,7 @@ namespace Game.Ui
         /// <summary>
         /// All sites in the world
         /// </summary>
-        protected Dictionary<Position, IWorldSite> Sites { get; set; }
+        protected Dictionary<Position, WorldSite> Sites { get; set; }
 
         /// <summary>
         /// All cities in the world
