@@ -4,6 +4,7 @@ using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
 using Game.Simulation;
+using Game.Simulation.Modules;
 
 namespace Game.Ui
 {
@@ -130,31 +131,27 @@ namespace Game.Ui
                 var distance = Position.GetDistance(worldPosition, this.CursorPosition);
                 
                 if (this.DrawMapLabels &&
-                    site.ShowName &&
-                    !string.IsNullOrEmpty(site.Name) &&
+                    site.HasModule<MapLabelRenderer>() &&
                     distance >= this.LabelMinDistance)
                 {
-                    // Append special marker for province capitals
-                    var name = site.Name;
+                    var renderer = site.QueryModule<MapLabelRenderer>();
+                    var label = renderer.Label;
 
-                    if (site is City city_ && city_.IsProvinceCapital)
+                    if (!string.IsNullOrEmpty(label))
                     {
-                        var marker = (char) 15;
-                        name = $"{marker}{name}{marker}";
-                    }
-                    
-                    surface.DrawStringCentered(
-                        new Position(screenPosition.X, screenPosition.Y - 2),
-                        name,
-                        DefaultColors.Black,
-                        UiColors.MapLabel
-                    );
+                        surface.DrawStringCentered(
+                            new Position(screenPosition.X, screenPosition.Y - 2),
+                            label,
+                            DefaultColors.Black,
+                            UiColors.MapLabel
+                        );
 
-                    var half = (int) (site.Name.Length / 2);
-                    for (var ix = 0; ix < site.Name.Length; ++ix)
-                    {
-                        var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
-                        surface.SetUiShadow(pos, true);
+                        var half = (int) (label.Length / 2);
+                        for (var ix = 0; ix < label.Length; ++ix)
+                        {
+                            var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
+                            surface.SetUiShadow(pos, true);
+                        }
                     }
                 }
             }

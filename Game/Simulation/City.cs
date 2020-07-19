@@ -7,6 +7,7 @@ using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
 using Game.Serialization;
+using Game.Simulation.Modules;
 
 namespace Game.Simulation
 {
@@ -19,8 +20,9 @@ namespace Game.Simulation
     /// The actual in-game title of a city depends on the population - they start out as towns, and will
     /// become cities when the population has grown beyond a certain number.
     /// </remarks>
-    public class City : PopulatedSite
+    public class City : WorldSite
     {
+        #region Properties
         /// <summary>
         /// City names are shown on the world map
         /// </summary>
@@ -34,7 +36,7 @@ namespace Game.Simulation
         /// <summary>
         /// How many associated villages this city can support
         /// </summary>
-        public int VillageCapacity => 3 + (int)(3 * Math.Min(1.0f, this.Population / 75000.0f));
+        public int VillageCapacity => 3 + (int)(3 * Math.Min(1.0f, this.Population.Population / 75000.0f));
 
         /// <summary>
         /// Whether this city can support an additional village
@@ -45,7 +47,7 @@ namespace Game.Simulation
         /// The radius of the influence sphere this city has. Associated villages
         /// can only be placed inside this sphere.
         /// </summary>
-        public int InfluenceRadius => 5 + (this.Population / 20000);
+        public int InfluenceRadius => 5 + (this.Population.Population / 20000);
         
         /// <summary>
         /// The current influence circle
@@ -56,6 +58,19 @@ namespace Game.Simulation
         /// Whether this citiy is the capital of its associated province
         /// </summary>
         public bool IsProvinceCapital => (this.AssociatedProvince != null) && (this.AssociatedProvince.Capital == this);
+        #endregion
+        
+        #region Modules
+        /// <summary>
+        /// The population controller module associated with this site
+        /// </summary>
+        protected PopulationController Population { get; set; }
+        
+        /// <summary>
+        /// The map label renderer
+        /// </summary>
+        protected MapLabelRenderer LabelRenderer { get; set; }
+        #endregion
         
         /// <summary>
         /// All villages associated with this city
@@ -80,8 +95,12 @@ namespace Game.Simulation
         /// Create new city with given name
         /// </summary>
         public City(string name, Position position, int population)
-            : base(name, position, GrowthStages, population)
+            : base(name, position)
         {
+            this.Population = new PopulationController(this, GrowthStages, population);
+            this.AddModule(this.Population);
+            this.LabelRenderer = new MapLabelRenderer(this, MapLabelStyle.Normal);
+            this.AddModule(this.LabelRenderer);
         }
 
         /// <summary>
@@ -97,6 +116,9 @@ namespace Game.Simulation
         /// </summary>
         public override void Update(int weeks)
         {
+            if (this.IsProvinceCapital && this.LabelRenderer.LabelStyle != MapLabelStyle.Capital)
+                this.LabelRenderer.LabelStyle = MapLabelStyle.Capital;
+            
             foreach (var village in this.AssociatedVillages)
             {
                 village.Update(weeks);
