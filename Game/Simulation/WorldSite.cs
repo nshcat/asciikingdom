@@ -34,12 +34,7 @@ namespace Game.Simulation
         /// A descriptive string for the type of this world site, such as "City" or "Village"
         /// </summary>
         public abstract string TypeDescriptor { get; }
-        
-        /// <summary>
-        /// Whether this sites name should be shown on the world map
-        /// </summary>
-        public abstract bool ShowName { get; }
-        
+
         /// <summary>
         /// The tile used to represent this site on the world map
         /// </summary>

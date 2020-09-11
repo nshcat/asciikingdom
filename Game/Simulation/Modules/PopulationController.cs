@@ -6,10 +6,22 @@ using Engine.Graphics;
 namespace Game.Simulation.Modules
 {
     /// <summary>
+    /// Delegate used for PopulationChanged event in <see cref="PopulationController"/>
+    /// </summary>
+    /// <param name="source">The event source</param>
+    /// <param name="newPopulation">The new population value</param>
+    public delegate void PopulationChangedHandler(PopulationController source, int newPopulation);
+    
+    /// <summary>
     /// A site module that handles population growth
     /// </summary>
     public class PopulationController : SiteModule
     {
+        /// <summary>
+        /// Event that is fired every time the population number changes
+        /// </summary>
+        public event PopulationChangedHandler PopulationChanged;
+        
         /// <summary>
         /// The current population count
         /// </summary>

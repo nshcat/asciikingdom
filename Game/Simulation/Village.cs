@@ -14,14 +14,20 @@ namespace Game.Simulation
     {
         #region Properties
         /// <summary>
-        /// Village names are not shown on the world map
-        /// </summary>
-        public override bool ShowName => false;
-
-        /// <summary>
         /// The city this village is associated with
         /// </summary>
         public City AssociatedCity { get; set; }
+
+        /// <summary>
+        /// Current site tile
+        /// </summary>
+        public override Tile Tile => this.Population.CurrentTile;
+
+        /// <summary>
+        /// Current site label
+        /// </summary>
+        public override string TypeDescriptor => this.Population.CurrentLabel;
+
         #endregion
         
         #region Modules
@@ -54,7 +60,6 @@ namespace Game.Simulation
     
             this.Population = new PopulationController(this, GrowthStages, initialPopulation);
             this.AddModule(this.Population);
-            this.AddModule(new MapLabelRenderer(this, MapLabelStyle.Normal));
         }
         
         public override void Update(int weeks)
@@ -71,7 +76,7 @@ namespace Game.Simulation
             {
                 Id = this.Id,
                 Name = this.Name,
-                Population = this.Population,
+                Population = this.Population.Population,
                 Position = this.Position
             };
         }

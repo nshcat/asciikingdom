@@ -8,8 +8,9 @@ namespace Game.Serialization
     /// <summary>
     /// Serialization view for cities
     /// </summary>
-    public class CityView : PopulatedSiteView
+    public class CityView : SiteView
     {
+        public int Population { get; set; }
         public List<VillageView> AssociatedVillages { get; set; }
         
         public City MakeObject()

@@ -24,14 +24,19 @@ namespace Game.Simulation
     {
         #region Properties
         /// <summary>
-        /// City names are shown on the world map
-        /// </summary>
-        public override bool ShowName => true;
-        
-        /// <summary>
         /// The province this city is associated with
         /// </summary>
         public Province AssociatedProvince { get; set; }
+
+        /// <summary>
+        /// Current tile for this site
+        /// </summary>
+        public override Tile Tile => this.Population.CurrentTile;
+
+        /// <summary>
+        /// Current site label
+        /// </summary>
+        public override string TypeDescriptor => this.Population.CurrentLabel;
 
         /// <summary>
         /// How many associated villages this city can support
@@ -135,7 +140,7 @@ namespace Game.Simulation
             return new CityView
             {
                 Id = this.Id,
-                Population = this.Population,
+                Population = this.Population.Population,
                 Position = this.Position,
                 Name = this.Name,
                 AssociatedVillages = villages
