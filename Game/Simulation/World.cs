@@ -99,6 +99,7 @@ namespace Game.Simulation
             this.BuildOverviewTemperature();
             this.BuildOverviewDrainage();
             this.BuildOverviewDiscovered();
+            this.CalcOverviewRawValues();
         }
         
         /// <summary>
@@ -123,6 +124,16 @@ namespace Game.Simulation
             this.BuildOverviewHelper(this.DetailedMap.Rainfall, this.OverviewMap.Rainfall);
         }
         
+        /// <summary>
+        /// Build overview map raw value array based on detailed map
+        /// </summary>
+        protected void CalcOverviewRawValues()
+        {
+            this.BuildOverviewHelper(this.DetailedMap.RawDrainage, this.OverviewMap.RawDrainage);
+            this.BuildOverviewHelper(this.DetailedMap.RawRainfall, this.OverviewMap.RawRainfall);
+            this.BuildOverviewHelper(this.DetailedMap.RawTemperature, this.OverviewMap.RawTemperature);
+        }
+
         /// <summary>
         /// Build overview map drainage map based on the detailed map
         /// </summary>
@@ -217,7 +228,22 @@ namespace Game.Simulation
                     }
                 }
             }
-            
+
+            // Write raw values
+            var rawPath = Path.Combine(prefix, "raw.bin");
+            using (var writer = new BinaryWriter(File.Open(rawPath, FileMode.Create)))
+            {
+                for (var ix = 0; ix < this.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < this.Dimensions.Height; ++iy)
+                    {
+                        writer.Write(this.DetailedMap.RawDrainage[ix, iy]);
+                        writer.Write(this.DetailedMap.RawRainfall[ix, iy]);
+                        writer.Write(this.DetailedMap.RawTemperature[ix, iy]);
+                    }
+                }
+            }
+
             // Write discovery data
             var discoveryPath = Path.Combine(prefix, "discovery.bin");
             using (var writer = new BinaryWriter(File.Open(discoveryPath, FileMode.Create)))
@@ -279,7 +305,22 @@ namespace Game.Simulation
                     }
                 }
             }
-            
+
+            // Load raw values
+            var rawPath = Path.Combine(prefix, "raw.bin");
+            using (var reader = new BinaryReader(File.Open(rawPath, FileMode.Open)))
+            {
+                for (var ix = 0; ix < metadata.Dimensions.Width; ++ix)
+                {
+                    for (var iy = 0; iy < metadata.Dimensions.Height; ++iy)
+                    {
+                        world.DetailedMap.RawDrainage[ix, iy] = reader.ReadSingle();
+                        world.DetailedMap.RawRainfall[ix, iy] = reader.ReadSingle();
+                        world.DetailedMap.RawTemperature[ix, iy] = reader.ReadSingle();
+                    }
+                }
+            }
+
             // Load discovery state
             var discoveryPath = Path.Combine(prefix, "discovery.bin");
             using (var reader = new BinaryReader(File.Open(discoveryPath, FileMode.Open)))

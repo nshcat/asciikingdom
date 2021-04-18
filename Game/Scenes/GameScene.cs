@@ -59,7 +59,8 @@ namespace Game.Scenes
             Select,
             GenerateTestData,
             IncreaseGameSpeed,
-            DecreaseGameSpeed
+            DecreaseGameSpeed,
+            ShowCropFertility
         }
 
         /// <summary>
@@ -85,7 +86,12 @@ namespace Game.Scenes
             /// <summary>
             /// Naming the site that is currently being placed
             /// </summary>
-            NamePlacement
+            NamePlacement,
+
+            /// <summary>
+            /// Show crop fertility
+            /// </summary>
+            CropFertility,
         }
 
         /// <summary>
@@ -206,6 +212,11 @@ namespace Game.Scenes
         /// The world terrain type currently under the cursor
         /// </summary>
         private TerrainType _cursorTerrainType;
+
+        /// <summary>
+        /// Crop type fertility info is currently shown for
+        /// </summary>
+        private CropType _cropType;
         
         /// <summary>
         /// Whether there are any provinces in the current state
@@ -338,6 +349,7 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.PlaceCity, KeyPressType.Down, Key.C, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.PlaceVillage, KeyPressType.Down, Key.V, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P),
+                new InputAction<GameAction>(GameAction.ShowCropFertility, KeyPressType.Down, Key.F),
                 new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape),
                 new InputAction<GameAction>(GameAction.Select, KeyPressType.Down, Key.Enter),
                 new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft),
@@ -365,10 +377,36 @@ namespace Game.Scenes
         }
         
         /// <summary>
+        /// Draw crop fertility side bar
+        /// </summary>
+        private void DrawCropFertility()
+        {
+            if (this._uiState != GameUiState.CropFertility)
+                return;
+
+            var position = this.MenuTopLeft;
+
+            this._surface.DrawString(
+                position,
+                $"Crop fertility: {this._cropType.Name.ToLower()}",
+                UiColors.ActiveText,
+                DefaultColors.Black
+            );
+
+            position += new Position(0, 2);
+
+            foreach (var entry in this._fertilityMenu)
+                position = entry.Render(this._surface, this._uiState, position);
+        }
+
+        /// <summary>
         /// Draw the game action menu
         /// </summary>
         private void DrawMenu()
         {
+            if (!this._gameMenuStates.Contains(this._uiState))
+                return;
+
             var position = this.MenuTopLeft;
 
             foreach (var entry in this._gameMenu)
@@ -587,12 +625,36 @@ namespace Game.Scenes
             this._surface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._terrainView.CursorPosition)).Name,
                 UiColors.ActiveText, DefaultColors.Black);
 
+            if (this._uiState == GameUiState.CropFertility)
+            {
+                var X = this._terrainView.CursorPosition.X;
+                var Y = this._terrainView.CursorPosition.Y;
+
+                if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.Terrain[X, Y]))
+                {
+                    var temperature = this._state.World.DetailedMap.RawTemperature[X, Y];
+                    var drainage = this._state.World.DetailedMap.RawDrainage[X, Y];
+                    var rainfall = this._state.World.DetailedMap.RawRainfall[X, Y];
+
+                    var fertility = this._cropType.FertilityFactors.CalculateFertilityFactor(temperature, drainage, rainfall);
+
+                    this._surface.DrawString(
+                        position + new Position(0, 1),
+                        $"Fertility: {(int)(fertility * 100.0)}%",
+                        UiColors.ActiveText, DefaultColors.Black);
+
+                    position += new Position(0, 1);
+                }
+            }
+
             if (this._terrainView.ShowResources &&
                 this._state.World.DetailedMap.Resources.ContainsKey(this._terrainView.CursorPosition))
             {
                 var resourceType = this._state.World.DetailedMap.Resources[this._terrainView.CursorPosition];
                 this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
                     UiColors.ActiveText, DefaultColors.Black);
+
+                position += new Position(0, 1);
             }
         }
 
@@ -603,7 +665,8 @@ namespace Game.Scenes
         {
             if (this._uiState == GameUiState.Main
                 || this._uiState == GameUiState.PlaceCity
-                || this._uiState == GameUiState.PlaceVillage)
+                || this._uiState == GameUiState.PlaceVillage
+                || this._uiState == GameUiState.CropFertility)
             {
                 this._terrainView.MoveCursor(direction, amount);
             }
@@ -683,6 +746,17 @@ namespace Game.Scenes
 
                     break;
                 }
+                case GameAction.ShowCropFertility:
+                {
+                    if(this._uiState == GameUiState.Main)
+                    {
+                        this.PauseGame();
+                        this._uiState = GameUiState.CropFertility;
+                        this._cropType = CropTypeManager.Instance.GetType("crop_wheat");
+                        this._terrainView.CurrentOverlay = Optional<MapOverlay>.Of(new FertilityOverlay(this._cropType));
+                    }
+                    break;
+                }
                 case GameAction.PlaceCity:
                 {
                     if (this._uiState == GameUiState.Main)
@@ -736,11 +810,13 @@ namespace Game.Scenes
                 {
                     if (this._uiState == GameUiState.PlaceCity
                         || this._uiState == GameUiState.PlaceVillage
-                        || this._uiState == GameUiState.NamePlacement)
+                        || this._uiState == GameUiState.NamePlacement
+                        || this._uiState == GameUiState.CropFertility)
                     {
                         this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
                         this._terrainView.CursorMode = CursorMode.Normal;
                         this._uiState = GameUiState.Main;
+                        this._terrainView.CurrentOverlay = Optional<MapOverlay>.Empty;
                     }
 
                     break;
@@ -798,11 +874,17 @@ namespace Game.Scenes
                 }
                 case GameAction.IncreaseGameSpeed:
                 {
+                    if (this._uiState != GameUiState.Main)
+                        break;
+
                     this.ModifyGameSpeed(1);
                     break;
                 }
                 case GameAction.DecreaseGameSpeed:
                 {
+                    if (this._uiState != GameUiState.Main)
+                        break;
+
                     this.ModifyGameSpeed(-1);
                     break;
                 }
@@ -820,6 +902,7 @@ namespace Game.Scenes
             this.DrawMenu();
             this.DrawBorders();
             this.DrawNameSiteWindow();
+            this.DrawCropFertility();
             
             this._surface.Render(rp);
         }

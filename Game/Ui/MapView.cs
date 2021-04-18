@@ -52,6 +52,17 @@ namespace Game.Ui
         public bool DrawFogOfWar { get; set; } = true;
 
         /// <summary>
+        /// The currently active map overlay, if any
+        /// </summary>
+        public Optional<MapOverlay> CurrentOverlay { get; set; }
+            = Optional<MapOverlay>.Empty;
+
+        /// <summary>
+        /// Timer used to blink overlay
+        /// </summary>
+        protected ToggleTimer OverlayTimer { get; set; } = new ToggleTimer(1.0, true);
+
+        /// <summary>
         /// The map data to visualize. This depends on the current <see cref="DisplayMode"/>.
         /// </summary>
         protected Tile[,] MapData
@@ -105,6 +116,19 @@ namespace Game.Ui
         /// </summary>
         protected override void RenderCell(Surface surface, Position worldPosition, Position screenPosition)
         {
+            // Check if need to draw the map overlay
+            if(this.CurrentOverlay.HasValue
+                && (!this.CurrentOverlay.Value.Blinking || this.OverlayTimer.Flag))
+            {
+                var overlayTile = this.CurrentOverlay.Value.DetermineTile(this.Map, worldPosition);
+
+                if (overlayTile.HasValue)
+                {
+                    surface.SetTile(screenPosition, overlayTile.Value);
+                    return;
+                }
+            }
+
             if (this.DrawFogOfWar && !this.Map.Discovered[worldPosition.X, worldPosition.Y])
                 return;
             
@@ -120,6 +144,16 @@ namespace Game.Ui
             {
                 surface.SetTile(screenPosition, this.MapData[worldPosition.X, worldPosition.Y]);
             }
+        }
+
+        /// <summary>
+        /// Update logic
+        /// </summary>
+        public override void Update(double deltaTime)
+        {
+            base.Update(deltaTime);
+
+            this.OverlayTimer.Update(deltaTime);
         }
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace Game.Maths
         /// <param name="inputRange">The range of the input value</param>
         /// <param name="outputRange">The desired output range</param>
         /// <returns>Value mapped into the output range</returns>
-        public static float Map(float value, Range inputRange, Range outputRange)
+        public static float Map(float value, FloatRange inputRange, FloatRange outputRange)
         {
             if (value > inputRange.Maximum)
                 return outputRange.Maximum;
@@ -27,9 +27,54 @@ namespace Game.Maths
         }
 
         /// <summary>
+        /// Perform a mapping from <paramref name="inputRange"/> to <paramref name="outputRange"/>, with
+        /// the maximum value of <paramref name="outputRange"/> being fixed to the center of the <paramref name="inputRange"/>.
+        /// Values outside of <paramref name="inputRange"/> are mapped to the lower bound of <paramref name="outputRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// The calculation follows the following graph:
+        /// 
+        ///      ^
+        /// oMax-|     ^
+        ///      |    / \
+        ///      |   /   \
+        /// oMin-|__/     \____
+        ///      +------------->
+        ///     iMin^      ^iMax
+        ///    
+        /// </remarks>
+        /// <param name="value">The input value to be mapped</param>
+        /// <param name="inputRange">The range of valid input values</param>
+        /// <param name="outputRange">The target output range to map value to</param>
+        /// <returns>Value mapped into <paramref name="outputRange"/>.</returns>
+        public static float PeakMap(float value, FloatRange inputRange, FloatRange outputRange)
+        {
+            var center = (float)((inputRange.Maximum - inputRange.Minimum) / 2.0f) + inputRange.Minimum;
+
+            if(value <= center)
+            {
+                // Map on rising slope
+                return Map(value, new FloatRange(inputRange.Minimum, center), outputRange);
+            }
+            else
+            {
+                // Map on falling slope
+                return Map(value, new FloatRange(center, inputRange.Maximum), outputRange.Flipped);
+            }
+        }
+
+        /// <summary>
         /// Clamp value to range.
         /// </summary>
         public static int Clamp(int value, int minimum, int maximum)
+        {
+            return Math.Max(minimum, Math.Min(maximum, value));
+        }
+
+        /// <summary>
+        /// Clamp value to range.
+        /// </summary>
+        public static float Clamp(float value, float minimum, float maximum)
         {
             return Math.Max(minimum, Math.Min(maximum, value));
         }

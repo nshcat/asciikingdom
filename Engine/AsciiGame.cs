@@ -128,10 +128,15 @@ namespace Engine
         protected override void OnResize(ResizeEventArgs e)
         {
             var newSize = new Size(this.Size.X, this.Size.Y);
-            GL.Viewport(0, 0, newSize.Width, newSize.Height);
-            this.Projection.Refresh(newSize);
-            this.OnReshape(newSize);
-            base.OnResize(e);
+
+            if (!newSize.IsEmpty)
+            {
+                GL.Viewport(0, 0, newSize.Width, newSize.Height);
+                this.Projection.Refresh(newSize);
+                this.OnReshape(newSize);
+            }
+            
+            base.OnResize(e); 
         }
 
         #endregion

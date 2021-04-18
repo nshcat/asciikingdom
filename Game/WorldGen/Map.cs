@@ -96,8 +96,8 @@ namespace Game.WorldGen
                 }
             }
             
-            var inputRange = new Maths.Range(min, max);
-            var outputRange = new Maths.Range(0.0f, 1.0f);
+            var inputRange = new Maths.FloatRange(min, max);
+            var outputRange = new Maths.FloatRange(0.0f, 1.0f);
 
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {

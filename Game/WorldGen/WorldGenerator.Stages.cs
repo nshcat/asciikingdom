@@ -10,7 +10,7 @@ using Game.Simulation;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
-using Range = Game.Maths.Range;
+using Range = Game.Maths.FloatRange;
 
 namespace Game.WorldGen
 {
@@ -54,6 +54,9 @@ namespace Game.WorldGen
             world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
             world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
             world.DetailedMap.Resources = resourceGenerator.Resources;
+            world.DetailedMap.RawRainfall = rainfallMap.Values;
+            world.DetailedMap.RawDrainage = drainageMap.Values;
+            world.DetailedMap.RawTemperature = temperatureMap.Values;
 
             this.SignalNextStage("Updating terrain tiles..", 0.85);
             world.UpdateTiles();
@@ -63,9 +66,7 @@ namespace Game.WorldGen
             
             this.SignalNextStage("Building overview map..", 1.0);
             world.BuildOverview();
-            
-            
-
+              
             // Signal that world generation has finished
             this.SignalFinished(world);
         }

@@ -122,10 +122,28 @@ namespace Game.Scenes
         private List<MenuEntry> _gameMenu;
 
         /// <summary>
+        /// States where the game menu is active
+        /// </summary>
+        private HashSet<GameUiState> _gameMenuStates;
+
+        /// <summary>
+        /// Menu shown in crop fertility mode
+        /// </summary>
+        private List<MenuEntry> _fertilityMenu;
+
+        /// <summary>
         /// Initialize game menu
         /// </summary>
         private void InitializeMenu()
         {
+            this._gameMenuStates = new HashSet<GameUiState>
+            {
+                GameUiState.Main,
+                GameUiState.NamePlacement,
+                GameUiState.PlaceCity,
+                GameUiState.PlaceVillage
+            };
+
             this._gameMenu = new List<MenuEntry>
             {
                 new MenuEntry
@@ -163,6 +181,11 @@ namespace Game.Scenes
                 },
                 new MenuEntry
                 {
+                    Keybind = 'F',
+                    Label = "Show crop fertility"
+                },
+                new MenuEntry
+                {
                     Keybind = 'T',
                     Label = "Gen Test Data"
                 },
@@ -170,6 +193,16 @@ namespace Game.Scenes
                 {
                     Keybind = 'Q',
                     Label = "Save and quit"
+                }
+            };
+
+            this._fertilityMenu = new List<MenuEntry>
+            {
+                new MenuEntry
+                {
+                    Keybind = 'C',
+                    Label = "Select crop",
+                    UiState = GameUiState.CropFertility
                 }
             };
         }

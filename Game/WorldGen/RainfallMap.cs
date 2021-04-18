@@ -9,7 +9,7 @@ using OpenToolkit.Graphics.ES11;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
-using Range = Game.Maths.Range;
+using FloatRange = Game.Maths.FloatRange;
 
 namespace Game.WorldGen
 {
@@ -193,8 +193,8 @@ namespace Game.WorldGen
         protected void GenerateShadowLine(int y)
         {
             var currentRain = this.InitialRainAmount;
-            var sourceRange = new Range(this.Elevation.SeaThreshold, this.Elevation.LandThreshold);
-            var destRange = new Range(this.MinRainLoss, this.MaxRainLoss);
+            var sourceRange = new FloatRange(this.Elevation.SeaThreshold, this.Elevation.LandThreshold);
+            var destRange = new FloatRange(this.MinRainLoss, this.MaxRainLoss);
 
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
