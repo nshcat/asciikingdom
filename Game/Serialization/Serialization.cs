@@ -18,16 +18,16 @@ namespace Game.Serialization
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
                 WriteIndented = true
             };
-        
+
         /// <summary>
         /// Serialize object to JSON file at given path
         /// </summary>
         public static void SerializeToFile<T>(T obj, string destinationPath, JsonSerializerOptions options = null)
         {
-            var text = JsonSerializer.Serialize<T>(obj, options);
+            var text = JsonSerializer.Serialize(obj, options);
             File.WriteAllText(destinationPath, text);
         }
-        
+
         /// <summary>
         /// Deserialize object from JSON file at given path
         /// </summary>

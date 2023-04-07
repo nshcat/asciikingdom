@@ -1,25 +1,26 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using Game.Data;
 
-namespace Game.Simulation.Modules
+namespace Game.Simulation.Sites.Modules
 {
     /// <summary>
     /// A site module that implements storing of products
     /// </summary>
+    [SiteModuleId("sitemodule.productstorage")]
     public class ProductStorage : SiteModule
     {
         /// <summary>
         /// Public, read-only view on the products stored in this module.
         /// </summary>
-        public IReadOnlyDictionary<ProductType, double> AllStoredProducts => this.StoredProducts;
-        
+        public IReadOnlyDictionary<ProductType, double> AllStoredProducts => StoredProducts;
+
         /// <summary>
         /// All currently stored products and their amount, in tons.
         /// </summary>
         protected Dictionary<ProductType, double> StoredProducts { get; set; }
             = new Dictionary<ProductType, double>();
-        
+
         public ProductStorage(WorldSite parentSite)
             : base(parentSite)
         {
@@ -32,18 +33,18 @@ namespace Game.Simulation.Modules
         /// <param name="amount">Amount of product to deposit, in tons</param>
         public void Deposit(ProductType type, double amount)
         {
-            if(amount < 0.0)
+            if (amount < 0.0)
                 throw new ArgumentException("Can't deposit negative product amount");
-            
-            if(amount == 0)
+
+            if (amount == 0)
                 throw new ArgumentException("Can't deposit zero product amount");
-            
-            if(!this.Has(type))
-                this.Add(type, amount);
+
+            if (!Has(type))
+                Add(type, amount);
             else
             {
-                var oldValue = this.StoredProducts[type];
-                this.StoredProducts[type] = oldValue + amount;
+                var oldValue = StoredProducts[type];
+                StoredProducts[type] = oldValue + amount;
             }
         }
 
@@ -55,16 +56,16 @@ namespace Game.Simulation.Modules
         /// <param name="amount">Amount to add</param>
         public void Add(ProductType type, double amount)
         {
-            if(amount < 0.0)
+            if (amount < 0.0)
                 throw new ArgumentException("Can't add negative product amount");
-            
-            if(amount == 0)
+
+            if (amount == 0)
                 throw new ArgumentException("Can't add zero product amount");
-            
-            if(this.Has(type))
+
+            if (Has(type))
                 throw new InvalidOperationException($"Storage already contains entry of type {type.Identifier}");
-            
-            this.StoredProducts.Add(type, amount);
+
+            StoredProducts.Add(type, amount);
         }
 
         /// <summary>
@@ -73,7 +74,7 @@ namespace Game.Simulation.Modules
         /// <param name="type">Type of product to check for</param>
         public bool Has(ProductType type)
         {
-            return this.StoredProducts.ContainsKey(type);
+            return StoredProducts.ContainsKey(type);
         }
 
         /// <summary>
@@ -86,10 +87,10 @@ namespace Game.Simulation.Modules
             if (amount <= 0.0)
                 return false;
 
-            if (!this.Has(type))
+            if (!Has(type))
                 return false;
 
-            return this.GetAmount(type) >= amount;
+            return GetAmount(type) >= amount;
         }
 
         /// <summary>
@@ -99,16 +100,16 @@ namespace Game.Simulation.Modules
         /// <param name="amount">Amount of product to withdraw</param>
         public void Withdraw(ProductType type, double amount)
         {
-            if(!this.CanWithdraw(type, amount))
+            if (!CanWithdraw(type, amount))
                 throw new InvalidOperationException($"Can't withdraw {amount}t of product type {type.Identifier}");
 
-            var currentAmount = this.GetAmount(type);
+            var currentAmount = GetAmount(type);
             var newAmount = currentAmount - amount;
 
             if (newAmount > 0.0)
-                this.StoredProducts[type] = 0.0;
+                StoredProducts[type] = 0.0;
             else
-                this.StoredProducts.Remove(type);
+                StoredProducts.Remove(type);
         }
 
         /// <summary>
@@ -117,10 +118,10 @@ namespace Game.Simulation.Modules
         /// <param name="type">Type of product to retrieve amount of</param>
         public double GetAmount(ProductType type)
         {
-            if (!this.Has(type))
+            if (!Has(type))
                 return 0.0;
 
-            return this.StoredProducts[type];
+            return StoredProducts[type];
         }
 
         /// <summary>
@@ -129,7 +130,7 @@ namespace Game.Simulation.Modules
         /// <param name="type">Type of product to remove</param>
         public void Remove(ProductType type)
         {
-            this.StoredProducts.Remove(type);
+            StoredProducts.Remove(type);
         }
 
         public override void Update(int weeks)
@@ -137,4 +138,4 @@ namespace Game.Simulation.Modules
             // Do nothing
         }
     }
-}
+}*/

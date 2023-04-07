@@ -1,6 +1,7 @@
 using System;
+using Game.Serialization;
 
-namespace Game.Simulation.Modules
+namespace Game.Simulation.Sites.Modules
 {
     /// <summary>
     /// Enumeration describing the different map label rendering styles
@@ -11,28 +12,33 @@ namespace Game.Simulation.Modules
         /// Just the site name
         /// </summary>
         Normal,
-        
+
         /// <summary>
         /// Site name, surrounded by two stars. Used for capitals
         /// </summary>
         Capital
     }
-    
+
     /// <summary>
     /// Module that renders the map label for the associated site
     /// </summary>
+    [SiteModuleId("sitemodule.maplabelrenderer")]
     public class MapLabelRenderer : SiteModule
     {
+        #region Properties
         /// <summary>
         /// The current map label style used to render the label
         /// </summary>
         public MapLabelStyle LabelStyle { get; set; }
+            = MapLabelStyle.Normal;
 
         /// <summary>
         /// The map label for the associated site
         /// </summary>
-        public string Label => this.MakeLabel();
-        
+        public string Label => MakeLabel();
+        #endregion
+
+        #region Constructors
         /// <summary>
         /// Create new map label renderer instance
         /// </summary>
@@ -41,29 +47,57 @@ namespace Game.Simulation.Modules
         public MapLabelRenderer(WorldSite parentSite, MapLabelStyle style)
             : base(parentSite)
         {
-            this.LabelStyle = style;
+            LabelStyle = style;
         }
-        
+
+        public MapLabelRenderer(WorldSite parentSite)
+            : base(parentSite)
+        {
+
+        }
+        #endregion
+
+        #region Game Logic Methods
         public override void Update(int weeks)
         {
             // Do nothing
         }
+        #endregion
 
+        #region De/Serialization Methods
+        public override void Serialize(SiteSerializationHelper helper)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Deserialize(SiteDeserializationHelper helper)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Initialize(SiteDeserializationHelper helper)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+
+        #region Protected Methods
         /// <summary>
         /// Create the site label based on the current map label style.
         /// </summary>
         protected string MakeLabel()
         {
-            switch (this.LabelStyle)
+            switch (LabelStyle)
             {
                 case MapLabelStyle.Capital:
-                {
-                    var marker = (char) 15;
-                    return $"{marker}{this.ParentSite.Name}{marker}";
-                }
+                    {
+                        var marker = (char)15;
+                        return $"{marker}{ParentSite.Name}{marker}";
+                    }
                 default:
-                    return this.ParentSite.Name;
+                    return ParentSite.Name;
             }
         }
+        #endregion
     }
 }

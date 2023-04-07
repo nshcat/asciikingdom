@@ -7,9 +7,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Engine.Core;
 using Game.Data;
-using Game.Serialization;
 using Game.Utility;
 using OpenToolkit.Graphics.OpenGL;
+using Game.Serialization;
 
 namespace Game.Simulation
 {

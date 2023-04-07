@@ -1,0 +1,18 @@
+[
+  {
+    "identifier": "site_city",
+    "typedesc": "City",
+    "modules": [
+      {
+        "type": "sitemodule.fixeddrawer",
+        "init": {
+          "tile": {
+            "front": "#CDD2D2",
+            "back": "#000000",
+            "glyph": 35
+          }
+        }
+      }
+    ]
+  }
+]

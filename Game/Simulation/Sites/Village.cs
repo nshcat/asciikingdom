@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Serialization;
-using Game.Simulation.Modules;
+using Game.Simulation.Sites.Modules;
 
-namespace Game.Simulation
+namespace Game.Simulation.Sites
 {
     /// <summary>
     /// A village is a small settlement associated with a city which produces basic, raw resources and is
@@ -21,22 +21,22 @@ namespace Game.Simulation
         /// <summary>
         /// Current site tile
         /// </summary>
-        public override Tile Tile => this.Population.CurrentTile;
+        public override Tile Tile => Population.CurrentTile;
 
         /// <summary>
         /// Current site label
         /// </summary>
-        public override string TypeDescriptor => this.Population.CurrentLabel;
+        public override string TypeDescriptor => Population.CurrentLabel;
 
         #endregion
-        
+
         #region Modules
         /// <summary>
         /// The population controller module associated with this site
         /// </summary>
         protected PopulationController Population { get; set; }
         #endregion
-        
+
         /// <summary>
         /// List of village growth stages
         /// </summary>
@@ -47,26 +47,26 @@ namespace Game.Simulation
             new SiteGrowthStage(50, "Small Village", new Tile(145, Color.FromHex("#CDD2D2"))),
             new SiteGrowthStage(100, "Village", new Tile(146, Color.FromHex("#CDD2D2"))),
         };
-        
+
         /// <summary>
         /// Create a bew village with given name, position, initial population and associated city
         /// </summary>
         public Village(string name, Position position, int initialPopulation, City associatedCity)
             : base(name, position)
         {
-            this.Name = name;
-            this.Position = position;
-            this.AssociatedCity = associatedCity;
-    
-            this.Population = new PopulationController(this, GrowthStages, initialPopulation);
-            this.AddModule(this.Population);
+            Name = name;
+            Position = position;
+            AssociatedCity = associatedCity;
+
+            Population = new PopulationController(this, GrowthStages, initialPopulation);
+            this.AddModule(Population);
         }
-        
+
         public override void Update(int weeks)
         {
             // TODO
         }
-        
+
         /// <summary>
         /// Create a simulation view from this object
         /// </summary>
@@ -74,11 +74,11 @@ namespace Game.Simulation
         {
             return new VillageView
             {
-                Id = this.Id,
-                Name = this.Name,
-                Population = this.Population.Population,
-                Position = this.Position
+                Id = Id,
+                Name = Name,
+                Population = Population.Population,
+                Position = Position
             };
         }
     }
-}
+}*/

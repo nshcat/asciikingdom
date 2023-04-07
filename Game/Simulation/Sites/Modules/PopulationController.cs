@@ -1,9 +1,9 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using System.Linq;
 using Engine.Graphics;
 
-namespace Game.Simulation.Modules
+namespace Game.Simulation.Sites.Modules
 {
     /// <summary>
     /// Delegate used for PopulationChanged event in <see cref="PopulationController"/>
@@ -11,17 +11,18 @@ namespace Game.Simulation.Modules
     /// <param name="source">The event source</param>
     /// <param name="newPopulation">The new population value</param>
     public delegate void PopulationChangedHandler(PopulationController source, int newPopulation);
-    
+
     /// <summary>
     /// A site module that handles population growth
     /// </summary>
+    [SiteModuleId("sitemodule.populationcontroller")]
     public class PopulationController : SiteModule
     {
         /// <summary>
         /// Event that is fired every time the population number changes
         /// </summary>
         public event PopulationChangedHandler PopulationChanged;
-        
+
         /// <summary>
         /// The current population count
         /// </summary>
@@ -30,18 +31,18 @@ namespace Game.Simulation.Modules
         /// <summary>
         /// Retrieve the current label for the associated site based on the current population count.
         /// </summary>
-        public string CurrentLabel => this.GetCurrentLabel();
+        public string CurrentLabel => GetCurrentLabel();
 
         /// <summary>
         /// Retrieve the current tile for the associated site based on the current population count.
         /// </summary>
-        public Tile CurrentTile => this.GetCurrentTile();
-        
+        public Tile CurrentTile => GetCurrentTile();
+
         /// <summary>
         /// All growth stages for the associated site
         /// </summary>
         public List<SiteGrowthStage> GrowthStages { get; protected set; }
-        
+
         /// <summary>
         /// Create new population controller
         /// </summary>
@@ -49,11 +50,11 @@ namespace Game.Simulation.Modules
             WorldSite parentSite,
             IEnumerable<SiteGrowthStage> stages,
             int initialPopulation
-        ) 
+        )
             : base(parentSite)
         {
-            this.GrowthStages = stages.OrderBy(x => x.PopulationThreshold).ToList();
-            this.Population = initialPopulation;
+            GrowthStages = stages.OrderBy(x => x.PopulationThreshold).ToList();
+            Population = initialPopulation;
         }
 
         public override void Update(int weeks)
@@ -66,14 +67,14 @@ namespace Game.Simulation.Modules
         /// </summary>
         protected string GetCurrentLabel()
         {
-            if(this.GrowthStages.Count <= 0)
+            if (GrowthStages.Count <= 0)
                 throw new InvalidOperationException("No growth stages associated with this population controller");
-            
+
             var label = "";
 
-            foreach (var stage in this.GrowthStages)
+            foreach (var stage in GrowthStages)
             {
-                if (this.Population >= stage.PopulationThreshold)
+                if (Population >= stage.PopulationThreshold)
                     label = stage.Descriptor;
                 else
                 {
@@ -89,14 +90,14 @@ namespace Game.Simulation.Modules
         /// </summary>
         protected Tile GetCurrentTile()
         {
-            if(this.GrowthStages.Count <= 0)
+            if (GrowthStages.Count <= 0)
                 throw new InvalidOperationException("No growth stages associated with this population controller");
-            
+
             Tile tile = new Tile();
-            
-            foreach (var stage in this.GrowthStages)
+
+            foreach (var stage in GrowthStages)
             {
-                if (this.Population >= stage.PopulationThreshold)
+                if (Population >= stage.PopulationThreshold)
                     tile = stage.Tile;
                 else
                 {
@@ -107,4 +108,4 @@ namespace Game.Simulation.Modules
             return tile;
         }
     }
-}
+}*/

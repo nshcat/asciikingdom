@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
@@ -15,6 +14,7 @@ using Game.Ui;
 using Game.WorldGen;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Windowing.Common.Input;
+using Game.Simulation.Sites;
 
 namespace Game.Scenes
 {
@@ -190,12 +190,12 @@ namespace Game.Scenes
         /// <summary>
         /// City in whose influence radius the cursor is currently in, if any
         /// </summary>
-        private Optional<City> _currentCity = Optional<City>.Empty;
+        //private Optional<City> _currentCity = Optional<City>.Empty;
 
         /// <summary>
         /// Province in which the cursor currently is in
         /// </summary>
-        private Optional<Province> _currentProvince = Optional<Province>.Empty;
+        //private Optional<Province> _currentProvince = Optional<Province>.Empty;
         
         /// <summary>
         /// The world site the cursor is currently on, if any
@@ -221,7 +221,7 @@ namespace Game.Scenes
         /// <summary>
         /// Whether there are any provinces in the current state
         /// </summary>
-        private bool HasAnyProvinces() => this._state.Provinces.Count > 0;
+        //private bool HasAnyProvinces() => this._state.Provinces.Count > 0;
         
         /// <summary>
         /// The top left corner of the game menu
@@ -287,9 +287,9 @@ namespace Game.Scenes
                 this._siteView.CursorPosition = newPosition;
                 
                 this._siteView.RecalulatePositions();
-                
+
                 // Detect if the cursor is currently on a site
-                var sites = this._state.GetAllSites();
+                var sites = this._state.Sites.AllSitesByPosition;
 
                 if (sites.ContainsKey(newPosition))
                 {
@@ -455,7 +455,7 @@ namespace Game.Scenes
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Bad terrain");
             }
-            else if (this._state.GetAllSites().ContainsKey(position))
+            else if (this._state.Sites.AllSitesByPosition.ContainsKey(position))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Site present");
@@ -474,7 +474,7 @@ namespace Game.Scenes
             {
                 case GameUiState.PlaceCity:
                 {
-                    if (this._newProvince && this._currentProvince.HasValue)
+                    /*if (this._newProvince && this._currentProvince.HasValue)
                     {
                         this._canPlace = false;
                         this._placementError= Optional<string>.Of("Inside other province");
@@ -491,7 +491,7 @@ namespace Game.Scenes
                             this._canPlace = false;
                             this._placementError= Optional<string>.Of("City limit reached");
                         }
-                    }
+                    }*/
                     
                     if(this._canPlace)
                         this.CheckGeneralSitePlacement();
@@ -501,7 +501,7 @@ namespace Game.Scenes
                 }
                 case GameUiState.PlaceVillage:
                 {
-                    if (!this._currentCity.HasValue)
+                    /*if (!this._currentCity.HasValue)
                     {
                         this._canPlace = false;
                         this._placementError = Optional<string>.Of("Outside city");
@@ -514,7 +514,7 @@ namespace Game.Scenes
                     else
                     {
                         this.CheckGeneralSitePlacement();
-                    }
+                    }*/
                     
                     this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
 
@@ -598,21 +598,21 @@ namespace Game.Scenes
                 return;
             }
 
-            if (this._currentProvince.HasValue)
+            /*if (this._currentProvince.HasValue)
             {
                 this._surface.DrawString(position, $"Province: {this._currentProvince.Value.Name}",
                     UiColors.ActiveText, DefaultColors.Black);
                 
                 position += new Position(0, 1);
-            }
+            }*/
 
-            if (this._currentCity.HasValue && !(this._cursorSite.HasValue && this._cursorSite.Value is City))
+            /*if (this._currentCity.HasValue && !(this._cursorSite.HasValue && this._cursorSite.Value is City))
             {
                 this._surface.DrawString(position, $"Near city: {this._currentCity.Value.Name}",
                     UiColors.ActiveText, DefaultColors.Black);
                 
                 position += new Position(0, 1);
-            }
+            }*/
 
             if (this._cursorSite.HasValue)
             {
@@ -763,7 +763,7 @@ namespace Game.Scenes
                     {
                         this.PauseGame();
                         this._uiState = GameUiState.PlaceCity;
-                        this._newProvince = !this.HasAnyProvinces();
+                        //this._newProvince = !this.HasAnyProvinces();
                         this._siteView.InfluenceMode = (this._newProvince 
                             ? SiteView.InfluenceDrawMode.InverseProvince 
                             : SiteView.InfluenceDrawMode.Province);
@@ -796,13 +796,13 @@ namespace Game.Scenes
                 }
                 case GameAction.ToggleNewProvince:
                 {
-                    if (this._uiState == GameUiState.PlaceCity && this.HasAnyProvinces())
+                    /*if (this._uiState == GameUiState.PlaceCity && this.HasAnyProvinces())
                     {
                         this._newProvince = !this._newProvince;
                         this._siteView.InfluenceMode = this._newProvince
                             ? SiteView.InfluenceDrawMode.InverseProvince
                             : SiteView.InfluenceDrawMode.Province;
-                    }
+                    }*/
 
                     break;
                 }
@@ -914,18 +914,19 @@ namespace Game.Scenes
         {
             switch (this._currentPlacement)
             {
-                case PlacementType.Village:
+                /*case PlacementType.Village:
                 {
                     var city = this._currentCity.Value;
                     var village = new Village(this._placementNameWindow.Text, this._placementPosition, 10, city);
                     city.AssociatedVillages.Add(village);
                     break;
-                }
+                }*/
                 case PlacementType.City:
                 {
-                    var city = new City(this._placementNameWindow.Text, this._placementPosition, 50);
+                    var city = this._state.Sites.CreateSite("site_city", this._placementPosition);
+                    city.Name = this._placementNameWindow.Text;
 
-                    if (this._newProvince)
+                    /*if (this._newProvince)
                     {
                         var province = new Province(this._provinceName.Value, city);
                         city.AssociatedProvince = province;
@@ -936,7 +937,7 @@ namespace Game.Scenes
                         var province = this._currentProvince.Value;
                         city.AssociatedProvince = province;
                         province.AssociatedCities.Add(city);
-                    }
+                    }*/
                     break;
                 }
                 default:
@@ -982,7 +983,7 @@ namespace Game.Scenes
         /// </summary>
         private void DoCursorHitTest()
         {
-            var cities = this._state.GetAllSites().Where(x => x.Value is City).Select(x => x.Value as City);
+            /*var cities = this._state.GetAllSites().Where(x => x.Value is City).Select(x => x.Value as City);
             
             // City region
             var cityResult = cities.FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
@@ -993,7 +994,7 @@ namespace Game.Scenes
                 .Where(x => x.IsProvinceCapital)
                 .Select(x => x.AssociatedProvince)
                 .FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
-            this._currentProvince = Optional<Province>.SafeOf(provinceResult);
+            this._currentProvince = Optional<Province>.SafeOf(provinceResult);*/
             
             // Terrain
             this._cursorTerrainInfo = this._state.World.DetailedMap.GetTerrainInfo(this._siteView.CursorPosition);
@@ -1007,7 +1008,7 @@ namespace Game.Scenes
         /// </summary>
         private void GenerateTestData()
         {
-            if (this.HasAnyProvinces())
+            /*if (this.HasAnyProvinces())
                 return;
             
             var city = new City("Weymouth", new Position(162, 111), 65000);
@@ -1023,7 +1024,7 @@ namespace Game.Scenes
             var city2 = new City("Bristol", new Position(191, 98), 150000);
             province.AssociatedCities.Add(city2);
                 
-            this._state.Provinces.Add(province);
+            this._state.Provinces.Add(province);*/
         }
 
         /// <summary>

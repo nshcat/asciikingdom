@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,6 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="NLog" Version="4.7.15" />
       <PackageReference Include="SharpNoise" Version="0.12.1.1" />
     </ItemGroup>
     

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Game.Core;
+using Game.Serialization;
 
 namespace Game.Simulation
 {

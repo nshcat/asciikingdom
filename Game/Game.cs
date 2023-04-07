@@ -50,6 +50,7 @@ namespace Game
             ResourceTypeManager.Instance.LoadTypes(this.Resources);
             ProductTypeManager.Instance.LoadTypes(this.Resources);
             CropTypeManager.Instance.LoadTypes(this.Resources);
+            SiteTypeManager.Instance.LoadTypes(this.Resources);
         }
 
         /// <summary>

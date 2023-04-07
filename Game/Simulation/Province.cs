@@ -1,11 +1,10 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Maths;
-using Game.Serialization;
-using Game.Simulation.Modules;
+using Game.Simulation.Sites.Modules;
 
-namespace Game.Simulation
+namespace Game.Simulation.Sites
 {
     /// <summary>
     /// A province is a part of a kingdom, and governs a number of cities and their villages.
@@ -17,7 +16,7 @@ namespace Game.Simulation
         /// Unique identifier of this province
         /// </summary>
         public Guid Id { get; set; }
-        
+
         /// <summary>
         /// Name of the province
         /// </summary>
@@ -37,27 +36,27 @@ namespace Game.Simulation
         /// </remarks>
         public City Capital
         {
-            get => this._capital;
+            get => _capital;
             set
             {
                 // If there is already a capital associated with this province, we are about
                 // to replace it - make sure we are not listening to its population changed event
                 // anymore.
-                if (this._capital != null)
+                if (_capital != null)
                 {
-                    if (this._capital.HasModule<PopulationController>())
+                    if (_capital.HasModule<PopulationController>())
                     {
-                        var controller = this._capital.QueryModule<PopulationController>();
-                        controller.PopulationChanged -= this.OnPopulationChanged;
+                        var controller = _capital.QueryModule<PopulationController>();
+                        controller.PopulationChanged -= OnPopulationChanged;
                     }
                 }
 
-                this._capital = value;
+                _capital = value;
 
-                if (this._capital.HasModule<PopulationController>())
+                if (_capital.HasModule<PopulationController>())
                 {
-                    var controller = this._capital.QueryModule<PopulationController>();
-                    controller.PopulationChanged += this.OnPopulationChanged;
+                    var controller = _capital.QueryModule<PopulationController>();
+                    controller.PopulationChanged += OnPopulationChanged;
                 }
             }
         }
@@ -66,17 +65,17 @@ namespace Game.Simulation
         /// Backing field for <see cref="Capital"/>
         /// </summary>
         private City _capital;
-        
+
         /// <summary>
         /// Whether this probince can support an additional city
         /// </summary>
-        public bool CanSupportNewCity => this.AssociatedCities.Count < this.CityCapacity;
+        public bool CanSupportNewCity => AssociatedCities.Count < CityCapacity;
 
         /// <summary>
         /// How many associated cities this province can manage
         /// </summary>
         public int CityCapacity { get; protected set; }
-        
+
         /// <summary>
         /// This provinces influence radius. It determines where new cities can be built.
         /// </summary>
@@ -85,41 +84,41 @@ namespace Game.Simulation
         /// <summary>
         /// The circle representing this provinces influence radius
         /// </summary>
-        public Circle InfluenceCircle => new Circle(this.Capital.Position, this.InfluenceRadius);
-        
+        public Circle InfluenceCircle => new Circle(Capital.Position, InfluenceRadius);
+
         /// <summary>
         /// Create a new province with given capital
         /// </summary>
         public Province(string name, City capital)
         {
-            this.Name = name;
-            this.AssociatedCities.Add(capital);
-            this.Capital = capital;
+            Name = name;
+            AssociatedCities.Add(capital);
+            Capital = capital;
             capital.AssociatedProvince = this;
-            this.Id = Guid.NewGuid();
+            Id = Guid.NewGuid();
         }
-        
+
         /// <summary>
         /// Update the simulation state of this province.
         /// </summary>
         public void Update(int weeks)
         {
-            foreach(var city in this.AssociatedCities)
+            foreach (var city in AssociatedCities)
                 city.Update(weeks);
         }
-        
+
         /// <summary>
         /// Create a simulation view from this object
         /// </summary>
         public ProvinceView ToView()
         {
-            var cities = this.AssociatedCities.Select(x => x.ToView()).ToList();
+            var cities = AssociatedCities.Select(x => x.ToView()).ToList();
 
             return new ProvinceView
             {
-                Id = this.Id,
-                Name = this.Name,
-                Capital = this.Capital.Id,
+                Id = Id,
+                Name = Name,
+                Capital = Capital.Id,
                 AssociatedCities = cities
             };
         }
@@ -130,8 +129,8 @@ namespace Game.Simulation
         /// </summary>
         protected void OnPopulationChanged(PopulationController source, int newPopulation)
         {
-            this.RecalculateCityCapacity(source);
-            this.RecalculateInfluenceRadius(source);
+            RecalculateCityCapacity(source);
+            RecalculateInfluenceRadius(source);
         }
 
         /// <summary>
@@ -140,8 +139,8 @@ namespace Game.Simulation
         /// <param name="controller">The population controller instance</param>
         protected void RecalculateCityCapacity(PopulationController controller)
         {
-            this.CityCapacity =
-                3 + (int)(Math.Min(1.0f, controller.Population / 100000.0f)*7);
+            CityCapacity =
+                3 + (int)(Math.Min(1.0f, controller.Population / 100000.0f) * 7);
         }
 
         /// <summary>
@@ -150,11 +149,11 @@ namespace Game.Simulation
         /// <param name="controller">The population controller instance</param>
         protected void RecalculateInfluenceRadius(PopulationController controller)
         {
-            this.InfluenceRadius = (int)(
+            InfluenceRadius = (int)(
                 (0.65f * Math.Min(1.0f, controller.Population / 100000.0f)        // How big the capital is, up to 100k
-                 + 0.35f * Math.Min(1.0f, this.AssociatedCities.Count / 10.0f))   // How many cities there are, up to 10
+                 + 0.35f * Math.Min(1.0f, AssociatedCities.Count / 10.0f))   // How many cities there are, up to 10
                 * 35 + 10                                                         // 10 is minimum, 45 is max
             );
         }
     }
-}
+}*/

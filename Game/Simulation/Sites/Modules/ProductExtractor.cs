@@ -1,19 +1,20 @@
-using System;
+/*using System;
 using Game.Data;
 
-namespace Game.Simulation.Modules
+namespace Game.Simulation.Sites.Modules
 {
     /// <summary>
     /// Site module that extracts raw resources from terrain tiles and special resources based on selected
     /// extraction recipes.
     /// </summary>
+    [SiteModuleId("sitemodule.productextractor")]
     public class ProductExtractor : SiteModule
     {
         /// <summary>
         /// The product storage the extracted products will end up in
         /// </summary>
         protected ProductStorage DestinationStorage { get; set; }
-        
+
         /// <summary>
         /// Construct new product extract associated with given site.
         /// </summary>
@@ -26,10 +27,10 @@ namespace Game.Simulation.Modules
             : base(parentSite)
         {
             // Try to retrieve reference to the product storage module
-            if(!parentSite.HasModule<ProductStorage>())
+            if (!parentSite.HasModule<ProductStorage>())
                 throw new ArgumentException("Associated site has no product storage module");
 
-            this.DestinationStorage = parentSite.QueryModule<ProductStorage>();
+            DestinationStorage = parentSite.QueryModule<ProductStorage>();
         }
 
         public override void Update(int weeks)
@@ -37,4 +38,4 @@ namespace Game.Simulation.Modules
             // Do nothing (yet)
         }
     }
-}
+}*/
