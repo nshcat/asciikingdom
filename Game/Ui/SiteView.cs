@@ -4,6 +4,8 @@ using Engine.Core;
 using Engine.Graphics;
 using Game.Maths;
 using Game.Simulation;
+using Game.Simulation.Sites;
+using Game.Simulation.Sites.Modules;
 
 namespace Game.Ui
 {
@@ -68,18 +70,18 @@ namespace Game.Ui
         /// List used to remember all cities in view. This is used to draw certain overlays like influence range
         /// after the map has been drawn.
         /// </summary>
-        public List<City> CitiesInView { get; set; }
-            = new List<City>();
+        //public List<City> CitiesInView { get; set; }
+        //    = new List<City>();
         
         /// <summary>
         /// All sites in the world
         /// </summary>
-        protected Dictionary<Position, IWorldSite> Sites { get; set; }
+        protected Dictionary<Position, WorldSite> Sites { get; set; }
 
         /// <summary>
         /// All cities in the world
         /// </summary>
-        protected List<City> Cities { get; set; }
+        //protected List<City> Cities { get; set; }
         
         /// <summary>
         /// Create new site view based on given simulation state
@@ -119,42 +121,41 @@ namespace Game.Ui
             {
                 // Retrieve site
                 var site = this.Sites[worldPosition];
+
+                // Retrieve its rendering module.
+                var siteDrawer = site.QueryAbstractModule<SiteDrawer>();
                 
                 // If its a city, save it for later to draw influence circles
-                if(site is City city)
-                    this.CitiesInView.Add(city);
+                //if(site is City city)
+                //    this.CitiesInView.Add(city);
 
-                surface.SetTile(screenPosition, site.Tile);
+                surface.SetTile(screenPosition, siteDrawer.Tile);
                 
                 // Draw site name if requested and cursor is some specific distance away
                 var distance = Position.GetDistance(worldPosition, this.CursorPosition);
                 
                 if (this.DrawMapLabels &&
-                    site.ShowName &&
-                    !string.IsNullOrEmpty(site.Name) &&
+                    site.HasModule<MapLabelRenderer>() &&
                     distance >= this.LabelMinDistance)
                 {
-                    // Append special marker for province capitals
-                    var name = site.Name;
+                    var renderer = site.QueryModule<MapLabelRenderer>();
+                    var label = renderer.Label;
 
-                    if (site is City city_ && city_.IsProvinceCapital)
+                    if (!string.IsNullOrEmpty(label))
                     {
-                        var marker = (char) 15;
-                        name = $"{marker}{name}{marker}";
-                    }
-                    
-                    surface.DrawStringCentered(
-                        new Position(screenPosition.X, screenPosition.Y - 2),
-                        name,
-                        DefaultColors.Black,
-                        UiColors.MapLabel
-                    );
+                        surface.DrawStringCentered(
+                            new Position(screenPosition.X, screenPosition.Y - 2),
+                            label,
+                            DefaultColors.Black,
+                            UiColors.MapLabel
+                        );
 
-                    var half = (int) (site.Name.Length / 2);
-                    for (var ix = 0; ix < site.Name.Length; ++ix)
-                    {
-                        var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
-                        surface.SetUiShadow(pos, true);
+                        var half = (int) (label.Length / 2);
+                        for (var ix = 0; ix < label.Length; ++ix)
+                        {
+                            var pos = new Position((screenPosition.X + ix + 1) - half, screenPosition.Y - 1);
+                            surface.SetUiShadow(pos, true);
+                        }
                     }
                 }
             }
@@ -165,7 +166,7 @@ namespace Game.Ui
         /// </summary>
         protected void DrawInfluenceCircles(Surface surface)
         {
-            if (this.InfluenceMode == InfluenceDrawMode.None)
+            /*if (this.InfluenceMode == InfluenceDrawMode.None)
                 return;
             
             var circles = this.InfluenceMode switch
@@ -189,7 +190,7 @@ namespace Game.Ui
                         surface.SetUiShadow(position, true);
                     }
                 }
-            }
+            }*/
         }
         
         /// <summary>
@@ -197,9 +198,15 @@ namespace Game.Ui
         /// </summary>
         protected override void BeforeRender(Surface surface)
         {
-            this.Sites = this.State.GetAllSites();
+            this.Sites = this.State.Sites.AllSites
+                .Where(x => x.HasAbstractModule<SiteDrawer>())
+                .ToDictionary(x => x.Position);
+
+            //this.CitiesInView.Clear();
+
+            /*this.Sites = this.State.GetAllSites();
             this.Cities = this.Sites.Where(x => x.Value is City).Select(x => x.Value as City).ToList();
-            this.CitiesInView.Clear();
+            this.CitiesInView.Clear();*/
         }
         
         /// <summary>
@@ -207,7 +214,7 @@ namespace Game.Ui
         /// </summary>
         protected override void AfterRender(Surface surface)
         {
-            this.DrawInfluenceCircles(surface);
+            //this.DrawInfluenceCircles(surface);
         }
 
 

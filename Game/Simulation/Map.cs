@@ -18,37 +18,52 @@ namespace Game.Simulation
         /// Dimensions of the map, in tiles
         /// </summary>
         public Size Dimensions { get; }
-        
+
         /// <summary>
         /// The terrain type array
         /// </summary>
         public TerrainType[,] Terrain { get; set; }
-        
+
         /// <summary>
         /// Terrain discovery status
         /// </summary>
         public bool[,] Discovered { get; set; }
-        
+
         /// <summary>
         /// Rendering of the map
         /// </summary>
         public Tile[,] Tiles { get; }
-        
+
         /// <summary>
         /// Rendering of the rainfall map
         /// </summary>
         public Tile[,] Rainfall { get; set; }
-        
+
         /// <summary>
         /// Rendering of the temperature map
         /// </summary>
         public Tile[,] Temperature { get; set; }
-        
+
         /// <summary>
         /// Rendering of the drainage map
         /// </summary>
         public Tile[,] Drainage { get; set; }
-        
+
+        /// <summary>
+        /// Raw temperatures values, in range [0, 1]
+        /// </summary>
+        public float[,] RawTemperature { get; set; }
+
+        /// <summary>
+        /// Raw rainfall values, in range [0, 1]
+        /// </summary>
+        public float[,] RawRainfall { get; set; }
+
+        /// <summary>
+        /// Raw drainage values, in range [0, 1]
+        /// </summary>
+        public float[,] RawDrainage { get; set; }
+
         /// <summary>
         /// The seed used to generate this map
         /// </summary>
@@ -69,6 +84,9 @@ namespace Game.Simulation
             this.Temperature = new Tile[dimensions.Width, dimensions.Height];
             this.Drainage = new Tile[dimensions.Width, dimensions.Height];
             this.Discovered = new bool[dimensions.Width, dimensions.Height];
+            this.RawDrainage = new float[dimensions.Width, dimensions.Height];
+            this.RawRainfall = new float[dimensions.Width, dimensions.Height];
+            this.RawTemperature = new float[dimensions.Width, dimensions.Height];
         }
         
         /// <summary>

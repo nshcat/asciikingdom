@@ -228,7 +228,7 @@ namespace Game.Ui
         /// <summary>
         /// Update logic
         /// </summary>
-        public void Update(double deltaTime)
+        public virtual void Update(double deltaTime)
         {
             this.CursorTimer.Update(deltaTime);
         }

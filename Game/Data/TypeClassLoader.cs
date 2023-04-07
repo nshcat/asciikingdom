@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Engine.Resources;
+using Microsoft.VisualBasic;
+using Game.Serialization;
 
 namespace Game.Data
 {
@@ -43,7 +45,7 @@ namespace Game.Data
         public void LoadTypes(ResourceManager resourceManager)
         {
             var contents = resourceManager.GetJSON(this.FileName);
-            var types = JsonSerializer.Deserialize<List<T>>(contents, Serialization.Serialization.DefaultOptions);
+            var types = this.DeserializeTypes(contents);
 
             foreach (var type in types)
             {
@@ -54,6 +56,15 @@ namespace Game.Data
                 
                 this.Types.Add(type.Identifier, type);
             }
+        }
+
+        /// <summary>
+        /// Deserialize type objects from given JSON document string. This can be overridden to
+        /// implement custom deserialization.
+        /// </summary>
+        protected virtual List<T> DeserializeTypes(string jsonContents)
+        {
+            return JsonSerializer.Deserialize<List<T>>(jsonContents, Serialization.Serialization.DefaultOptions);
         }
 
         /// <summary>

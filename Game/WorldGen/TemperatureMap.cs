@@ -6,7 +6,7 @@ using Game.Maths;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
-using Range = Game.Maths.Range;
+using Range = Game.Maths.FloatRange;
 
 namespace Game.WorldGen
 {
@@ -165,6 +165,15 @@ namespace Game.WorldGen
             this.WarmThreshold = this.CalculateThreshold(this.Parameters.WarmPercentage);
             this.WarmerThreshold = this.CalculateThreshold(this.Parameters.WarmerPercentage);
 
+            var mapper = new ValueMapper
+            {
+                { this.ColdestThreshold, 0.15f },
+                { this.ColderThreshold, 0.35f },
+                { this.ColdThreshold, 0.55f },
+                { this.WarmThreshold, 0.75f },
+                { this.WarmerThreshold, 0.85f }
+            };
+
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
@@ -184,12 +193,15 @@ namespace Game.WorldGen
                     else if (temperature <= this.WarmerThreshold)
                         temperatureLevel = TemperatureLevel.Warmer;
 
+                    this.Values[ix, iy] = mapper.Map(temperature);
+
                     if (this.Parameters.LimitColdZones
                         && (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
                         && (temperatureLevel == TemperatureLevel.Colder ||
                             temperatureLevel == TemperatureLevel.Coldest))
                     {
                         temperatureLevel = TemperatureLevel.Cold;
+                        this.Values[ix, iy] = 0.45f;
                     }
                     
                     this.TemperatureLevels[ix, iy] = temperatureLevel;

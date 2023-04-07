@@ -70,15 +70,15 @@ namespace Game.WorldGen
                 if (value <= sourceEnd)
                 {
                     // Map it into the range
-                    var sourceRange = new Range(sourceBegin, sourceEnd);
-                    var destinationRange = new Range(destinationBegin, destinationEnd);
+                    var sourceRange = new FloatRange(sourceBegin, sourceEnd);
+                    var destinationRange = new FloatRange(destinationBegin, destinationEnd);
                     return MathUtil.Map(value, sourceRange, destinationRange);
                 }
             }
             
             // Value is in last range
-            var lastSourceRange = new Range(sourceEnd, 1.0f);
-            var lastDestinationRange = new Range(destinationEnd, 1.0f);
+            var lastSourceRange = new FloatRange(sourceEnd, 1.0f);
+            var lastDestinationRange = new FloatRange(destinationEnd, 1.0f);
 
             return MathUtil.Map(value, lastSourceRange, lastDestinationRange);
         }

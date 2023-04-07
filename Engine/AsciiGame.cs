@@ -43,8 +43,7 @@ namespace Engine
         /// The orthographic projection used to render ASCII surfaces
         /// </summary>
         private OrthographicProjection Projection { get; set; } = new OrthographicProjection();
-        
-        
+          
         /// <summary>
         /// Create a new ascii game instance. This will create and show a window.
         /// </summary>
@@ -63,7 +62,6 @@ namespace Engine
             this.GameTitle = gameTitle;
             this.Input = new InputManager(this);
         }
-
 
         /// <summary>
         /// Build window title string containing the current FPS and OpenGL version
@@ -128,15 +126,19 @@ namespace Engine
         protected override void OnResize(ResizeEventArgs e)
         {
             var newSize = new Size(this.Size.X, this.Size.Y);
-            GL.Viewport(0, 0, newSize.Width, newSize.Height);
-            this.Projection.Refresh(newSize);
-            this.OnReshape(newSize);
-            base.OnResize(e);
+
+            if (!newSize.IsEmpty)
+            {
+                GL.Viewport(0, 0, newSize.Width, newSize.Height);
+                this.Projection.Refresh(newSize);
+                this.OnReshape(newSize);
+            }
+            
+            base.OnResize(e); 
         }
 
         #endregion
-        
-        
+            
         #region Event Callbacks
 
         /// <summary>

@@ -9,6 +9,6 @@ namespace Game.Core
         /// Update internal state using given amount of seconds elapsed since last update
         /// </summary>
         /// <param name="deltaTime">Number of seconds elapsed since last update</param>
-        public void Update(double deltaTime);
+        public abstract void Update(double deltaTime);
     }
 }

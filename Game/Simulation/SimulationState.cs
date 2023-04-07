@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Engine.Core;
 using Game.Core;
-using Game.Serialization;
+using Game.Simulation.Sites;
 
 namespace Game.Simulation
 {
@@ -19,17 +21,18 @@ namespace Game.Simulation
         /// The game world
         /// </summary>
         public World World { get; set; }
-        
+
         /// <summary>
         /// The current date in the simulated world
         /// </summary>
         public Date Date { get; set; }
-        
+            = new Date();
+
         /// <summary>
-        /// All provinces of the kingdom
+        /// Manager instance that contains all sites in the current world
         /// </summary>
-        public List<Province> Provinces { get; set; }
-            = new List<Province>();
+        public SiteManager Sites { get; protected set; }
+            = new SiteManager();
 
         /// <summary>
         /// Create a new simulation state representing a fresh game world, using given world.
@@ -37,7 +40,6 @@ namespace Game.Simulation
         public SimulationState(World world)
         {
             this.World = world;
-            this.Date = new Date();
         }
         
         /// <summary>
@@ -46,46 +48,8 @@ namespace Game.Simulation
         public void Update(int weeks)
         {
             this.Date.Weeks += weeks;
-            
-            foreach(var province in this.Provinces)
-                province.Update(weeks);
-        }
-        
-        /// <summary>
-        /// Retrieve all sites on the world map
-        /// </summary>
-        public Dictionary<Position, IWorldSite> GetAllSites()
-        {
-            var result = new Dictionary<Position, IWorldSite>();
 
-            foreach (var province in this.Provinces)
-            {
-                foreach (var city in province.AssociatedCities)
-                {
-                    result.Add(city.Position, city);
-
-                    foreach (var village in city.AssociatedVillages)
-                    {
-                        result.Add(village.Position, village);
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Create a simulation view from this object
-        /// </summary>
-        public SimulationStateView ToView()
-        {
-            var provinces = this.Provinces.Select(x => x.ToView()).ToList();
-
-            return new SimulationStateView
-            {
-                Provinces = provinces,
-                Date = Date
-            };
+            this.Sites.Update(weeks);
         }
 
         /// <summary>
@@ -98,11 +62,15 @@ namespace Game.Simulation
             
             // First save the world
             this.World.Save(prefix);
-            
-            // Now create a view and serialize it
-            var view = this.ToView();
+
+            // Now serialize remaining state data to JSON tree
+            var root = new JsonObject();
+            root.Add("date", JsonSerializer.SerializeToNode(this.Date));
+            root.Add("sites", this.Sites.Serialize());
+
+            // Write JSON tree to disk
             var statePath = Path.Combine(prefix, "state.json");
-            File.WriteAllText(statePath, JsonSerializer.Serialize(view, Serialization.Serialization.DefaultOptions));
+            File.WriteAllText(statePath, root.ToJsonString(Serialization.Serialization.DefaultOptions));
         }
 
         /// <summary>
@@ -112,15 +80,15 @@ namespace Game.Simulation
         {
             // First load world
             var world = World.Load(prefix);
-            
-            // Load serialization view
-            var statePath = Path.Combine(prefix, "state.json");
-            var view = JsonSerializer.Deserialize<SimulationStateView>(
-                File.ReadAllText(statePath),
-                Serialization.Serialization.DefaultOptions
-            );
+            var state = new SimulationState(world);
 
-            return view.MakeObject(world);
+            // Load JSON data
+            var statePath = Path.Combine(prefix, "state.json");
+            var root = JsonNode.Parse(File.ReadAllText(statePath)).AsObject();
+            state.Date = JsonSerializer.Deserialize<Date>(root["date"]);
+            state.Sites.Deserialize(root["sites"]);
+
+            return state;
         }
     }
 }

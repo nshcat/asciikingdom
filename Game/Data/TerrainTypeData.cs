@@ -505,6 +505,14 @@ namespace Game.Data
         }
 
         /// <summary>
+        /// Checks whether given terrain type accepts crops
+        /// </summary>
+        public static bool AcceptsCrops(TerrainType terrainType)
+        {
+            return AcceptsSites(terrainType);
+        }
+
+        /// <summary>
         /// Create a new weighted collection based on given weighted collection of ASCII glyphs, where each glyph
         /// is present in any of the colors in the palette.
         /// </summary>

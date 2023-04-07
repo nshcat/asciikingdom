@@ -26,7 +26,7 @@ namespace Game
         /// Construct new game instance
         /// </summary>
         public Game()
-            : base(new Size(1400, 860), "AsciiKingdom")
+            : base(new Size(1600, 860), "AsciiKingdom")
         {
         }
 
@@ -48,6 +48,9 @@ namespace Game
         protected void LoadData()
         {
             ResourceTypeManager.Instance.LoadTypes(this.Resources);
+            ProductTypeManager.Instance.LoadTypes(this.Resources);
+            CropTypeManager.Instance.LoadTypes(this.Resources);
+            SiteTypeManager.Instance.LoadTypes(this.Resources);
         }
 
         /// <summary>

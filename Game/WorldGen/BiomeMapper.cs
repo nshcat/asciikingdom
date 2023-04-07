@@ -3,7 +3,7 @@ using Engine.Core;
 using Game.Data;
 using Game.Maths;
 using OpenToolkit.Graphics.OpenGL;
-using Range = Game.Maths.Range;
+using FloatRange = Game.Maths.FloatRange;
 
 namespace Game.WorldGen
 {
@@ -84,11 +84,11 @@ namespace Game.WorldGen
             // Chance ranges for broad leaf forest generation, pulled out of the loops to avoid repeated heap allocations
             //var sourceRange = new Range(this.Temperature.ColderThreshold, this.Temperature.ColdThreshold);
             // Alternative: Source range starting at 0.0f. Causes forests to almost never be 100% coniferous
-            var coniferousSrcRange = new Range(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
-            var destRange = new Range(0.0f, 1.0f);
+            var coniferousSrcRange = new FloatRange(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
+            var destRange = new FloatRange(0.0f, 1.0f);
 
             var difference = this.Temperature.WarmThreshold - this.Temperature.ColdThreshold;
-            var jungleSrcRange = new Range(this.Temperature.ColdThreshold + (difference / 2), this.Temperature.WarmThreshold);
+            var jungleSrcRange = new FloatRange(this.Temperature.ColdThreshold + (difference / 2), this.Temperature.WarmThreshold);
             var climateZoneSrcRange = jungleSrcRange;
             
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)

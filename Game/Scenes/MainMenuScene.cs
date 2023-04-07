@@ -5,6 +5,7 @@ using Engine.Input;
 using Engine.Rendering;
 using Engine.Resources;
 using Game.Core;
+using Game.Scenes.Common;
 using Game.Simulation;
 using Game.Ui;
 using OpenToolkit.Windowing.Common.Input;
@@ -337,6 +338,11 @@ namespace Game.Scenes
         /// </summary>
         public override void Update(double deltaTime)
         {
+            if(this.Input.AreKeysDown(KeyPressType.Pressed, Key.T))
+                this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
+                    new TestTabContainer(this)
+                    );
+            
             this._actionMapper.Update();
             
             if (this._actionMapper.HasTriggeredAction)
