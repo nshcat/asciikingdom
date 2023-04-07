@@ -11,7 +11,7 @@ namespace Engine.Graphics
     {
         /// <summary>
         /// The foreground color.
-        /// </summary>
+        /// </summary> 
         public Color Front { get; set; }
         
         /// <summary>

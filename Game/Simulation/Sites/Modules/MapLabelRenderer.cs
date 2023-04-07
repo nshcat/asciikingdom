@@ -22,7 +22,7 @@ namespace Game.Simulation.Sites.Modules
     /// <summary>
     /// Module that renders the map label for the associated site
     /// </summary>
-    [SiteModuleId("sitemodule.maplabelrenderer")]
+    [SiteModuleId("maplabelrenderer")]
     public class MapLabelRenderer : SiteModule
     {
         #region Properties
@@ -67,17 +67,17 @@ namespace Game.Simulation.Sites.Modules
         #region De/Serialization Methods
         public override void Serialize(SiteSerializationHelper helper)
         {
-            throw new NotImplementedException();
+            helper.WriteEnum("style", this.LabelStyle);
         }
 
         public override void Deserialize(SiteDeserializationHelper helper)
         {
-            throw new NotImplementedException();
+            this.LabelStyle = helper.ReadEnum<MapLabelStyle>("style");
         }
 
         public override void Initialize(SiteDeserializationHelper helper)
         {
-            throw new NotImplementedException();
+            this.LabelStyle = helper.ReadEnum<MapLabelStyle>("style", MapLabelStyle.Normal);
         }
         #endregion
 

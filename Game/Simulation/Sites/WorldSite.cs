@@ -223,7 +223,7 @@ namespace Game.Simulation.Sites
                 var stateNode = moduleNode.WriteObject("state");
                 kvp.Value.Serialize(stateNode as SiteSerializationHelper);
 
-                moduleArray.Add(moduleNode);
+                moduleArray.Add(moduleNode.Node);
             }
 
             helper.Node.Add("modules", moduleArray);
@@ -255,7 +255,7 @@ namespace Game.Simulation.Sites
                 var module = (SiteModule)moduleInstance;
 
                 // Retrieve state JSON node and deserialize
-                module.Deserialize(helper.GetObject("state") as SiteDeserializationHelper);
+                module.Deserialize(moduleObj.GetObject("state") as SiteDeserializationHelper);
 
                 // Register module with this site
                 this.Modules.Add(moduleType, module);

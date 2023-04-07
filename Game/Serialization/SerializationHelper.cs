@@ -43,6 +43,14 @@ namespace Game.Serialization
         }
 
         /// <summary>
+        /// Store given enum with given key, as numerical value
+        /// </summary>
+        public void WriteEnum<E>(string key, E value) where E : System.Enum
+        {
+            Node.Add(key, JsonValue.Create(Convert.ToInt32(value)));
+        }
+
+        /// <summary>
         /// Store given guid with given key
         /// </summary>
         public void WriteGuid(string key, Guid value)

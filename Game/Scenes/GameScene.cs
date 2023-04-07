@@ -60,7 +60,8 @@ namespace Game.Scenes
             GenerateTestData,
             IncreaseGameSpeed,
             DecreaseGameSpeed,
-            ShowCropFertility
+            ShowCropFertility,
+            ToggleFullView
         }
 
         /// <summary>
@@ -103,11 +104,25 @@ namespace Game.Scenes
             Village,
             City
         }
+
+        /// <summary>
+        /// The two game view types - Normal and Full
+        /// </summary>
+        private enum MapViewState
+        {
+            Normal,
+            Full
+        }
         
         /// <summary>
         /// The current simulation state
         /// </summary>
         private SimulationState _state;
+
+        /// <summary>
+        /// The current map view state
+        /// </summary>
+        private MapViewState _mapViewState = MapViewState.Normal;
 
         /// <summary>
         /// The current UI state
@@ -354,7 +369,8 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.Select, KeyPressType.Down, Key.Enter),
                 new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.IncreaseGameSpeed, KeyPressType.Pressed, Key.KeypadPlus),
-                new InputAction<GameAction>(GameAction.DecreaseGameSpeed, KeyPressType.Pressed, Key.KeypadMinus)
+                new InputAction<GameAction>(GameAction.DecreaseGameSpeed, KeyPressType.Pressed, Key.KeypadMinus),
+                new InputAction<GameAction>(GameAction.ToggleFullView, KeyPressType.Pressed, Key.Tab)
             );
         }
 
@@ -750,6 +766,7 @@ namespace Game.Scenes
                 {
                     if(this._uiState == GameUiState.Main)
                     {
+                        this.EnsureNormalMapViewState();
                         this.PauseGame();
                         this._uiState = GameUiState.CropFertility;
                         this._cropType = CropTypeManager.Instance.GetType("crop_wheat");
@@ -761,6 +778,7 @@ namespace Game.Scenes
                 {
                     if (this._uiState == GameUiState.Main)
                     {
+                        this.EnsureNormalMapViewState();
                         this.PauseGame();
                         this._uiState = GameUiState.PlaceCity;
                         //this._newProvince = !this.HasAnyProvinces();
@@ -781,6 +799,7 @@ namespace Game.Scenes
                 {
                     if (this._uiState == GameUiState.Main)
                     {
+                        this.EnsureNormalMapViewState();
                         this.PauseGame();
                         this._uiState = GameUiState.PlaceVillage;
                         this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.City;
@@ -888,6 +907,17 @@ namespace Game.Scenes
                     this.ModifyGameSpeed(-1);
                     break;
                 }
+                case GameAction.ToggleFullView:
+                {
+                    if (this._uiState != GameUiState.Main)
+                        break;
+
+                    if (this._mapViewState == MapViewState.Normal)
+                        this.SwitchMapViewState(MapViewState.Full);
+                    else
+                        this.SwitchMapViewState(MapViewState.Normal);
+                    break;
+                }
             }
         }
         
@@ -898,12 +928,18 @@ namespace Game.Scenes
         {
             this._surface.Clear();
             this.DrawViews();
-            this.DrawTileInfo();
-            this.DrawMenu();
-            this.DrawBorders();
+
+            // In full map view mode, the right side bar is not shown.
+            if (this._mapViewState == MapViewState.Normal)
+            {
+                this.DrawTileInfo();
+                this.DrawMenu();
+                this.DrawCropFertility();
+            }
+
             this.DrawNameSiteWindow();
-            this.DrawCropFertility();
-            
+            this.DrawBorders();
+
             this._surface.Render(rp);
         }
 
@@ -1028,6 +1064,41 @@ namespace Game.Scenes
         }
 
         /// <summary>
+        /// Makes sure that the map views have the correct dimensions
+        /// </summary>
+        private void UpdateMapViewDimensions()
+        {
+            if(this._mapViewState == MapViewState.Normal)
+                this._terrainView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height - 2);
+            else
+                this._terrainView.Dimensions = new Size(this._surface.Dimensions.Width - 2, this._surface.Dimensions.Height - 2);
+
+            this._siteView.Dimensions = this._terrainView.Dimensions;
+
+            this._terrainView.RecalulatePositions();
+            this._siteView.RecalulatePositions();
+        }
+
+        /// <summary>
+        /// Change map view state and make sure dimensions are updated
+        /// </summary>
+        private void SwitchMapViewState(MapViewState newState)
+        {
+            this._mapViewState = newState;
+            this.UpdateMapViewDimensions();
+        }
+
+        /// <summary>
+        /// Makes sure that the map view state is set to normal. Used in command handlers for keyput input to make sure
+        /// the user can see the panels.
+        /// </summary>
+        private void EnsureNormalMapViewState()
+        {
+            if (this._mapViewState == MapViewState.Full)
+                this.SwitchMapViewState(MapViewState.Normal);
+        }
+
+        /// <summary>
         /// React to screen dimensions change
         /// </summary>
         public override void Reshape(Size newSize)
@@ -1040,13 +1111,9 @@ namespace Game.Scenes
                 .Tileset(this.Resources, "myne_rect.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
-            
-            this._terrainView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height-2);
-            this._siteView.Dimensions = this._terrainView.Dimensions;
-            
-            this._terrainView.RecalulatePositions();
-            this._siteView.RecalulatePositions();
-            
+
+            this.UpdateMapViewDimensions();
+
             this._placementNameWindow.Reshape(this._surface);
         }
     }

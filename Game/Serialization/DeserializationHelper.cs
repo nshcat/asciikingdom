@@ -69,6 +69,15 @@ namespace Game.Serialization
         }
 
         /// <summary>
+        /// Read enum value corresponding to given key name
+        /// </summary>
+        public E ReadEnum<E>(string key, E defaultValue = default(E)) where E : System.Enum
+        {
+            var val = this.ReadValue<int>(key, Convert.ToInt32(defaultValue));
+            return (E)(object)val;
+        }
+
+        /// <summary>
         /// Read value corresponding to given key name. If no such value exists, the default is returned instead.
         /// </summary>
         public T ReadValue<T>(string key, T defaultValue = default)

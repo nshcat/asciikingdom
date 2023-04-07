@@ -10,7 +10,7 @@ using Game.Serialization;
 
 namespace Game.Simulation.Sites.Modules
 {
-    [SiteModuleId("sitemodule.fixeddrawer")]
+    [SiteModuleId("fixeddrawer")]
     public class FixedSiteDrawer
         : SiteDrawer
     {
@@ -51,7 +51,7 @@ namespace Game.Simulation.Sites.Modules
         {
             base.Deserialize(helper);
             var tileObj = helper.GetObject("tile");
-            this._tile = JsonSerializer.Deserialize<Tile>(tileObj.Node);
+            this._tile = JsonSerializer.Deserialize<Tile>(tileObj.Node, Serialization.Serialization.DefaultOptions);
         }
         #endregion
 

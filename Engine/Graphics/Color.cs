@@ -135,7 +135,7 @@ namespace Engine.Graphics
         /// <returns>Hex string representation of this color, including preceding '#'</returns>
         public string ToHex()
         {
-            return $"#{this.R:X2}#{this.G:X2}#{this.B:X2}";
+            return $"#{this.R:X2}{this.G:X2}{this.B:X2}";
         }
 
         #region Equality Implementation
