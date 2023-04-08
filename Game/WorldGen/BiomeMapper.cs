@@ -294,7 +294,9 @@ namespace Game.WorldGen
                                         var broadleafChance = MathUtil.Map(rawTemperature, coniferousSrcRange, destRange);
 
                                         // Adjust chance so that up north, most of the forests are coniferous, with rapidly
-                                        // falling odds towards the equator
+                                        // falling odds towards the equator.
+                                        // Note that we are inverting the chance for broadleaf forest here, so we are
+                                        // ending up with the chance for coniferous forest 
                                         // DESMOS: f\left(x\right)=-e^{\left(4.5x-2\right)}+1.85
                                         var coniferousChance = -Math.Exp(4.5 * broadleafChance - 2.0f) + 1.7f;
                                         coniferousChance = Math.Min(Math.Max(coniferousChance, 0.0f), 1.0f);
