@@ -53,23 +53,14 @@ namespace Game.Data
                 typeClass.Identifier = innerObj.ReadValue<string>("identifier");
                 typeClass.TypeDescriptor = innerObj.ReadValue<string>("typedesc");
 
-                // Get the array
-                var moduleArray = innerObj.GetArray("modules");
+                // Get the modules object
+                var moduleObject = innerObj.GetObject("modules");
 
-                foreach(var moduleNode in moduleArray)
+                foreach(var kvp in moduleObject.Node)
                 {
-                    var moduleObj = new DeserializationHelper(moduleNode.AsObject());
-                    var moduleTypeId = moduleObj.ReadValue<string>("type");
-
-                    if (moduleObj.Node.ContainsKey("init"))
-                    {
-                        var initObj = moduleObj.GetObject("init");
-                        typeClass.Modules[moduleTypeId] = initObj.Node;
-                    }
-                    else
-                    {
-                        typeClass.Modules[moduleTypeId] = new JsonObject();
-                    }
+                    var moduleTypeId = kvp.Key;
+                    var initNode = kvp.Value;
+                    typeClass.Modules[moduleTypeId] = initNode.AsObject();
                 }
 
                 types.Add(typeClass);

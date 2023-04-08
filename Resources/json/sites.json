@@ -2,23 +2,17 @@
   {
     "identifier": "site_city",
     "typedesc": "City",
-    "modules": [
-      {
-        "type": "fixeddrawer",
-        "init": {
-          "tile": {
-            "front": "#CDD2D2",
-            "back": "#000000",
-            "glyph": 35
-          }
+    "modules": {
+      "fixeddrawer": {
+        "tile": {
+          "front": "#CDD2D2",
+          "back": "#000000",
+          "glyph": 35
         }
       },
-      {
-        "type": "maplabelrenderer",
-        "init": {
-          "style": 1
-        }
+      "maplabelrenderer" : {
+        "style": 1
       }
-    ]
+    }
   }
 ]
