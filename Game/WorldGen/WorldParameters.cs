@@ -39,7 +39,7 @@ namespace Game.WorldGen
         /// <summary>
         /// Percentage longitude limit after which no coldest and colder zones may appear
         /// </summary>
-        public float ColdZoneLongitudeLimit { get; set; } = 0.15f;
+        public float ColdZoneLongitudeLimit { get; set; } = 0.17f;//0.15f;
         
         /// <summary>
         /// The percentage amount of terrain that is supposed to be underwater, in percent
