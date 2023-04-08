@@ -84,7 +84,7 @@ namespace Game.WorldGen
             // Chance ranges for broad leaf forest generation, pulled out of the loops to avoid repeated heap allocations
             //var sourceRange = new Range(this.Temperature.ColderThreshold, this.Temperature.ColdThreshold);
             // Alternative: Source range starting at 0.0f. Causes forests to almost never be 100% coniferous
-            var coniferousSrcRange = new FloatRange(this.Temperature.ColdestThreshold, this.Temperature.ColdThreshold);
+            var coniferousSrcRange = new FloatRange(/*this.Temperature.ColdestThreshold*/this.Temperature.ColderThreshold, this.Temperature.WarmThreshold);
             var destRange = new FloatRange(0.0f, 1.0f);
 
             var difference = this.Temperature.WarmThreshold - this.Temperature.ColdThreshold;
@@ -293,12 +293,18 @@ namespace Game.WorldGen
                                         // more colder zones with coniferous forests
                                         var broadleafChance = MathUtil.Map(rawTemperature, coniferousSrcRange, destRange);
 
-                                       // broadleafChance *= broadleafChance;
-                                        
-                                        if (rng.NextDouble() <= broadleafChance)
-                                            type = TerrainType.TemperateBroadleafForest;
-                                        else
+                                        // Adjust chance so that up north, most of the forests are coniferous, with rapidly
+                                        // falling odds towards the equator.
+                                        // Note that we are inverting the chance for broadleaf forest here, so we are
+                                        // ending up with the chance for coniferous forest 
+                                        // DESMOS: f\left(x\right)=-e^{\left(4.5x-2\right)}+1.85
+                                        var coniferousChance = -Math.Exp(4.5 * broadleafChance - 2.0f) + 1.7f;
+                                        coniferousChance = Math.Min(Math.Max(coniferousChance, 0.0f), 1.0f);
+
+                                        if (rng.NextDouble() <= coniferousChance)
                                             type = TerrainType.ConiferousForest;
+                                        else
+                                            type = TerrainType.TemperateBroadleafForest;
                                     }
                                 }
                             }

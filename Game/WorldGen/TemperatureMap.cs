@@ -146,6 +146,8 @@ namespace Game.WorldGen
         /// </summary>
         private void Generate()
         {
+            var rng = new Random(this.Seed + 1443285);
+
             this.GenerateGradient();
             this.GenerateNoise();
 
@@ -174,6 +176,12 @@ namespace Game.WorldGen
                 { this.WarmerThreshold, 0.85f }
             };
 
+            // Helper variables for glacier limiting
+            var glacierLimitLower = (float)this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit;
+            var glacierLimitUpper = (float)this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit * 0.75f;
+            var glacierSrcRange = new FloatRange(glacierLimitUpper, glacierLimitLower);
+            var glacierDestRange = new FloatRange(0.0f, 1.0f);
+
             for (var ix = 0; ix < this.Dimensions.Width; ++ix)
             {
                 for (var iy = 0; iy < this.Dimensions.Height; ++iy)
@@ -195,13 +203,25 @@ namespace Game.WorldGen
 
                     this.Values[ix, iy] = mapper.Map(temperature);
 
+                    
+
                     if (this.Parameters.LimitColdZones
-                        && (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
+                        && (iy >= (int)glacierLimitUpper)
                         && (temperatureLevel == TemperatureLevel.Colder ||
                             temperatureLevel == TemperatureLevel.Coldest))
                     {
-                        temperatureLevel = TemperatureLevel.Cold;
-                        this.Values[ix, iy] = 0.45f;
+                        // Determine distance from "a bit over the limit" to limit within [0, 1].
+                        // We want to apply a smooth gradient here and use that as a probability
+                        // to create a much less harsh edge, while still making sure the glacier never goes over the
+                        // limit                     
+                        var prob = MathUtil.Map((float)iy, glacierSrcRange, glacierDestRange);
+                        prob = MathUtil.Smoothstep(prob);
+
+                        if(rng.NextDouble() <= prob)
+                        {
+                            temperatureLevel = TemperatureLevel.Cold;
+                            this.Values[ix, iy] = 0.45f;
+                        }
                     }
                     
                     this.TemperatureLevels[ix, iy] = temperatureLevel;
