@@ -78,5 +78,19 @@ namespace Game.Maths
         {
             return Math.Max(minimum, Math.Min(maximum, value));
         }
+        
+        /// <summary>
+        /// GLSL smooth step function on [0, 1]
+        /// </summary>
+        public static float Smoothstep(float x)
+        {
+            if (x <= 0.0f)
+                return 0.0f;
+
+            if (x >= 1.0f)
+                return 1.0f;
+
+            return x * x * (3.0f - 2.0f * x);
+        }
     }
 }

@@ -146,6 +146,8 @@ namespace Game.WorldGen
         /// </summary>
         private void Generate()
         {
+            var rng = new Random(this.Seed + 1443285);
+
             this.GenerateGradient();
             this.GenerateNoise();
 
@@ -195,13 +197,31 @@ namespace Game.WorldGen
 
                     this.Values[ix, iy] = mapper.Map(temperature);
 
+                    var iyLimitUpper = (float)this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit * 0.75f;
+
                     if (this.Parameters.LimitColdZones
-                        && (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
+                        && (iy >= (int)iyLimitUpper)
+                        //&& (iy >= this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit)
                         && (temperatureLevel == TemperatureLevel.Colder ||
                             temperatureLevel == TemperatureLevel.Coldest))
                     {
-                        temperatureLevel = TemperatureLevel.Cold;
-                        this.Values[ix, iy] = 0.45f;
+                        // Determine distance from limit/2 to limit within [0, 1].
+                        // We want to apply a smooth gradient here.
+                        var iyLimit = (float)this.Dimensions.Height * this.Parameters.ColdZoneLongitudeLimit;
+                        
+                        var srcRange = new FloatRange(iyLimitUpper, iyLimit);
+                        var destRange = new FloatRange(0.0f, 1.0f);
+                        var prob = MathUtil.Map((float)iy, srcRange, destRange);
+                        prob = MathUtil.Smoothstep(prob);
+
+                        if(rng.NextDouble() <= prob)
+                        {
+                            temperatureLevel = TemperatureLevel.Cold;
+                            this.Values[ix, iy] = 0.45f;
+                        }
+
+                        /*temperatureLevel = TemperatureLevel.Cold;
+                        this.Values[ix, iy] = 0.45f;*/
                     }
                     
                     this.TemperatureLevels[ix, iy] = temperatureLevel;
