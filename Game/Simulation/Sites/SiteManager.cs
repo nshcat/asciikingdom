@@ -9,40 +9,41 @@ using NLog.LayoutRenderers.Wrappers;
 using Game.Data;
 using Engine.Core;
 using System.Xml.Linq;
+using Game.Simulation.Sites.Modules;
 
 namespace Game.Simulation.Sites
 {
+    /// <summary>
+    /// Types of notifications sites can send to the site manager
+    /// </summary>
+    public enum SiteNotificationType
+    {
+        /// <summary>
+        /// A module was added
+        /// </summary>
+        ModuleAdded,
+
+        /// <summary>
+        /// A module was removed
+        /// </summary>
+        ModuleRemoved
+    }
+
     /// <summary>
     /// Class managing all sites that are part of the game state
     /// </summary>
     public class SiteManager
     {
-        // TODO: Have caching structures for queries like "get all entities with component X"
-        // => EventManager static class manages ComponentAdded and ComponentRemoved events etc, and Entity
-        // class fires those global events
-
         #region Properties
-
         /// <summary>
         /// All sites managed by this object
         /// </summary>
         public Dictionary<Guid, WorldSite> Sites { get; protected set; }
             = new Dictionary<Guid, WorldSite>();
-
-        /// <summary>
-        /// All sites managed by this object, as a list.
-        /// </summary>
-        public List<WorldSite> AllSites => Sites.Values.ToList();
-
-        /// <summary>
-        /// Dictionary of all sites associated with their position
-        /// </summary>
-        public Dictionary<Position, WorldSite> AllSitesByPosition => this.Sites.Select(x => x.Value).ToDictionary(x => x.Position);
-
         #endregion
 
         #region Private Fields
-
+        #region Caches for module type lookups
         // Cache used to speed up site module type id extraction
         private Dictionary<Type, string> _siteModuleTypeToId
             = new Dictionary<Type, string>();
@@ -50,11 +51,24 @@ namespace Game.Simulation.Sites
         // Associates site module type IDs with their type object
         private Dictionary<string, Type> _siteModuleIdToType
             = new Dictionary<string, Type>();
-
         #endregion
 
-        #region Public Interface
+        #region Caches for site queries
+        // Cache for site filter queries
+        private Dictionary<SiteFilter, List<WorldSite>> _siteQueryCache
+            = new Dictionary<SiteFilter, List<WorldSite>>();
 
+        // Whether we currently have a valid cache containing sites organized by position
+        private bool _hasSiteByPositionCache
+            = false;
+
+        // Cache for queries for all world sites that have a position module, organized by position
+        private Dictionary<Position, WorldSite> _siteByPositionCache
+            = new Dictionary<Position, WorldSite>();
+        #endregion
+        #endregion
+
+        #region Constructor, Game Logic Update and Notifications
         /// <summary>
         /// Create new entity manager instance
         /// </summary>
@@ -64,6 +78,27 @@ namespace Game.Simulation.Sites
         }
 
         /// <summary>
+        /// Called by child world sites to notify this manager of changes concerning site modules etc
+        /// </summary>
+        public void Notify(SiteNotificationType notificationType, WorldSite site, Type moduleType)
+        {
+            this.InvalidateCaches();
+        }
+
+        /// <summary>
+        /// Updates state of all sites
+        /// </summary>
+        public void Update(int weeks)
+        {
+            foreach (var kvp in this.Sites)
+            {
+                kvp.Value.Update(weeks);
+            }
+        }
+        #endregion
+
+        #region Site Management Methods
+        /// <summary>
         /// Checks whether a site with given instance id exists.
         /// </summary>
         public bool HasSite(Guid id)
@@ -72,27 +107,15 @@ namespace Game.Simulation.Sites
         }
 
         /// <summary>
-        /// Updates state of all sites
-        /// </summary>
-        public void Update(int weeks)
-        {
-            foreach(var kvp in this.Sites)
-            {
-                kvp.Value.Update(weeks);
-            }
-        }
-
-        /// <summary>
         /// Create new site based on site template with given type
         /// </summary>
-        public WorldSite CreateSite(string type, Position position)
+        public WorldSite CreateSite(string type)
         {
             // Retrieve type class for requested site type
             var siteTypeClass = SiteTypeManager.Instance.GetType(type);
 
             // First, create the empty site object and fill it with metadata
             var site = new WorldSite();
-            site.Position = position;
             site.TypeId = siteTypeClass.Identifier;
             site.TypeDescriptor = siteTypeClass.TypeDescriptor;
             
@@ -119,6 +142,17 @@ namespace Game.Simulation.Sites
         }
 
         /// <summary>
+        /// Create new site based on site template with given type and position. This requires
+        /// that the site type template includes a position component.
+        /// </summary>
+        public WorldSite CreateSiteAt(string type, Position position)
+        {
+            var site = this.CreateSite(type);
+            site.QueryModule<SitePosition>().Position = position;
+            return site;
+        }
+
+        /// <summary>
         /// Retrieves site with given instance id. Will throw if no such entity exists.
         /// </summary>
         public WorldSite GetSite(Guid id)
@@ -138,6 +172,8 @@ namespace Game.Simulation.Sites
                 throw new ArgumentException($"Site with id {site.Id} already exists");
 
             Sites.Add(site.Id, site);
+            site.Manager = this;
+            this.InvalidateCaches();
         }
 
         /// <summary>
@@ -180,7 +216,54 @@ namespace Game.Simulation.Sites
 
             return this._siteModuleIdToType[typeId];
         }
+        #endregion
 
+        #region Site Querying and Filtering
+        /// <summary>
+        /// Retrieve collection of world sites satisfying given site filter
+        /// </summary>
+        public IReadOnlyList<WorldSite> QuerySites(SiteFilter filter)
+        {
+            // First, check we have a cache entry for this query.
+            if(this._siteQueryCache.ContainsKey(filter))
+            {
+                // If so, just return that.
+                return this._siteQueryCache[filter];
+            }
+
+            // Otherwise, we have to recompute the set of matching sites.
+            var results = this.Sites.Where(x => filter.Matches(x.Value)).Select(x => x.Value).ToList();
+
+            // Record in our cache
+            this._siteQueryCache[filter] = results;
+
+            return results;
+        }
+
+        /// <summary>
+        /// Return all sites that have a position, organized by position for faster lookup
+        /// </summary>
+        public IReadOnlyDictionary<Position, WorldSite> QuerySitesWithPosition()
+        {
+            // If we have a valid cache, use that
+            if(this._hasSiteByPositionCache)
+            {
+                return this._siteByPositionCache;
+            }
+
+            // We have to rebuild the cache
+            this._siteByPositionCache =
+                this.Sites
+                    .Where(x => x.Value.HasModule<SitePosition>())
+                    .Select(x => x.Value)
+                    .ToDictionary(x => x.QueryModule<SitePosition>().Position);
+
+            this._hasSiteByPositionCache = true;
+            return this._siteByPositionCache;
+        }
+        #endregion
+
+        #region De/Serialization
         /// <summary>
         /// Deserialize site manager state from given JSON node
         /// </summary>
@@ -244,10 +327,20 @@ namespace Game.Simulation.Sites
 
             return array;
         }
-
         #endregion
 
         #region Internal Methods
+        /// <summary>
+        /// Invalidate all caches. Called when sites change etc.
+        /// </summary>
+        private void InvalidateCaches()
+        {
+            this._siteQueryCache.Clear();
+
+            this._hasSiteByPositionCache = false;
+            this._siteByPositionCache.Clear();
+        }
+
         /// <summary>
         /// Retrieve the type id from given site module type
         /// </summary>

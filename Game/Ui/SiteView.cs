@@ -78,6 +78,14 @@ namespace Game.Ui
         /// </summary>
         protected Dictionary<Position, WorldSite> Sites { get; set; }
 
+        // Filter used to find all sites we need to draw
+        protected SiteFilter _siteFilter
+            = new SiteFilter
+            {
+                ModuleFilterConstraint.Create<SitePosition>(),
+                ModuleFilterConstraint.CreateAbstract<SiteDrawer>()
+            };
+
         /// <summary>
         /// All cities in the world
         /// </summary>
@@ -198,9 +206,9 @@ namespace Game.Ui
         /// </summary>
         protected override void BeforeRender(Surface surface)
         {
-            this.Sites = this.State.Sites.AllSites
-                .Where(x => x.HasAbstractModule<SiteDrawer>())
-                .ToDictionary(x => x.Position);
+            this.Sites = this.State.Sites
+                .QuerySites(this._siteFilter)
+                .ToDictionary(x => x.QueryModule<SitePosition>().Position);
 
             //this.CitiesInView.Clear();
 

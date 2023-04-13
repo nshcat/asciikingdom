@@ -20,14 +20,14 @@ namespace Game.Simulation.Sites
     {
         #region Properties
         /// <summary>
+        /// The site manager this site is registered with
+        /// </summary>
+        public SiteManager Manager { get; set; }
+
+        /// <summary>
         /// The name for this site, specified by the user
         /// </summary>
         public string Name { get; set; }
-
-        /// <summary>
-        /// The position of the site on the world map
-        /// </summary>
-        public Position Position { get; set; }
 
         /// <summary>
         /// The identifying GUID of this site
@@ -43,6 +43,26 @@ namespace Game.Simulation.Sites
         /// A descriptive string for the type of this world site, such as "City" or "Village"
         /// </summary>
         public string TypeDescriptor { get; set; }
+        #endregion
+
+        #region Constructors
+        /// <summary>
+        /// Base class constructor. Sets a new GUID.
+        /// </summary>
+        public WorldSite(string name)
+        {
+            Id = Guid.NewGuid();
+            Name = name;
+        }
+
+        /// <summary>
+        /// Empty constructor, used for deserialization
+        /// </summary>
+        public WorldSite()
+        {
+            Id = Guid.NewGuid();
+            Name = "";
+        }
         #endregion
 
         #region Module Management
@@ -159,6 +179,7 @@ namespace Game.Simulation.Sites
                 throw new ArgumentException($"Site already contains module of type {moduleType}");
 
             this.Modules.Add(moduleType, module);
+            this.Manager?.Notify(SiteNotificationType.ModuleAdded, this, moduleType);
         }
 
         /// <summary>
@@ -171,30 +192,11 @@ namespace Game.Simulation.Sites
         public void RemoveModule<T>() where T : SiteModule
         {
             if (this.HasModule<T>())
+            {
                 Modules.Remove(typeof(T));
+                this.Manager?.Notify(SiteNotificationType.ModuleRemoved, this, typeof(T));
+            }
             else throw new ArgumentException($"Site does not contain module of type {typeof(T)}");
-        }
-        #endregion
-
-        #region Constructors
-        /// <summary>
-        /// Base class constructor. Sets a new GUID.
-        /// </summary>
-        public WorldSite(string name, Position position)
-        {
-            Id = Guid.NewGuid();
-            Name = name;
-            Position = position;
-        }
-
-        /// <summary>
-        /// Empty constructor, used for deserialization
-        /// </summary>
-        public WorldSite()
-        {
-            Id = Guid.NewGuid();
-            Name = "";
-            Position = new Position();
         }
         #endregion
 
@@ -204,7 +206,6 @@ namespace Game.Simulation.Sites
             // Write site properties
             helper.WriteGuid("id", this.Id);
             helper.WriteValue("name", this.Name);
-            helper.WritePosition("position", this.Position);
             helper.WriteValue("type", this.TypeDescriptor);
             helper.WriteValue("typeid", this.TypeId);
 
@@ -234,7 +235,6 @@ namespace Game.Simulation.Sites
             // Read site properties
             this.Id = helper.ReadGuid("id");
             this.Name = helper.ReadValue<string>("name");
-            this.Position = helper.ReadPosition("position");
             this.TypeDescriptor = helper.ReadValue<string>("type");
             this.TypeId = helper.ReadValue<string>("typeid");
 

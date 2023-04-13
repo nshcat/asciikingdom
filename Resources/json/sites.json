@@ -3,6 +3,7 @@
     "identifier": "site_city",
     "typedesc": "City",
     "modules": {
+      "position" : { },
       "fixeddrawer": {
         "tile": {
           "front": "#CDD2D2",
@@ -10,7 +11,7 @@
           "glyph": 35
         }
       },
-      "maplabelrenderer" : {
+      "maplabelrenderer": {
         "style": 1
       }
     }

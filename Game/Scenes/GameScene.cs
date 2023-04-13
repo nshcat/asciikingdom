@@ -304,7 +304,7 @@ namespace Game.Scenes
                 this._siteView.RecalulatePositions();
 
                 // Detect if the cursor is currently on a site
-                var sites = this._state.Sites.AllSitesByPosition;
+                var sites = this._state.Sites.QuerySitesWithPosition();
 
                 if (sites.ContainsKey(newPosition))
                 {
@@ -471,7 +471,7 @@ namespace Game.Scenes
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Bad terrain");
             }
-            else if (this._state.Sites.AllSitesByPosition.ContainsKey(position))
+            else if (this._state.Sites.QuerySitesWithPosition().ContainsKey(position))
             {
                 this._canPlace = false;
                 this._placementError = Optional<string>.Of("Site present");
@@ -959,7 +959,7 @@ namespace Game.Scenes
                 }*/
                 case PlacementType.City:
                 {
-                    var city = this._state.Sites.CreateSite("site_city", this._placementPosition);
+                    var city = this._state.Sites.CreateSiteAt("site_city", this._placementPosition);
                     city.Name = this._placementNameWindow.Text;
 
                     /*if (this._newProvince)

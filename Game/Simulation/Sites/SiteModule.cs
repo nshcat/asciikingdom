@@ -44,7 +44,10 @@ namespace Game.Simulation.Sites
         /// Initialize site module from template json data
         /// </summary>
         /// <param name="helper"></param>
-        public abstract void Initialize(SiteDeserializationHelper helper);
+        public virtual void Initialize(SiteDeserializationHelper helper)
+        {
+            // Default behaviour is no initialization
+        }
 
         /// <summary>
         /// Serialize site module state to JSON
