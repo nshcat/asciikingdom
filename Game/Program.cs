@@ -9,6 +9,7 @@ using NLog.Config;
 using NLog.Layouts;
 using NLog.Targets;
 using NLog;
+using Game.Settings;
 
 namespace Game
 {
@@ -18,6 +19,10 @@ namespace Game
         {
             SetupLogging();
             GameDirectories.EnsureDirectories();
+
+            // Load settings as early as possible, since we need to know how big the
+            // game window is supposed to be.
+            SettingsManager.Instance.LoadSettings();
 
             LogManager.GetCurrentClassLogger().Warn("Bla bla bla");
             LogManager.GetCurrentClassLogger().Info("Bla bla bla");

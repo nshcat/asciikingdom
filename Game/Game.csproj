@@ -12,6 +12,7 @@
     <ItemGroup>
       <PackageReference Include="NLog" Version="4.7.15" />
       <PackageReference Include="SharpNoise" Version="0.12.1.1" />
+      <PackageReference Include="YamlDotNet" Version="13.0.2" />
     </ItemGroup>
     
     <ItemGroup>

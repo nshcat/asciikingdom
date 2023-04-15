@@ -16,6 +16,7 @@ using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Windowing.Common.Input;
 using Game.Simulation.Sites;
 using SixLabors.ImageSharp.Primitives;
+using Game.Settings;
 
 namespace Game.Scenes
 {
@@ -119,6 +120,11 @@ namespace Game.Scenes
         /// The current simulation state
         /// </summary>
         private SimulationState _state;
+
+        /// <summary>
+        /// Reference to the settings object, for convenience.
+        /// </summary>
+        private Settings.Settings _settings;
 
         /// <summary>
         /// The current map view state
@@ -285,6 +291,7 @@ namespace Game.Scenes
         /// </summary>
         private void Initialize(SimulationState state)
         {
+            this._settings = SettingsManager.Instance.Settings;
             this._state = state;
             this.InitializeViews();
             this.InitializeMapper();
@@ -425,7 +432,7 @@ namespace Game.Scenes
             if (!this._gameMenuStates.Contains(this._uiState))
                 return;
 
-            var position = new Position(1, 0);
+            var position = new Position(1, 1);
 
             foreach (var entry in this._gameMenu)
                 position = entry.Render(this._sideMenuSurface, this._uiState, position);
@@ -1122,7 +1129,7 @@ namespace Game.Scenes
             this._popupSurface?.Destroy();
 
             this._mainSurface = Surface.New()
-                .Tileset(this.Resources, "myne_rect.png")
+                .Tileset(this.Resources, this._settings.General.GraphicsTileset)
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
 
@@ -1130,13 +1137,13 @@ namespace Game.Scenes
             this.UpdateSideMenuMetrics();
 
             this._sideMenuSurface = Surface.New()
-                .Tileset(this.Resources, "VGA9x16.png")
+                .Tileset(this.Resources, this._settings.General.TextTileset)
                 .RelativeTo(this._mainSurface, this._sideMenuTopLeft, this._sideMenuBottomRight)
                 .Transparent()
                 .Build();
 
             this._popupSurface = Surface.New()
-                .Tileset(this.Resources, "myne_rect.png")
+                .Tileset(this.Resources, this._settings.General.GraphicsTileset)
                 .PixelDimensions(this.ScreenDimensions)
                 .Transparent()
                 .Build();

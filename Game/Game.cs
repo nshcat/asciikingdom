@@ -7,6 +7,7 @@ using Engine.Rendering;
 using Game.Core;
 using Game.Data;
 using Game.Scenes;
+using Game.Settings;
 using OpenToolkit.Graphics.OpenGL4;
 using OpenToolkit.Windowing.Common.Input;
 
@@ -26,7 +27,12 @@ namespace Game
         /// Construct new game instance
         /// </summary>
         public Game()
-            : base(new Size(1600, 860), "AsciiKingdom")
+            : base(
+                new Size(
+                    SettingsManager.Instance.Settings.General.GameWindowWidth,
+                    SettingsManager.Instance.Settings.General.GameWindowHeight
+                ),
+                "AsciiKingdom")
         {
         }
 
@@ -46,7 +52,7 @@ namespace Game
         /// Load game data from filesystem
         /// </summary>
         protected void LoadData()
-        {
+        { 
             ResourceTypeManager.Instance.LoadTypes(this.Resources);
             ProductTypeManager.Instance.LoadTypes(this.Resources);
             CropTypeManager.Instance.LoadTypes(this.Resources);
