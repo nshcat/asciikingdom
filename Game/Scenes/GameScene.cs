@@ -15,6 +15,7 @@ using Game.WorldGen;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Windowing.Common.Input;
 using Game.Simulation.Sites;
+using SixLabors.ImageSharp.Primitives;
 
 namespace Game.Scenes
 {
@@ -133,7 +134,17 @@ namespace Game.Scenes
         /// The surface used to draw the game views. Is supposed to have a tile set that is well-suited
         /// for displaying the world tiles.
         /// </summary>
-        private Surface _surface;
+        private Surface _mainSurface;
+
+        /// <summary>
+        /// Surface for the menu on the right side, with a smaller font.
+        /// </summary>
+        private Surface _sideMenuSurface;
+
+        /// <summary>
+        /// Surface for popup windows.
+        /// </summary>
+        private Surface _popupSurface;
         
         /// <summary>
         /// The input action mapper for this scene
@@ -232,20 +243,23 @@ namespace Game.Scenes
         /// Crop type fertility info is currently shown for
         /// </summary>
         private CropType _cropType;
-        
+
         /// <summary>
         /// Whether there are any provinces in the current state
         /// </summary>
         //private bool HasAnyProvinces() => this._state.Provinces.Count > 0;
-        
+
         /// <summary>
         /// The top left corner of the game menu
         /// </summary>
-        private Position MenuTopLeft => new Position(
-            this._terrainView.Position.X + this._terrainView.Dimensions.Width + 2,
-            2
-        );
-        
+        private Position _sideMenuTopLeft = new Position();
+
+        /// <summary>
+        /// The bottom ri corner of the game menu
+        /// </summary>
+        private Position _sideMenuBottomRight = new Position();
+
+        #region Constructors
         /// <summary>
         /// Create new game scene based on given simulation state 
         /// </summary>
@@ -263,29 +277,20 @@ namespace Game.Scenes
         {
             this.Initialize(state);
         }
-        
+        #endregion
+
+        #region Initialization
         /// <summary>
-        /// Determine the number of weeks elapsing per second based on given game speed setting
+        /// Initialize the scene
         /// </summary>
-        private int WeeksPerSecond(GameSpeed speed)
+        private void Initialize(SimulationState state)
         {
-            return speed switch
-            {
-                GameSpeed.Paused => 0,
-                GameSpeed.Slow => 1,
-                GameSpeed.Normal => 4,
-                GameSpeed.Fast => 12,
-            };
+            this._state = state;
+            this.InitializeViews();
+            this.InitializeMapper();
+            this.InitializeMenu();
         }
 
-        /// <summary>
-        /// Pause the game
-        /// </summary>
-        private void PauseGame()
-        {
-            this._gameSpeed = GameSpeed.Paused;
-        }
-        
         /// <summary>
         /// Initialize the game views that are part of this scene
         /// </summary>
@@ -319,31 +324,255 @@ namespace Game.Scenes
             this._terrainView.CursorPosition = this._state.World.Metadata.InitialLocation;
             this._terrainView.RecalulatePositions();
             this._terrainView.FireCursorMovedEvent();
+        }   
+        #endregion
+
+        #region Drawing - General
+        /// <summary>
+        /// Draw the decorative borders around the game view and menu
+        /// </summary>
+        private void DrawBorders()
+        {
+            var menuBounds = new Rectangle(
+                new Position(this._terrainView.Position.X + this._terrainView.Dimensions.Width, 0),
+                (Position)this._mainSurface.Dimensions - new Position(1, 1)
+            );
+
+            this._mainSurface.DrawRectangle(menuBounds, 219, UiColors.BorderBack, DefaultColors.Black);
+            this._mainSurface.DrawRectangle(new Rectangle(this._mainSurface.Dimensions), 219, UiColors.BorderBack, DefaultColors.Black);
+            this._mainSurface.DrawStringCentered(
+                new Position(this._mainSurface.Dimensions.Width / 2, 0),
+                "  Ascii Kingdom  ",
+                UiColors.BorderTitle,
+                UiColors.BorderBack
+            );
+
+            var dateString = this._state.Date.ToString();
+            this._mainSurface.DrawString(
+                new Position(this._mainSurface.Dimensions.Width - dateString.Length - 2, 0),
+                dateString,
+                UiColors.BorderTitle,
+                UiColors.BorderBack
+            );
+
+            var speedStr = $"Speed: {this._gameSpeed.ToString()}";
+            if (this._gameSpeed == GameSpeed.Paused)
+                speedStr = "*PAUSED*";
+
+            this._mainSurface.DrawString(
+                new Position(2, 0),
+                speedStr,
+                UiColors.BorderTitle,
+                (this._gameSpeed == GameSpeed.Paused) ? Color.FromHex("#238300") : UiColors.BorderBack
+            );
         }
 
         /// <summary>
-        /// Calculate how many weeks elapsed depending on the game speed
+        /// Makes sure that the map views have the correct dimensions
         /// </summary>
-        private int CalculateElapsedWeeks(double seconds)
+        private void UpdateMapViewDimensions()
         {
-            var total = this._elapsedTimeBuffer + seconds;
-            var elapsedSeconds = Math.Truncate(total);
-            this._elapsedTimeBuffer = total - elapsedSeconds;
+            if (this._mapViewState == MapViewState.Normal)
+                this._terrainView.Dimensions = new Size((int)(this._mainSurface.Dimensions.Width * 0.7f) - 1, this._mainSurface.Dimensions.Height - 2);
+            else
+                this._terrainView.Dimensions = new Size(this._mainSurface.Dimensions.Width - 2, this._mainSurface.Dimensions.Height - 2);
 
-            return this.WeeksPerSecond(this._gameSpeed) * (int) elapsedSeconds;
+            this._siteView.Dimensions = this._terrainView.Dimensions;
+
+            this._terrainView.RecalulatePositions();
+            this._siteView.RecalulatePositions();
         }
 
         /// <summary>
-        /// Initialize the scene
+        /// Draw the game views
         /// </summary>
-        private void Initialize(SimulationState state)
+        private void DrawViews()
         {
-            this._state = state;
-            this.InitializeViews();
-            this.InitializeMapper();
-            this.InitializeMenu();
+            this._terrainView.Render(this._mainSurface);
+            this._siteView.Render(this._mainSurface);
         }
-        
+        #endregion
+
+        #region Drawing - Side Menu
+        /// <summary>
+        /// Draw crop fertility side bar
+        /// </summary>
+        private void DrawCropFertility()
+        {
+            if (this._uiState != GameUiState.CropFertility)
+                return;
+
+            var position = new Position(1, 0);
+
+            this._sideMenuSurface.DrawString(
+                position,
+                $"Crop fertility: {this._cropType.Name.ToLower()}",
+                UiColors.ActiveText,
+                DefaultColors.Black
+            );
+
+            position += new Position(0, 2);
+
+            foreach (var entry in this._fertilityMenu)
+                position = entry.Render(this._sideMenuSurface, this._uiState, position);
+        }
+
+        /// <summary>
+        /// Draw the game action menu
+        /// </summary>
+        private void DrawMenu()
+        {
+            if (!this._gameMenuStates.Contains(this._uiState))
+                return;
+
+            var position = new Position(1, 0);
+
+            foreach (var entry in this._gameMenu)
+                position = entry.Render(this._sideMenuSurface, this._uiState, position);
+
+            if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
+            {
+                position += new Position(0, 2);
+
+                this._sideMenuSurface.DrawString(
+                    position,
+                    $"Placing {(this._uiState == GameUiState.PlaceCity ? "City" : "Village")}",
+                    UiColors.ActiveText,
+                    DefaultColors.Black
+                );
+
+                if (this._placementError.HasValue)
+                {
+                    position += new Position(0, 1);
+
+                    this._sideMenuSurface.DrawString(
+                        position,
+                        this._placementError.Value,
+                        DefaultColors.Red,
+                        DefaultColors.Black
+                    );
+                }
+            }
+        }
+
+        /// <summary>
+        /// Draw information about the current tile
+        /// </summary>
+        private void DrawTileInfo()
+        {
+            var position = new Position(1, (int)(this._sideMenuSurface.Dimensions.Height * 0.75f));
+
+            if (!this._state.World.DetailedMap.IsDiscovered(this._terrainView.CursorPosition))
+            {
+                this._sideMenuSurface.DrawString(position, "Unknown",
+                    UiColors.ActiveText, DefaultColors.Black);
+
+                return;
+            }
+
+            /*if (this._currentProvince.HasValue)
+            {
+                this._surface.DrawString(position, $"Province: {this._currentProvince.Value.Name}",
+                    UiColors.ActiveText, DefaultColors.Black);
+                
+                position += new Position(0, 1);
+            }*/
+
+            /*if (this._currentCity.HasValue && !(this._cursorSite.HasValue && this._cursorSite.Value is City))
+            {
+                this._surface.DrawString(position, $"Near city: {this._currentCity.Value.Name}",
+                    UiColors.ActiveText, DefaultColors.Black);
+                
+                position += new Position(0, 1);
+            }*/
+
+            if (this._cursorSite.HasValue)
+            {
+                this._sideMenuSurface.DrawString(position, $"{this._cursorSite.Value.TypeDescriptor}: {this._cursorSite.Value.Name}",
+                    UiColors.ActiveText, DefaultColors.Black);
+
+                position += new Position(0, 1);
+            }
+
+            this._sideMenuSurface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._terrainView.CursorPosition)).Name,
+                UiColors.ActiveText, DefaultColors.Black);
+
+            if (this._uiState == GameUiState.CropFertility)
+            {
+                var X = this._terrainView.CursorPosition.X;
+                var Y = this._terrainView.CursorPosition.Y;
+
+                if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.Terrain[X, Y]))
+                {
+                    var temperature = this._state.World.DetailedMap.RawTemperature[X, Y];
+                    var drainage = this._state.World.DetailedMap.RawDrainage[X, Y];
+                    var rainfall = this._state.World.DetailedMap.RawRainfall[X, Y];
+
+                    var fertility = this._cropType.FertilityFactors.CalculateFertilityFactor(temperature, drainage, rainfall);
+
+                    this._sideMenuSurface.DrawString(
+                        position + new Position(0, 1),
+                        $"Fertility: {(int)(fertility * 100.0)}%",
+                        UiColors.ActiveText, DefaultColors.Black);
+
+                    position += new Position(0, 1);
+                }
+            }
+
+            if (this._terrainView.ShowResources &&
+                this._state.World.DetailedMap.Resources.ContainsKey(this._terrainView.CursorPosition))
+            {
+                var resourceType = this._state.World.DetailedMap.Resources[this._terrainView.CursorPosition];
+                this._sideMenuSurface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
+                    UiColors.ActiveText, DefaultColors.Black);
+
+                position += new Position(0, 1);
+            }
+        }
+
+        /// <summary>
+        /// Draw the menu on the right side of the game screen, if its active.
+        /// </summary>
+        private void DrawSideMenu()
+        {
+            // In full map view mode, the right side bar is not shown.
+            if (this._mapViewState == MapViewState.Normal)
+            {
+                this.DrawTileInfo();
+                this.DrawMenu();
+                this.DrawCropFertility();
+            }
+        }
+
+        /// <summary>
+        /// Recalculate side menu metrics
+        /// </summary>
+        private void UpdateSideMenuMetrics()
+        {
+            this._sideMenuTopLeft = new Position(
+                (int)(this._mainSurface.Dimensions.Width * 0.7f) + 1,
+                1
+            );
+
+            this._sideMenuBottomRight = new Position(
+                this._mainSurface.Dimensions.Width - 2,
+                this._mainSurface.Dimensions.Height - 2
+            );
+        }
+        #endregion
+
+        #region Drawing - Popups
+        /// <summary>
+        /// Render the window used to name newly placed sites, if needed
+        /// </summary>
+        private void DrawNameSiteWindow()
+        {
+            if (this._uiState == GameUiState.NamePlacement)
+                this._placementNameWindow.Render(this._popupSurface);
+        }
+        #endregion
+
+        #region Input
         /// <summary>
         /// Initialize the input mapper
         /// </summary>
@@ -375,12 +604,250 @@ namespace Game.Scenes
         }
 
         /// <summary>
-        /// Draw the game views
+        /// Handle user input actions
         /// </summary>
-        private void DrawViews()
+        private void HandleInput(GameAction action)
         {
-            this._terrainView.Render(this._surface);
-            this._siteView.Render(this._surface);
+            switch (action)
+            {
+                case GameAction.MoveDown:
+                    {
+                        this.HandleCursorMove(MovementDirection.Down);
+                        break;
+                    }
+                case GameAction.MoveUp:
+                    {
+                        this.HandleCursorMove(MovementDirection.Up);
+                        break;
+                    }
+                case GameAction.MoveLeft:
+                    {
+                        this.HandleCursorMove(MovementDirection.Left);
+                        break;
+                    }
+                case GameAction.MoveRight:
+                    {
+                        this.HandleCursorMove(MovementDirection.Right);
+                        break;
+                    }
+                case GameAction.MoveDownFast:
+                    {
+                        this.HandleCursorMove(MovementDirection.Down, 5);
+                        break;
+                    }
+                case GameAction.MoveUpFast:
+                    {
+                        this.HandleCursorMove(MovementDirection.Up, 5);
+                        break;
+                    }
+                case GameAction.MoveLeftFast:
+                    {
+                        this.HandleCursorMove(MovementDirection.Left, 5);
+                        break;
+                    }
+                case GameAction.MoveRightFast:
+                    {
+                        this.HandleCursorMove(MovementDirection.Right, 5);
+                        break;
+                    }
+                case GameAction.ShowResources:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                            this._terrainView.ShowResources = !this._terrainView.ShowResources;
+
+                        break;
+                    }
+                case GameAction.ToggleMapLabels:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                            this._siteView.DrawMapLabels = !this._siteView.DrawMapLabels;
+
+                        break;
+                    }
+                case GameAction.SaveAndQuit:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                        {
+                            // Save the world
+                            WorldManager.Instance.SaveWorld(this._state);
+
+                            // Exit to main menu
+                            this.SceneStack.NextOperation = new SceneStackOperation.PopScene();
+                        }
+
+                        break;
+                    }
+                case GameAction.ShowCropFertility:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                        {
+                            this.EnsureNormalMapViewState();
+                            this.PauseGame();
+                            this._uiState = GameUiState.CropFertility;
+                            this._cropType = CropTypeManager.Instance.GetType("crop_wheat");
+                            this._terrainView.CurrentOverlay = Optional<MapOverlay>.Of(new FertilityOverlay(this._cropType));
+                        }
+                        break;
+                    }
+                case GameAction.PlaceCity:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                        {
+                            this.EnsureNormalMapViewState();
+                            this.PauseGame();
+                            this._uiState = GameUiState.PlaceCity;
+                            //this._newProvince = !this.HasAnyProvinces();
+                            this._siteView.InfluenceMode = (this._newProvince
+                                ? SiteView.InfluenceDrawMode.InverseProvince
+                                : SiteView.InfluenceDrawMode.Province);
+                        }
+                        else if (this._uiState == GameUiState.PlaceCity)
+                        {
+                            this._uiState = GameUiState.Main;
+                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
+                            this._terrainView.CursorMode = CursorMode.Normal;
+                        }
+
+                        break;
+                    }
+                case GameAction.PlaceVillage:
+                    {
+                        if (this._uiState == GameUiState.Main)
+                        {
+                            this.EnsureNormalMapViewState();
+                            this.PauseGame();
+                            this._uiState = GameUiState.PlaceVillage;
+                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.City;
+                        }
+                        else if (this._uiState == GameUiState.PlaceVillage)
+                        {
+                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
+                            this._terrainView.CursorMode = CursorMode.Normal;
+                            this._uiState = GameUiState.Main;
+                        }
+
+                        break;
+                    }
+                case GameAction.ToggleNewProvince:
+                    {
+                        /*if (this._uiState == GameUiState.PlaceCity && this.HasAnyProvinces())
+                        {
+                            this._newProvince = !this._newProvince;
+                            this._siteView.InfluenceMode = this._newProvince
+                                ? SiteView.InfluenceDrawMode.InverseProvince
+                                : SiteView.InfluenceDrawMode.Province;
+                        }*/
+
+                        break;
+                    }
+                case GameAction.Return:
+                    {
+                        if (this._uiState == GameUiState.PlaceCity
+                            || this._uiState == GameUiState.PlaceVillage
+                            || this._uiState == GameUiState.NamePlacement
+                            || this._uiState == GameUiState.CropFertility)
+                        {
+                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
+                            this._terrainView.CursorMode = CursorMode.Normal;
+                            this._uiState = GameUiState.Main;
+                            this._terrainView.CurrentOverlay = Optional<MapOverlay>.Empty;
+                        }
+
+                        break;
+                    }
+                case GameAction.Select:
+                    {
+                        if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
+                        {
+                            if (this._canPlace)
+                            {
+                                this._placementPosition = this._terrainView.CursorPosition;
+                                this._currentPlacement = (this._uiState == GameUiState.PlaceCity)
+                                    ? PlacementType.City
+                                    : PlacementType.Village;
+                                this._uiState = GameUiState.NamePlacement;
+
+                                this._placementNameWindow.Begin();
+                                this._placementNameWindow.Title = this._currentPlacement switch
+                                {
+                                    PlacementType.City when this._newProvince => "Name Province",
+                                    PlacementType.City => "Name City",
+                                    _ => "Name Village"
+                                };
+
+                                this._provinceName = Optional<string>.Empty;
+                                this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
+                                this._terrainView.CursorMode = CursorMode.Normal;
+                            }
+                        }
+                        else if (this._uiState == GameUiState.NamePlacement &&
+                                 !string.IsNullOrEmpty(this._placementNameWindow.Text))
+                        {
+                            // Do we still need the city name?
+                            if (!this._provinceName.HasValue && this._newProvince)
+                            {
+                                this._provinceName = this._placementNameWindow.Text;
+                                this._placementNameWindow.Text = "";
+                                this._placementNameWindow.Title = "Name City";
+                            }
+                            else
+                            {
+                                this.PlaceSite();
+                                this._uiState = GameUiState.Main;
+                            }
+                        }
+
+                        break;
+                    }
+                case GameAction.GenerateTestData:
+                    {
+                        /*if (this._uiState == GameUiState.Main)
+                            this.GenerateTestData();*/
+
+                        break;
+                    }
+                case GameAction.IncreaseGameSpeed:
+                    {
+                        if (this._uiState != GameUiState.Main)
+                            break;
+
+                        this.ModifyGameSpeed(1);
+                        break;
+                    }
+                case GameAction.DecreaseGameSpeed:
+                    {
+                        if (this._uiState != GameUiState.Main)
+                            break;
+
+                        this.ModifyGameSpeed(-1);
+                        break;
+                    }
+                case GameAction.ToggleFullView:
+                    {
+                        if (this._uiState != GameUiState.Main)
+                            break;
+
+                        if (this._mapViewState == MapViewState.Normal)
+                            this.SwitchMapViewState(MapViewState.Full);
+                        else
+                            this.SwitchMapViewState(MapViewState.Normal);
+                        break;
+                    }
+            }
+        }
+
+        /// <summary>
+        /// Handle game view cursor movement input actions
+        /// </summary>
+        private void HandleCursorMove(MovementDirection direction, int amount = 1)
+        {
+            if (this._uiState == GameUiState.Main
+                || this._uiState == GameUiState.PlaceCity
+                || this._uiState == GameUiState.PlaceVillage
+                || this._uiState == GameUiState.CropFertility)
+            {
+                this._terrainView.MoveCursor(direction, amount);
+            }
         }
 
         /// <summary>
@@ -388,69 +855,44 @@ namespace Game.Scenes
         /// </summary>
         private void UpdateTextInputWindow()
         {
-            if(this._uiState == GameUiState.NamePlacement)
+            if (this._uiState == GameUiState.NamePlacement)
                 this._placementNameWindow.Update(this.Input);
         }
-        
+        #endregion
+
+        #region Helper Methods
         /// <summary>
-        /// Draw crop fertility side bar
+        /// Determine the number of weeks elapsing per second based on given game speed setting
         /// </summary>
-        private void DrawCropFertility()
+        private int WeeksPerSecond(GameSpeed speed)
         {
-            if (this._uiState != GameUiState.CropFertility)
-                return;
-
-            var position = this.MenuTopLeft;
-
-            this._surface.DrawString(
-                position,
-                $"Crop fertility: {this._cropType.Name.ToLower()}",
-                UiColors.ActiveText,
-                DefaultColors.Black
-            );
-
-            position += new Position(0, 2);
-
-            foreach (var entry in this._fertilityMenu)
-                position = entry.Render(this._surface, this._uiState, position);
+            return speed switch
+            {
+                GameSpeed.Paused => 0,
+                GameSpeed.Slow => 1,
+                GameSpeed.Normal => 4,
+                GameSpeed.Fast => 12,
+            };
         }
 
         /// <summary>
-        /// Draw the game action menu
+        /// Pause the game
         /// </summary>
-        private void DrawMenu()
+        private void PauseGame()
         {
-            if (!this._gameMenuStates.Contains(this._uiState))
-                return;
+            this._gameSpeed = GameSpeed.Paused;
+        }
 
-            var position = this.MenuTopLeft;
+        /// <summary>
+        /// Calculate how many weeks elapsed depending on the game speed
+        /// </summary>
+        private int CalculateElapsedWeeks(double seconds)
+        {
+            var total = this._elapsedTimeBuffer + seconds;
+            var elapsedSeconds = Math.Truncate(total);
+            this._elapsedTimeBuffer = total - elapsedSeconds;
 
-            foreach (var entry in this._gameMenu)
-                position = entry.Render(this._surface, this._uiState, position);
-            
-            if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
-            {
-                position += new Position(0, 2);
-                
-                this._surface.DrawString(
-                    position,
-                    $"Placing {(this._uiState == GameUiState.PlaceCity ? "City" : "Village")}",
-                    UiColors.ActiveText,
-                    DefaultColors.Black
-                );
-
-                if (this._placementError.HasValue)
-                {
-                    position += new Position(0, 1);
-                    
-                    this._surface.DrawString(
-                        position,
-                        this._placementError.Value,
-                        DefaultColors.Red,
-                        DefaultColors.Black
-                    );
-                }
-            }
+            return this.WeeksPerSecond(this._gameSpeed) * (int)elapsedSeconds;
         }
 
         /// <summary>
@@ -485,57 +927,57 @@ namespace Game.Scenes
         {
             this._placementError = Optional<string>.Empty;
             this._canPlace = true;
-            
+
             switch (this._uiState)
             {
                 case GameUiState.PlaceCity:
-                {
-                    /*if (this._newProvince && this._currentProvince.HasValue)
                     {
-                        this._canPlace = false;
-                        this._placementError= Optional<string>.Of("Inside other province");
-                    }
-                    else if (!this._newProvince)
-                    {
-                        if (!this._currentProvince.HasValue)
+                        /*if (this._newProvince && this._currentProvince.HasValue)
                         {
                             this._canPlace = false;
-                            this._placementError= Optional<string>.Of("Outside province");
+                            this._placementError= Optional<string>.Of("Inside other province");
                         }
-                        else if (!this._currentProvince.Value.CanSupportNewCity)
+                        else if (!this._newProvince)
                         {
-                            this._canPlace = false;
-                            this._placementError= Optional<string>.Of("City limit reached");
-                        }
-                    }*/
-                    
-                    if(this._canPlace)
-                        this.CheckGeneralSitePlacement();
+                            if (!this._currentProvince.HasValue)
+                            {
+                                this._canPlace = false;
+                                this._placementError= Optional<string>.Of("Outside province");
+                            }
+                            else if (!this._currentProvince.Value.CanSupportNewCity)
+                            {
+                                this._canPlace = false;
+                                this._placementError= Optional<string>.Of("City limit reached");
+                            }
+                        }*/
 
-                    this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
-                    break;
-                }
+                        if (this._canPlace)
+                            this.CheckGeneralSitePlacement();
+
+                        this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
+                        break;
+                    }
                 case GameUiState.PlaceVillage:
-                {
-                    /*if (!this._currentCity.HasValue)
                     {
-                        this._canPlace = false;
-                        this._placementError = Optional<string>.Of("Outside city");
-                    }
-                    else if (!this._currentCity.Value.CanSupportNewVillage)
-                    {
-                        this._canPlace = false;
-                        this._placementError = Optional<string>.Of("Village limit reached");
-                    }
-                    else
-                    {
-                        this.CheckGeneralSitePlacement();
-                    }*/
-                    
-                    this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
+                        /*if (!this._currentCity.HasValue)
+                        {
+                            this._canPlace = false;
+                            this._placementError = Optional<string>.Of("Outside city");
+                        }
+                        else if (!this._currentCity.Value.CanSupportNewVillage)
+                        {
+                            this._canPlace = false;
+                            this._placementError = Optional<string>.Of("Village limit reached");
+                        }
+                        else
+                        {
+                            this.CheckGeneralSitePlacement();
+                        }*/
 
-                    break;
-                }
+                        this._siteView.CursorMode = !this._canPlace ? CursorMode.Invalid : CursorMode.Normal;
+
+                        break;
+                    }
                 default:
                     this._siteView.CursorMode = CursorMode.Normal;
                     this._canPlace = false;
@@ -548,7 +990,7 @@ namespace Game.Scenes
         /// </summary>
         private void ModifyGameSpeed(int direction)
         {
-            var val = (int) this._gameSpeed;
+            var val = (int)this._gameSpeed;
             val += direction;
 
             if (val < 0)
@@ -557,390 +999,7 @@ namespace Game.Scenes
             if (val > 3)
                 val = 3;
 
-            this._gameSpeed = (GameSpeed) val;
-        }
-        
-        /// <summary>
-        /// Draw the decorative borders around the game view and menu
-        /// </summary>
-        private void DrawBorders()
-        {
-            var menuBounds = new Rectangle(
-                new Position(this._terrainView.Position.X + this._terrainView.Dimensions.Width, 0),
-                (Position)this._surface.Dimensions - new Position(1, 1)
-            );
-            
-            this._surface.DrawRectangle(menuBounds, 219, UiColors.BorderBack, DefaultColors.Black);
-            this._surface.DrawRectangle(new Rectangle(this._surface.Dimensions), 219, UiColors.BorderBack, DefaultColors.Black);
-            this._surface.DrawStringCentered(
-                new Position(this._surface.Dimensions.Width / 2, 0),
-                "  Ascii Kingdom  ",
-                UiColors.BorderTitle,
-                UiColors.BorderBack
-            );
-
-            var dateString = this._state.Date.ToString();
-            this._surface.DrawString(
-                new Position(this._surface.Dimensions.Width - dateString.Length - 2, 0),
-                dateString,
-                UiColors.BorderTitle,
-                UiColors.BorderBack
-            );
-
-            var speedStr = $"Speed: {this._gameSpeed.ToString()}";
-            if (this._gameSpeed == GameSpeed.Paused)
-                speedStr = "*PAUSED*";
-            
-            this._surface.DrawString(
-                new Position(2, 0),
-                speedStr,
-                UiColors.BorderTitle,
-                (this._gameSpeed == GameSpeed.Paused) ? Color.FromHex("#238300") : UiColors.BorderBack
-            );
-        }
-        
-        /// <summary>
-        /// Draw information about the current tile
-        /// </summary>
-        private void DrawTileInfo()
-        {
-            var position = this.MenuTopLeft + new Position(0, (int)(this._surface.Dimensions.Height * 0.75f));
-
-            if (!this._state.World.DetailedMap.IsDiscovered(this._terrainView.CursorPosition))
-            {
-                this._surface.DrawString(position, "Unknown",
-                    UiColors.ActiveText, DefaultColors.Black);
-                
-                return;
-            }
-
-            /*if (this._currentProvince.HasValue)
-            {
-                this._surface.DrawString(position, $"Province: {this._currentProvince.Value.Name}",
-                    UiColors.ActiveText, DefaultColors.Black);
-                
-                position += new Position(0, 1);
-            }*/
-
-            /*if (this._currentCity.HasValue && !(this._cursorSite.HasValue && this._cursorSite.Value is City))
-            {
-                this._surface.DrawString(position, $"Near city: {this._currentCity.Value.Name}",
-                    UiColors.ActiveText, DefaultColors.Black);
-                
-                position += new Position(0, 1);
-            }*/
-
-            if (this._cursorSite.HasValue)
-            {
-                this._surface.DrawString(position, $"{this._cursorSite.Value.TypeDescriptor}: {this._cursorSite.Value.Name}",
-                    UiColors.ActiveText, DefaultColors.Black);
-                
-                position += new Position(0, 1);
-            }
-            
-            this._surface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._terrainView.CursorPosition)).Name,
-                UiColors.ActiveText, DefaultColors.Black);
-
-            if (this._uiState == GameUiState.CropFertility)
-            {
-                var X = this._terrainView.CursorPosition.X;
-                var Y = this._terrainView.CursorPosition.Y;
-
-                if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.Terrain[X, Y]))
-                {
-                    var temperature = this._state.World.DetailedMap.RawTemperature[X, Y];
-                    var drainage = this._state.World.DetailedMap.RawDrainage[X, Y];
-                    var rainfall = this._state.World.DetailedMap.RawRainfall[X, Y];
-
-                    var fertility = this._cropType.FertilityFactors.CalculateFertilityFactor(temperature, drainage, rainfall);
-
-                    this._surface.DrawString(
-                        position + new Position(0, 1),
-                        $"Fertility: {(int)(fertility * 100.0)}%",
-                        UiColors.ActiveText, DefaultColors.Black);
-
-                    position += new Position(0, 1);
-                }
-            }
-
-            if (this._terrainView.ShowResources &&
-                this._state.World.DetailedMap.Resources.ContainsKey(this._terrainView.CursorPosition))
-            {
-                var resourceType = this._state.World.DetailedMap.Resources[this._terrainView.CursorPosition];
-                this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
-                    UiColors.ActiveText, DefaultColors.Black);
-
-                position += new Position(0, 1);
-            }
-        }
-
-        /// <summary>
-        /// Handle game view cursor movement input actions
-        /// </summary>
-        private void HandleCursorMove(MovementDirection direction, int amount = 1)
-        {
-            if (this._uiState == GameUiState.Main
-                || this._uiState == GameUiState.PlaceCity
-                || this._uiState == GameUiState.PlaceVillage
-                || this._uiState == GameUiState.CropFertility)
-            {
-                this._terrainView.MoveCursor(direction, amount);
-            }
-        }
-        
-        /// <summary>
-        /// Handle user input actions
-        /// </summary>
-        private void HandleInput(GameAction action)
-        {
-            switch (action)
-            {
-                case GameAction.MoveDown:
-                {
-                    this.HandleCursorMove(MovementDirection.Down);
-                    break;
-                }
-                case GameAction.MoveUp:
-                {
-                    this.HandleCursorMove(MovementDirection.Up);
-                    break;
-                }
-                case GameAction.MoveLeft:
-                {
-                    this.HandleCursorMove(MovementDirection.Left);
-                    break;
-                }
-                case GameAction.MoveRight:
-                {
-                    this.HandleCursorMove(MovementDirection.Right);
-                    break;
-                }
-                case GameAction.MoveDownFast:
-                {
-                    this.HandleCursorMove(MovementDirection.Down, 5);
-                    break;
-                }
-                case GameAction.MoveUpFast:
-                {
-                    this.HandleCursorMove(MovementDirection.Up, 5);
-                    break;
-                }
-                case GameAction.MoveLeftFast:
-                {
-                    this.HandleCursorMove(MovementDirection.Left, 5);
-                    break;
-                }
-                case GameAction.MoveRightFast:
-                {
-                    this.HandleCursorMove(MovementDirection.Right, 5);
-                    break;
-                }
-                case GameAction.ShowResources:
-                {
-                    if(this._uiState == GameUiState.Main)
-                        this._terrainView.ShowResources = !this._terrainView.ShowResources;
-                    
-                    break;
-                }
-                case GameAction.ToggleMapLabels:
-                {
-                    if(this._uiState == GameUiState.Main)
-                        this._siteView.DrawMapLabels = !this._siteView.DrawMapLabels;
-                    
-                    break;
-                }
-                case GameAction.SaveAndQuit:
-                {
-                    if (this._uiState == GameUiState.Main)
-                    {
-                        // Save the world
-                        WorldManager.Instance.SaveWorld(this._state);
-                        
-                        // Exit to main menu
-                        this.SceneStack.NextOperation = new SceneStackOperation.PopScene();
-                    }
-
-                    break;
-                }
-                case GameAction.ShowCropFertility:
-                {
-                    if(this._uiState == GameUiState.Main)
-                    {
-                        this.EnsureNormalMapViewState();
-                        this.PauseGame();
-                        this._uiState = GameUiState.CropFertility;
-                        this._cropType = CropTypeManager.Instance.GetType("crop_wheat");
-                        this._terrainView.CurrentOverlay = Optional<MapOverlay>.Of(new FertilityOverlay(this._cropType));
-                    }
-                    break;
-                }
-                case GameAction.PlaceCity:
-                {
-                    if (this._uiState == GameUiState.Main)
-                    {
-                        this.EnsureNormalMapViewState();
-                        this.PauseGame();
-                        this._uiState = GameUiState.PlaceCity;
-                        //this._newProvince = !this.HasAnyProvinces();
-                        this._siteView.InfluenceMode = (this._newProvince 
-                            ? SiteView.InfluenceDrawMode.InverseProvince 
-                            : SiteView.InfluenceDrawMode.Province);
-                    }
-                    else if (this._uiState == GameUiState.PlaceCity)
-                    {
-                        this._uiState = GameUiState.Main;
-                        this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
-                        this._terrainView.CursorMode = CursorMode.Normal;
-                    }
-
-                    break;
-                }
-                case GameAction.PlaceVillage:
-                {
-                    if (this._uiState == GameUiState.Main)
-                    {
-                        this.EnsureNormalMapViewState();
-                        this.PauseGame();
-                        this._uiState = GameUiState.PlaceVillage;
-                        this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.City;
-                    }
-                    else if (this._uiState == GameUiState.PlaceVillage)
-                    {
-                        this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
-                        this._terrainView.CursorMode = CursorMode.Normal;
-                        this._uiState = GameUiState.Main;
-                    }
-
-                    break;
-                }
-                case GameAction.ToggleNewProvince:
-                {
-                    /*if (this._uiState == GameUiState.PlaceCity && this.HasAnyProvinces())
-                    {
-                        this._newProvince = !this._newProvince;
-                        this._siteView.InfluenceMode = this._newProvince
-                            ? SiteView.InfluenceDrawMode.InverseProvince
-                            : SiteView.InfluenceDrawMode.Province;
-                    }*/
-
-                    break;
-                }
-                case GameAction.Return:
-                {
-                    if (this._uiState == GameUiState.PlaceCity
-                        || this._uiState == GameUiState.PlaceVillage
-                        || this._uiState == GameUiState.NamePlacement
-                        || this._uiState == GameUiState.CropFertility)
-                    {
-                        this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
-                        this._terrainView.CursorMode = CursorMode.Normal;
-                        this._uiState = GameUiState.Main;
-                        this._terrainView.CurrentOverlay = Optional<MapOverlay>.Empty;
-                    }
-
-                    break;
-                }
-                case GameAction.Select:
-                {
-                    if (this._uiState == GameUiState.PlaceCity || this._uiState == GameUiState.PlaceVillage)
-                    {
-                        if (this._canPlace)
-                        {
-                            this._placementPosition = this._terrainView.CursorPosition;
-                            this._currentPlacement = (this._uiState == GameUiState.PlaceCity)
-                                ? PlacementType.City
-                                : PlacementType.Village;
-                            this._uiState = GameUiState.NamePlacement;
-                            
-                            this._placementNameWindow.Begin();
-                            this._placementNameWindow.Title = this._currentPlacement switch
-                            {
-                                PlacementType.City when this._newProvince => "Name Province",
-                                PlacementType.City => "Name City",
-                                _ => "Name Village"
-                            };
-                            
-                            this._provinceName = Optional<string>.Empty;
-                            this._siteView.InfluenceMode = SiteView.InfluenceDrawMode.None;
-                            this._terrainView.CursorMode = CursorMode.Normal;
-                        }
-                    }
-                    else if (this._uiState == GameUiState.NamePlacement &&
-                             !string.IsNullOrEmpty(this._placementNameWindow.Text))
-                    {
-                        // Do we still need the city name?
-                        if (!this._provinceName.HasValue && this._newProvince)
-                        {
-                            this._provinceName = this._placementNameWindow.Text;
-                            this._placementNameWindow.Text = "";
-                            this._placementNameWindow.Title = "Name City";
-                        }
-                        else
-                        {
-                            this.PlaceSite();
-                            this._uiState = GameUiState.Main;
-                        }
-                    }
-
-                    break;
-                }
-                case GameAction.GenerateTestData:
-                {
-                    if (this._uiState == GameUiState.Main)
-                        this.GenerateTestData();
-                        
-                    break;
-                }
-                case GameAction.IncreaseGameSpeed:
-                {
-                    if (this._uiState != GameUiState.Main)
-                        break;
-
-                    this.ModifyGameSpeed(1);
-                    break;
-                }
-                case GameAction.DecreaseGameSpeed:
-                {
-                    if (this._uiState != GameUiState.Main)
-                        break;
-
-                    this.ModifyGameSpeed(-1);
-                    break;
-                }
-                case GameAction.ToggleFullView:
-                {
-                    if (this._uiState != GameUiState.Main)
-                        break;
-
-                    if (this._mapViewState == MapViewState.Normal)
-                        this.SwitchMapViewState(MapViewState.Full);
-                    else
-                        this.SwitchMapViewState(MapViewState.Normal);
-                    break;
-                }
-            }
-        }
-        
-        /// <summary>
-        /// Render the scene
-        /// </summary>
-        public override void Render(RenderParams rp)
-        {
-            this._surface.Clear();
-            this.DrawViews();
-
-            // In full map view mode, the right side bar is not shown.
-            if (this._mapViewState == MapViewState.Normal)
-            {
-                this.DrawTileInfo();
-                this.DrawMenu();
-                this.DrawCropFertility();
-            }
-
-            this.DrawNameSiteWindow();
-            this.DrawBorders();
-
-            this._surface.Render(rp);
+            this._gameSpeed = (GameSpeed)val;
         }
 
         /// <summary>
@@ -958,38 +1017,75 @@ namespace Game.Scenes
                     break;
                 }*/
                 case PlacementType.City:
-                {
-                    var city = this._state.Sites.CreateSiteAt("site_city", this._placementPosition);
-                    city.Name = this._placementNameWindow.Text;
+                    {
+                        var city = this._state.Sites.CreateSiteAt("site_city", this._placementPosition);
+                        city.Name = this._placementNameWindow.Text;
 
-                    /*if (this._newProvince)
-                    {
-                        var province = new Province(this._provinceName.Value, city);
-                        city.AssociatedProvince = province;
-                        this._state.Provinces.Add(province);
+                        /*if (this._newProvince)
+                        {
+                            var province = new Province(this._provinceName.Value, city);
+                            city.AssociatedProvince = province;
+                            this._state.Provinces.Add(province);
+                        }
+                        else
+                        {
+                            var province = this._currentProvince.Value;
+                            city.AssociatedProvince = province;
+                            province.AssociatedCities.Add(city);
+                        }*/
+                        break;
                     }
-                    else
-                    {
-                        var province = this._currentProvince.Value;
-                        city.AssociatedProvince = province;
-                        province.AssociatedCities.Add(city);
-                    }*/
-                    break;
-                }
                 default:
                     return;
             }
         }
-        
+
         /// <summary>
-        /// Render the window used to name newly placed sites, if needed
+        /// Determine in which cities and provinces the current cursor is inside of
         /// </summary>
-        private void DrawNameSiteWindow()
+        private void DoCursorHitTest()
         {
-            if(this._uiState == GameUiState.NamePlacement)
-                this._placementNameWindow.Render(this._surface);
+            /*var cities = this._state.GetAllSites().Where(x => x.Value is City).Select(x => x.Value as City);
+            
+            // City region
+            var cityResult = cities.FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
+            this._currentCity = Optional<City>.SafeOf(cityResult);
+            
+            // Province region
+            var provinceResult = cities
+                .Where(x => x.IsProvinceCapital)
+                .Select(x => x.AssociatedProvince)
+                .FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
+            this._currentProvince = Optional<Province>.SafeOf(provinceResult);*/
+
+            // Terrain
+            this._cursorTerrainInfo = this._state.World.DetailedMap.GetTerrainInfo(this._siteView.CursorPosition);
+            this._cursorTerrainType = this._state.World.DetailedMap
+                .Terrain[this._siteView.CursorPosition.X, this._siteView.CursorPosition.Y];
+
         }
 
+        /// <summary>
+        /// Change map view state and make sure dimensions are updated
+        /// </summary>
+        private void SwitchMapViewState(MapViewState newState)
+        {
+            this._mapViewState = newState;
+            this.UpdateMapViewDimensions();
+        }
+
+        /// <summary>
+        /// Makes sure that the map view state is set to normal. Used in command handlers for keyput input to make sure
+        /// the user can see the panels.
+        /// </summary>
+        private void EnsureNormalMapViewState()
+        {
+            if (this._mapViewState == MapViewState.Full)
+                this.SwitchMapViewState(MapViewState.Normal);
+        }
+        #endregion
+
+        #region Game Scene interface implementation
         /// <summary>
         /// Update state
         /// </summary>
@@ -1015,106 +1111,58 @@ namespace Game.Scenes
         }
 
         /// <summary>
-        /// Determine in which cities and provinces the current cursor is inside of
-        /// </summary>
-        private void DoCursorHitTest()
-        {
-            /*var cities = this._state.GetAllSites().Where(x => x.Value is City).Select(x => x.Value as City);
-            
-            // City region
-            var cityResult = cities.FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
-            this._currentCity = Optional<City>.SafeOf(cityResult);
-            
-            // Province region
-            var provinceResult = cities
-                .Where(x => x.IsProvinceCapital)
-                .Select(x => x.AssociatedProvince)
-                .FirstOrDefault(x => x.InfluenceCircle.ContainsPoint(this._terrainView.CursorPosition));
-            this._currentProvince = Optional<Province>.SafeOf(provinceResult);*/
-            
-            // Terrain
-            this._cursorTerrainInfo = this._state.World.DetailedMap.GetTerrainInfo(this._siteView.CursorPosition);
-            this._cursorTerrainType = this._state.World.DetailedMap
-                .Terrain[this._siteView.CursorPosition.X, this._siteView.CursorPosition.Y];
-
-        }
-
-        /// <summary>
-        /// Generate test data
-        /// </summary>
-        private void GenerateTestData()
-        {
-            /*if (this.HasAnyProvinces())
-                return;
-            
-            var city = new City("Weymouth", new Position(162, 111), 65000);
-            var village1 = new Village("", new Position(160, 108), 103, city);
-            var village2 = new Village("", new Position(157, 113), 46, city);
-            var village3 = new Village("", new Position(158, 109), 16, city);
-            city.AssociatedVillages.Add(village1);
-            city.AssociatedVillages.Add(village2);
-            city.AssociatedVillages.Add(village3);
-                
-            var province = new Province("Germania Magna", city);
-                
-            var city2 = new City("Bristol", new Position(191, 98), 150000);
-            province.AssociatedCities.Add(city2);
-                
-            this._state.Provinces.Add(province);*/
-        }
-
-        /// <summary>
-        /// Makes sure that the map views have the correct dimensions
-        /// </summary>
-        private void UpdateMapViewDimensions()
-        {
-            if(this._mapViewState == MapViewState.Normal)
-                this._terrainView.Dimensions = new Size((int)(this._surface.Dimensions.Width * 0.7f) - 1, this._surface.Dimensions.Height - 2);
-            else
-                this._terrainView.Dimensions = new Size(this._surface.Dimensions.Width - 2, this._surface.Dimensions.Height - 2);
-
-            this._siteView.Dimensions = this._terrainView.Dimensions;
-
-            this._terrainView.RecalulatePositions();
-            this._siteView.RecalulatePositions();
-        }
-
-        /// <summary>
-        /// Change map view state and make sure dimensions are updated
-        /// </summary>
-        private void SwitchMapViewState(MapViewState newState)
-        {
-            this._mapViewState = newState;
-            this.UpdateMapViewDimensions();
-        }
-
-        /// <summary>
-        /// Makes sure that the map view state is set to normal. Used in command handlers for keyput input to make sure
-        /// the user can see the panels.
-        /// </summary>
-        private void EnsureNormalMapViewState()
-        {
-            if (this._mapViewState == MapViewState.Full)
-                this.SwitchMapViewState(MapViewState.Normal);
-        }
-
-        /// <summary>
         /// React to screen dimensions change
         /// </summary>
         public override void Reshape(Size newSize)
         {
             base.Reshape(newSize);
             
-            this._surface?.Destroy();
-            
-            this._surface = Surface.New()
+            this._mainSurface?.Destroy();
+            this._sideMenuSurface?.Destroy();
+            this._popupSurface?.Destroy();
+
+            this._mainSurface = Surface.New()
                 .Tileset(this.Resources, "myne_rect.png")
                 .PixelDimensions(this.ScreenDimensions)
                 .Build();
 
             this.UpdateMapViewDimensions();
+            this.UpdateSideMenuMetrics();
 
-            this._placementNameWindow.Reshape(this._surface);
+            this._sideMenuSurface = Surface.New()
+                .Tileset(this.Resources, "VGA9x16.png")
+                .RelativeTo(this._mainSurface, this._sideMenuTopLeft, this._sideMenuBottomRight)
+                .Transparent()
+                .Build();
+
+            this._popupSurface = Surface.New()
+                .Tileset(this.Resources, "myne_rect.png")
+                .PixelDimensions(this.ScreenDimensions)
+                .Transparent()
+                .Build();
+
+            this._placementNameWindow.Reshape(this._mainSurface);
         }
+
+        /// <summary>
+        /// Render the scene
+        /// </summary>
+        public override void Render(RenderParams rp)
+        {
+            this._mainSurface.Clear();
+            this._popupSurface.Clear();
+            this._sideMenuSurface.Clear();
+            this.DrawViews();
+
+            this.DrawSideMenu();
+
+            this.DrawNameSiteWindow();
+            this.DrawBorders();
+
+            this._mainSurface.Render(rp);
+            this._sideMenuSurface.Render(rp);
+            this._popupSurface.Render(rp);
+        }
+        #endregion
     }
 }
