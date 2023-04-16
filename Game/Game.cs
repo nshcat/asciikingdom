@@ -44,7 +44,7 @@ namespace Game
             // Load data files
             this.LoadData();
             
-            var initialScene = new MainMenuScene(this.SceneStack, this.Input, this.Resources);
+            var initialScene = new TestScene(this.SceneStack, this.Input, this.Resources);
             this.SceneStack.AddInitialScene(initialScene);
         }
 
