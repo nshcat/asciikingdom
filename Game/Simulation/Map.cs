@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Data;
@@ -63,6 +64,12 @@ namespace Game.Simulation
         /// Raw drainage values, in range [0, 1]
         /// </summary>
         public float[,] RawDrainage { get; set; }
+
+        /// <summary>
+        /// Mapping from resource type id to its abundance map.
+        /// </summary>
+        public Dictionary<string, float[,]> ResourceAbundance { get; set; }
+            = new Dictionary<string, float[,]>();
 
         /// <summary>
         /// The seed used to generate this map

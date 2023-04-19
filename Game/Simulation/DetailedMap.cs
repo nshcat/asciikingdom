@@ -18,11 +18,6 @@ namespace Game.Simulation
         public Dictionary<Position, RiverTileInfo> RiverTileInfo { get; set; }
         
         /// <summary>
-        /// Resources present on the map
-        /// </summary>
-        public Dictionary<Position, ResourceType> Resources { get; set; }
-
-        /// <summary>
         /// Construct a new detailed map instance
         /// </summary>
         public DetailedMap(Size dimensions, int seed)

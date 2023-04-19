@@ -13,10 +13,20 @@ namespace Game.WorldGen
     public class ResourceGenerator
     {
         /// <summary>
-        /// The biome map
+        /// The world height map
         /// </summary>
-        protected TerrainType[,] Biomes { get; }
-        
+        protected float[,] HeightMap { get; }
+
+        /// <summary>
+        /// The world temperature map
+        /// </summary>
+        protected float[,] TemperatureMap { get; }
+
+        /// <summary>
+        /// The world drainage map
+        /// </summary>
+        protected float[,] DrainageMap { get; }
+
         /// <summary>
         /// The map generator seed
         /// </summary>
@@ -31,67 +41,30 @@ namespace Game.WorldGen
         /// World generator parameters
         /// </summary>
         protected WorldParameters Parameters { get; }
-        
-        /// <summary>
-        /// Generated resources
-        /// </summary>
-        public Dictionary<Position, ResourceType> Resources { get; }
-            = new Dictionary<Position, ResourceType>();
-        
-        /// <summary>
-        /// Resource spawn tables for each biome type
-        /// </summary>
-        protected Dictionary<TerrainType, WeightedCollection<ResourceType>> SpawnTables { get; }
-            = new Dictionary<TerrainType, WeightedCollection<ResourceType>>();
 
+        /// <summary>
+        /// The calculated resource abundances
+        /// </summary>
+        public Dictionary<string, float[,]> ResourceAbundances { get; }
+            = new Dictionary<string, float[,]>();
+       
         /// <summary>
         /// Construct new resource generator instance
         /// </summary>
-        public ResourceGenerator(Size dimensions, int seed, TerrainType[,] biomes, WorldParameters parameters)
+        public ResourceGenerator(   Size dimensions, int seed,
+                                    float[,] heightmap,
+                                    float[,] temperature,
+                                    float[,] drainage,
+                                    WorldParameters parameters)
         {
-            Biomes = biomes;
+            HeightMap = heightmap;
+            TemperatureMap = temperature;
+            DrainageMap = drainage;
             Seed = seed;
             Dimensions = dimensions;
             Parameters = parameters;
 
-            this.BuildSpawnTables();
             this.GenerateResources();
-        }
-
-        /// <summary>
-        /// Create and populate spawn tables based on known resource types
-        /// </summary>
-        protected void BuildSpawnTables()
-        {
-            var resourceTypes = ResourceTypeManager.Instance.AllTypes;
-
-            foreach (var (_, type) in resourceTypes)
-            {
-                foreach (var spawnBiome in type.AllowedTerrain)
-                {
-                    if(!this.SpawnTables.ContainsKey(spawnBiome))
-                        this.SpawnTables[spawnBiome] = new WeightedCollection<ResourceType>();
-                    
-                    this.SpawnTables[spawnBiome].Add(type.Weight, type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Check if there is at least one resource type that can spawn in given biome
-        /// </summary>
-        protected bool HasResources(TerrainType biome)
-        {
-            return this.SpawnTables.ContainsKey(biome);
-        }
-
-        /// <summary>
-        /// Select a special resource type for a tile with given biome
-        /// </summary>
-        protected ResourceType SelectResource(Random rng, TerrainType biome)
-        {
-            var collection = this.SpawnTables[biome];
-            return collection.Next(rng);
         }
 
         /// <summary>
@@ -99,22 +72,7 @@ namespace Game.WorldGen
         /// </summary>
         protected void GenerateResources()
         {
-            var sampler = new PoissonDiskSampler(this.Dimensions, 6.5f);
-            var rng = new Random(this.Seed + 9118);
-            var positions = sampler.Sample(rng);
-
-            foreach (var position in positions)
-            {
-                if (rng.NextDouble() <= this.Parameters.ResourceSpawnChance)
-                {
-                    var biome = this.Biomes[position.X, position.Y];
-
-                    if (this.HasResources(biome))
-                    {
-                        this.Resources.Add(position, this.SelectResource(rng, biome));
-                    }
-                }
-            }
+            
         }
     }
 }
