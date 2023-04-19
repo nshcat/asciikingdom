@@ -221,6 +221,17 @@ namespace Game.Ui.Toolkit
                 return false;
             }
         }
+
+        /// <summary>
+        /// Draw a window with the given bounds and title. This will set the current position and origin
+        /// to be contained within the windows bounds.
+        /// </summary>
+        public void Window(Rectangle bounds, string title)
+        {
+            this.GetActiveTheme().DrawWindow(this, bounds, title);
+            this._context.Origin = bounds.TopLeft + new Position(1, 1);
+            this._context.CurrentPosition = this._context.Origin;
+        }
         #endregion
         #endregion
 

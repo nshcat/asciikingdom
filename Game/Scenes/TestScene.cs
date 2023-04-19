@@ -82,15 +82,16 @@ namespace Game.Scenes
             this._ui.Label("Label 3");
             this._ui.End();*/
 
+            var bounds = this._mainSurface.Bounds.Centered(
+                this._mainSurface.Dimensions * 0.35f
+            );
+
             this._ui.Begin();
-            this._ui.PushId("s1");
-            this._ui.NoNewLine(); this._ui.Label("Setting 1"); this._ui.HorizontalSpace(6); this._ui.Button("Change");
-            this._ui.PopId();
-
-            this._ui.PushId("s2");
-            this._ui.NoNewLine(); this._ui.Label("Setting 2"); this._ui.HorizontalSpace(6); this._ui.Button("Change");
-            this._ui.PopId();
-
+            this._ui.Window(bounds, "Test");
+            this._ui.Label("Label");
+            this._ui.Button("Button 1");
+            this._ui.Button("Button 2");
+            this._ui.Button("Button 3");
             this._ui.End();
         }
 

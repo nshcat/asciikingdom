@@ -58,5 +58,22 @@ namespace Game.Ui.Toolkit
 
             return new Position(position.X + label.Length, position.Y);
         }
+
+        /// <summary>
+        /// Draw a window
+        /// </summary>
+        /// <param name="recorder"></param>
+        /// <param name="bounds"></param>
+        /// <param name="title"></param>
+        public virtual void DrawWindow(RenderCommandRecorder recorder, Rectangle bounds, string title)
+        {
+            recorder.RecordPushFrontColor(UiColors.BorderFront);
+            recorder.RecordPushBackColor(UiColors.BorderBack);
+
+            recorder.RecordDrawWindow(bounds, title, UiColors.BorderTitle);
+
+            recorder.RecordPopBackColor();
+            recorder.RecordPopFrontColor();
+        }
     }
 }

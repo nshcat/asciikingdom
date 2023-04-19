@@ -14,6 +14,13 @@ namespace Game.Ui.Toolkit
     {
         #region Properties
         /// <summary>
+        /// The top left corner of the accesible area for the GUI.
+        /// This is e.g. used for windows and affects new lines, indentation etc.
+        /// </summary>
+        public Position Origin { get; set; }
+            = new Position(0, 0);
+
+        /// <summary>
         /// The current position in the layout.
         /// </summary>
         public Position CurrentPosition { get; set; }
@@ -62,7 +69,7 @@ namespace Game.Ui.Toolkit
         public void NextLine()
         {
             this.CurrentPosition = new Position(
-                this.IndentLevel * this.IndentDepth,
+                this.Origin.X + this.IndentLevel * this.IndentDepth,
                 this.CurrentPosition.Y + 1);
         }
 
@@ -72,10 +79,10 @@ namespace Game.Ui.Toolkit
         /// </summary>
         public void IncreaseIndent(int value)
         {
-            if (this.CurrentPosition.X == (this.IndentLevel * this.IndentDepth))
+            if (this.CurrentPosition.X == this.Origin.X + (this.IndentLevel * this.IndentDepth))
             {
                 this.CurrentPosition = new Position(
-                    ((this.IndentLevel + value) * this.IndentDepth),
+                    this.Origin.X + ((this.IndentLevel + value) * this.IndentDepth),
                     this.CurrentPosition.Y
                     );
             }
@@ -89,10 +96,10 @@ namespace Game.Ui.Toolkit
         /// </summary>
         public void DecreaseIndent(int value)
         {
-            if (this.CurrentPosition.X == (this.IndentLevel * this.IndentDepth))
+            if (this.CurrentPosition.X == this.Origin.X + (this.IndentLevel * this.IndentDepth))
             {
                 this.CurrentPosition = new Position(
-                    ((this.IndentLevel - value) * this.IndentDepth),
+                    this.Origin.X + ((this.IndentLevel - value) * this.IndentDepth),
                     this.CurrentPosition.Y
                     );
             }

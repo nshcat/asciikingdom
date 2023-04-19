@@ -114,6 +114,14 @@ namespace Game.Ui.Toolkit
         {
             this.RecordSetInvertedState(false);
         }
+
+        /// <summary>
+        /// Record drawing of a window
+        /// </summary>
+        public void RecordDrawWindow(Rectangle bounds, string title, Color titleFrontColor)
+        {
+            this.Record(new DrawWindowCommand(bounds, title, titleFrontColor));
+        }
         #endregion
     }
 }
