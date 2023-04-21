@@ -87,11 +87,11 @@ namespace Game.Scenes
             );
 
             this._ui.Begin(this._mainSurface);
-            this._ui.Window("Test", new SizeF(0.35f, 0.35f), new Padding(1, 1, 1, 1));
+            this._ui.Window(new SizeF(0.35f, 0.35f), title: "Test", new Padding(1, 1, 1, 1));
             this._ui.Label("Label");
-            this._ui.Button("Button 1");
-            this._ui.Button("Button 2");
-            this._ui.Button("Button 3");
+            this._ui.HorizontalCenter(); this._ui.Button("Button 1", centered: true);
+            this._ui.HorizontalCenter(); this._ui.Button("Button 2", centered: true);
+            this._ui.HorizontalCenter(); this._ui.Button("Button 3", centered: true);
             this._ui.End();
         }
 

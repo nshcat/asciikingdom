@@ -21,9 +21,9 @@ namespace Game.Ui.Toolkit
         /// <summary>
         /// Record a draw string operation
         /// </summary>
-        public void RecordDrawString(string str)
+        public void RecordDrawString(string str, bool centered = false)
         {
-            this.Record(new DrawStringCommand(str));
+            this.Record(new DrawStringCommand(str, centered));
         }
 
         /// <summary>
@@ -37,10 +37,10 @@ namespace Game.Ui.Toolkit
         /// <summary>
         /// Record a draw string at given location operation
         /// </summary>
-        public void RecordDrawString(Position pos, string str)
+        public void RecordDrawString(Position pos, string str, bool centered = false)
         {
             this.RecordSetPosition(pos);
-            this.RecordDrawString(str);
+            this.RecordDrawString(str, centered);
         }
 
         /// <summary>

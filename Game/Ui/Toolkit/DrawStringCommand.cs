@@ -18,21 +18,39 @@ namespace Game.Ui.Toolkit
         /// </summary>
         private string _stringToDraw;
 
-        public DrawStringCommand(string str)
+        /// <summary>
+        /// Whether the string will be drawn centered at the current position
+        /// </summary>
+        private bool _centered;
+
+        public DrawStringCommand(string str, bool centered = false)
         {
             this._stringToDraw = str;
+            this._centered = centered;
         }
 
         public void ApplyTo(RenderingContext context)
         {
             var (front, back) = context.GetRenderingColors();
 
-            context.Target.DrawString(
-                context.CurrentPosition,
-                this._stringToDraw,
-                front,
-                back
-            );
+            if (this._centered)
+            {
+                context.Target.DrawStringCentered(
+                    context.CurrentPosition,
+                    this._stringToDraw,
+                    front,
+                    back
+                );
+            }
+            else
+            {
+                context.Target.DrawString(
+                    context.CurrentPosition,
+                    this._stringToDraw,
+                    front,
+                    back
+                );
+            }
         }
     }
 }

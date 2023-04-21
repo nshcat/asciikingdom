@@ -8,11 +8,56 @@ using Game.Core;
 using Game.Scenes.Common;
 using Game.Simulation;
 using Game.Ui;
+using Game.Ui.Toolkit;
 using OpenToolkit.Windowing.Common.Input;
 using SixLabors.ImageSharp.Processing.Processors.Dithering;
 
 namespace Game.Scenes
 {
+    /// <summary>
+    /// Custom UI theme for the main menu
+    /// </summary>
+    internal class MainMenuTheme : Theme
+    {
+        public override Position DrawButton(RenderCommandRecorder recorder, WidgetDrawParams widgetParams)
+        {
+            recorder.RecordPushFrontColor(widgetParams.IsEnabled ? this.ActiveTextColor : this.InactiveTextColor);
+
+            var drawSelection = widgetParams.IsSelected && widgetParams.IsEnabled;
+
+            var text = drawSelection ? $"> {widgetParams.Text} <" : widgetParams.Text;
+            recorder.RecordDrawString(widgetParams.Position, text, widgetParams.Centered);
+
+            recorder.RecordPopFrontColor();
+
+            return new Position(widgetParams.Position.X + widgetParams.Text.Length, widgetParams.Position.Y);
+        }
+    }
+
+    /// <summary>
+    /// Custom UI theme for the world select popup
+    /// </summary>
+    internal class WorldSelectTheme : Theme
+    {
+        public override Position DrawButton(RenderCommandRecorder recorder, WidgetDrawParams widgetParams)
+        {         
+            var drawSelection = widgetParams.IsSelected && widgetParams.IsEnabled;
+
+            if(drawSelection)
+            {
+                recorder.RecordPushFrontColor(UiColors.Keybinding);
+                recorder.RecordDrawString(widgetParams.Position, ((char)26).ToString());
+                recorder.RecordPopFrontColor();
+            }
+
+            recorder.RecordPushFrontColor(widgetParams.IsEnabled ? this.ActiveTextColor : this.InactiveTextColor);
+            recorder.RecordDrawString(widgetParams.Position + new Position(2, 0), widgetParams.Text, widgetParams.Centered);
+            recorder.RecordPopFrontColor();
+
+            return new Position(widgetParams.Position.X + widgetParams.Text.Length + 2, widgetParams.Position.Y);
+        }
+    }
+
     /// <summary>
     /// Main menu scene
     /// </summary>
@@ -79,6 +124,28 @@ namespace Game.Scenes
         private bool _selectWorld = false;
 
         /// <summary>
+        /// UI state for the main menu
+        /// </summary>
+        private UIState _mainMenuUI;
+
+        /// <summary>
+        /// UI state for the world selection UI
+        /// </summary>
+        private UIState _worldSelectUI;
+
+        /// <summary>
+        /// The custom theme for the main menu
+        /// </summary>
+        private MainMenuTheme _mainMenuTheme
+            = new MainMenuTheme();
+
+        /// <summary>
+        /// The custom theme used for the world select popup
+        /// </summary>
+        private WorldSelectTheme _worldSelectTheme
+            = new WorldSelectTheme();
+
+        /// <summary>
         /// Create new main menu scene
         /// </summary>
         public MainMenuScene(Scene parent)
@@ -100,101 +167,25 @@ namespace Game.Scenes
         /// Initialize scene
         /// </summary>
         private void Initialize()
-        {
-            this.InitializeMapper();
+        {         
+            this.InitializeUI();
         }
 
         /// <summary>
-        /// Initialize the input mapper
+        /// Initialize UI states
         /// </summary>
-        private void InitializeMapper()
+        private void InitializeUI()
         {
-            this._actionMapper = new InputActionMapper<MainMenuAction>(this.Input,
-                new InputAction<MainMenuAction>(MainMenuAction.MenuUp, KeyPressType.Down, Key.Up),
-                new InputAction<MainMenuAction>(MainMenuAction.MenuDown, KeyPressType.Down, Key.Down),
-                new InputAction<MainMenuAction>(MainMenuAction.MenuSelect, KeyPressType.Pressed, Key.Enter),
-                new InputAction<MainMenuAction>(MainMenuAction.Exit, KeyPressType.Pressed, Key.Escape),
-                new InputAction<MainMenuAction>(MainMenuAction.Exit, KeyPressType.Down, Key.Q, Key.ShiftLeft)
-            );
-        }
-
-        /// <summary>
-        /// Calculate the next selection index
-        /// </summary>
-        private void NextMenuSelectionIndex(int direction)
-        {
-            var nextIndex = (this._menuSelection + direction);
-            
-            if (nextIndex > 2)
-                nextIndex = 0;
-            if (nextIndex < 0)
-                nextIndex = 2;
-
-            // Jump over disabled "load world" if no worlds are available
-            if (nextIndex == 1 && !this._hasWorlds)
-                nextIndex += direction;
-
-            this._menuSelection = nextIndex;
-        }
-        
-        /// <summary>
-        /// Calculate the next world index
-        /// </summary>
-        private void NextWorldSelectionIndex(int direction)
-        {
-            var nextIndex = (this._worldSelection + direction);
-
-            if (nextIndex > WorldManager.Instance.Worlds.Count - 1)
-                nextIndex = 0;
-            if (nextIndex < 0)
-                nextIndex = WorldManager.Instance.Worlds.Count - 1;
-            
-            this._worldSelection = nextIndex;
-        }
-
-        /// <summary>
-        /// Handle user input action
-        /// </summary>
-        private void HandleInput(MainMenuAction action)
-        {
-            switch (action)
-            {
-                case MainMenuAction.MenuUp:
-                    if(this._selectWorld)
-                        this.NextWorldSelectionIndex(-1);
-                    else
-                        this.NextMenuSelectionIndex(-1);
-                    break;
-                case MainMenuAction.MenuDown:
-                    if(this._selectWorld)
-                        this.NextWorldSelectionIndex(1);
-                    else
-                        this.NextMenuSelectionIndex(1);
-                    break;
-                case MainMenuAction.MenuSelect:
-                    if (this._selectWorld)
-                        this.HandleWorldSelection();
-                    else
-                        this.HandleMenuSelection();
-                    break;
-                case MainMenuAction.Exit:
-                    if (this._selectWorld)
-                        this._selectWorld = false;
-                    else
-                        this.Exit();
-                    break;
-                default:
-                    break;
-            }
+            this._mainMenuUI = new UIState(this.Input);
         }
 
         /// <summary>
         /// Handle world selection by user
         /// </summary>
-        private void HandleWorldSelection()
+        private void HandleWorldSelection(int worldIndex)
         {
             // Get world index
-            var index = WorldManager.Instance.Worlds[this._worldSelection].Item1;
+            var index = WorldManager.Instance.Worlds[worldIndex].Item1;
             
             // Load world
             var state = WorldManager.Instance.LoadWorld(index);
@@ -205,7 +196,6 @@ namespace Game.Scenes
             
             // Reset main menu state
             this._selectWorld = false;
-            this._menuSelection = 0;
         }
         
         /// <summary>
@@ -224,87 +214,79 @@ namespace Game.Scenes
         }
 
         /// <summary>
-        /// Draw a menu button
+        /// Create UI for the world select window
         /// </summary>
-        private void DrawButton(Position basePosition, int index, bool enabled, string text)
+        protected void DoWorldSelectGui()
         {
-            var position = basePosition + new Position(0, index * 2);
-            var frontColor = enabled ? UiColors.ActiveText : UiColors.InactiveText;
-            var buttonText = (index == this._menuSelection) ? $"> {text} <" : text;
-            this._titleSurface.DrawStringCentered(position, buttonText, frontColor, DefaultColors.Black);
-        }
-        
-        /// <summary>
-        /// Draw the menu
-        /// </summary>
-        private void DrawMenu()
-        {
-            var dimensions = this._titleSurface.Dimensions;
-            var position = new Position(dimensions.Width/2, dimensions.Height * 4/6);
-            
-            this.DrawButton(position, 0, true, "Create new world");
-            this.DrawButton(position, 1, this._hasWorlds, "Load world");
-            this.DrawButton(position, 2, true, "Quit");
-        }
+            this._worldSelectUI.Begin(this._titleSurface);
+            this._worldSelectUI.Window(new SizeF(0.35f, 0.35f), title: "Select World", padding: new Padding(1, 1, 1, 1));
+            this._worldSelectUI.PushTheme(this._worldSelectTheme);
 
-        /// <summary>
-        /// Draw the world selection screen
-        /// </summary>
-        private void DrawWorldSelection()
-        {
-            // TODO: Scroll bar
-            
-            var bounds = this._titleSurface.Bounds.Centered(
-                this._titleSurface.Dimensions * 0.35f
-            );
-            
-            this._titleSurface.DrawWindow(bounds, "Select World", UiColors.BorderFront, UiColors.BorderBack, UiColors.BorderTitle, DefaultColors.Black);
-
-            var basePosition = bounds.TopLeft + new Position(4, 2);
-
-            for (var iy = 0; iy < WorldManager.Instance.Worlds.Count; ++iy)
+            if(this._worldSelectUI.HasKey(Key.Escape))
             {
-                var position = basePosition + new Position(0, iy);
-                var world = WorldManager.Instance.Worlds[iy];
+                this._selectWorld = false;
+                return;
+            }
 
-                var frontColor = UiColors.InactiveText;
-                
-                if (iy == this._worldSelection)
+            for(int worldIndex = 0; worldIndex < WorldManager.Instance.Worlds.Count; ++worldIndex)
+            {
+                var world = WorldManager.Instance.Worlds[worldIndex];
+                var label = string.IsNullOrEmpty(world.Item2)
+                    ? $"World {world.Item1}"
+                    : $"World {world.Item1}: {world.Item2}";
+
+                if(this._worldSelectUI.Button(label))
                 {
-                    frontColor = UiColors.ActiveText;
-                    var arrowPosition = position + new Position(-2, 0);
-                    this._titleSurface.DrawString(arrowPosition, ((char)26).ToString(), UiColors.Keybinding, DefaultColors.Black);
+                    this.HandleWorldSelection(worldIndex);
+                    this._selectWorld = false;
                 }
-                
-                if(!string.IsNullOrEmpty(world.Item2))
-                    this._titleSurface.DrawString(position, $"World {world.Item1}: {world.Item2}", frontColor, DefaultColors.Black);
-                else
-                    this._titleSurface.DrawString(position, $"World {world.Item1}", frontColor, DefaultColors.Black);
             }
+
+            this._worldSelectUI.PopTheme();
+            this._worldSelectUI.End();
         }
 
         /// <summary>
-        /// Handle menu entry selection by the user
+        /// Create UI for the main menu
         /// </summary>
-        private void HandleMenuSelection()
+        protected void DoMainMenuGui()
         {
-            switch (this._menuSelection)
+            var _dimensions = this._titleSurface.Dimensions;
+            var _menuBounds = new Rectangle(
+                new Position(0, (int)(_dimensions.Height * (4.0f / 6.0f))),
+                new Position(_dimensions.Width - 1, _dimensions.Height - 1)
+            );
+
+            this._mainMenuUI.Begin(this._titleSurface, !this._selectWorld);
+            this._mainMenuUI.PushTheme(this._mainMenuTheme);
+            this._mainMenuUI.Window(_menuBounds, drawBorder: false);
+     
+            this._mainMenuUI.HorizontalCenter();
+            if (this._mainMenuUI.Button("Create new world", centered: true))
             {
-                case 0:
-                    this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
-                        new WorldGenScene(this.SceneStack, this.Input, this.Resources)
-                    );
-                    break;
-                case 1:
-                    this._selectWorld = true;
-                    this._worldSelection = 0;
-                    break;
-                case 2:
-                    this.Exit();
-                    break;
-                default:
-                    break;
+                this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
+                    new WorldGenScene(this.SceneStack, this.Input, this.Resources)
+                );
             }
+            this._mainMenuUI.NextLine();
+
+            this._mainMenuUI.HorizontalCenter();
+            if (this._mainMenuUI.Button("Load World", centered: true, enabled: this._hasWorlds))
+            {
+                this._selectWorld = true;
+                this._worldSelectUI = new UIState(this.Input);
+                this._worldSelection = 0;
+            }
+            this._mainMenuUI.NextLine();
+
+            this._mainMenuUI.HorizontalCenter();
+            if (this._mainMenuUI.Button("Quit", centered: true))
+            {
+                this.Exit();
+            }
+
+            this._mainMenuUI.PopTheme();
+            this._mainMenuUI.End();
         }
 
         /// <summary>
@@ -324,10 +306,11 @@ namespace Game.Scenes
             this._mainSurface.Clear();
 
             this.DrawTitle();
-            this.DrawMenu();
-            
-            if(this._selectWorld)
-                this.DrawWorldSelection();
+
+            this._mainMenuUI.Draw(this._titleSurface);
+
+            if (this._selectWorld)
+                this._worldSelectUI.Draw(this._titleSurface);
             
             this._titleSurface.Render(rp);
             this._mainSurface.Render(rp);
@@ -338,17 +321,10 @@ namespace Game.Scenes
         /// </summary>
         public override void Update(double deltaTime)
         {
-            if(this.Input.AreKeysDown(KeyPressType.Pressed, Key.T))
-                this.SceneStack.NextOperation = new SceneStackOperation.PushScene(
-                    new TestTabContainer(this)
-                    );
-            
-            this._actionMapper.Update();
-            
-            if (this._actionMapper.HasTriggeredAction)
-            {
-                this.HandleInput(this._actionMapper.TriggeredAction);
-            }
+            if (this._selectWorld)
+                this.DoWorldSelectGui();
+
+            this.DoMainMenuGui();   
         }
 
         /// <summary>

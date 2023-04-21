@@ -46,37 +46,37 @@ namespace Game.Ui.Toolkit
         /// <summary>
         /// Draw a label
         /// </summary>
-        public virtual Position DrawLabel(RenderCommandRecorder recorder, Position position, string label)
+        public virtual Position DrawLabel(RenderCommandRecorder recorder, WidgetDrawParams widgetParams)
         {
             recorder.RecordPushFrontColor(this.ActiveTextColor);
 
-            recorder.RecordDrawString(position, label);
+            recorder.RecordDrawString(widgetParams.Position, widgetParams.Text);
 
             recorder.RecordPopFrontColor();
 
-            return new Position(position.X + label.Length, position.Y);
+            return new Position(widgetParams.Position.X + widgetParams.Text.Length, widgetParams.Position.Y);
         }
 
         /// <summary>
         /// Draw a button
         /// </summary>
-        public virtual Position DrawButton(RenderCommandRecorder recorder, Position position, string label, bool isSelected, bool isEnabled)
+        public virtual Position DrawButton(RenderCommandRecorder recorder, WidgetDrawParams widgetParams)
         {
-            recorder.RecordPushFrontColor(isEnabled ? this.ActiveTextColor : this.InactiveTextColor);
+            recorder.RecordPushFrontColor(widgetParams.IsEnabled ? this.ActiveTextColor : this.InactiveTextColor);
 
-            var drawSelection = isSelected && isEnabled;
+            var drawSelection = widgetParams.IsSelected && widgetParams.IsEnabled;
 
             if (drawSelection)
                 recorder.RecordSetInverted();
 
-            recorder.RecordDrawString(position, label);
+            recorder.RecordDrawString(widgetParams.Position, widgetParams.Text, widgetParams.Centered);
 
             if (drawSelection)
                 recorder.RecordSetNonInverted();
 
             recorder.RecordPopFrontColor();
 
-            return new Position(position.X + label.Length, position.Y);
+            return new Position(widgetParams.Position.X + widgetParams.Text.Length, widgetParams.Position.Y);
         }
 
         /// <summary>
@@ -85,12 +85,12 @@ namespace Game.Ui.Toolkit
         /// <param name="recorder"></param>
         /// <param name="bounds"></param>
         /// <param name="title"></param>
-        public virtual void DrawWindow(RenderCommandRecorder recorder, Rectangle bounds, string title, bool withBorder)
+        public virtual void DrawWindow(RenderCommandRecorder recorder, WidgetDrawParams widgetParams)
         {
             // The draw window command fills the background with the currently active back color.
             recorder.RecordPushBackColor(this.BackgroundColor);
 
-            recorder.RecordDrawWindow(bounds, title, this.WindowTitleColor, this.BorderFrontColor, this.BorderBackColor, withBorder);
+            recorder.RecordDrawWindow(widgetParams.Bounds, widgetParams.Text, this.WindowTitleColor, this.BorderFrontColor, this.BorderBackColor, widgetParams.WithBorder);
 
             recorder.RecordPopBackColor();
         }

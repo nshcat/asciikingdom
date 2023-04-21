@@ -10,6 +10,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using OpenToolkit.Windowing.Common.Input;
+using OpenToolkit.Windowing.GraphicsLibraryFramework;
 
 namespace Game.Ui.Toolkit
 {
@@ -19,7 +20,21 @@ namespace Game.Ui.Toolkit
     public class UIState
         : RenderCommandRecorder
     {
+        #region Properties
+        /// <summary>
+        /// Whether the UI will wrap around the selection if the last or first widget is reached
+        /// </summary>
+        public bool WrapSelection { get; set; }
+            = true;
+        #endregion
+
         #region Fields
+        /// <summary>
+        /// Whether this UI currently has focus and therefore receives input
+        /// </summary>
+        protected bool _hasFocus
+            = false;
+
         /// <summary>
         /// Convenience reference to the input manager
         /// </summary>
@@ -133,6 +148,18 @@ namespace Game.Ui.Toolkit
         }
 
         /// <summary>
+        /// Moves horizontal position to be at the exact center of the current layout bounds
+        /// </summary>
+        /// <remarks>
+        /// Cannot be used when any indentation is active
+        /// </remarks>
+        public void HorizontalCenter()
+        {
+            var targetPosition = new Position(this._context.Bounds.Center.X, this._context.CurrentPosition.Y);
+            this._context.CurrentPosition = targetPosition;
+        }
+
+        /// <summary>
         /// Causes the next widget command to not cause a new line.
         /// </summary>
         public void NoNewLine()
@@ -159,38 +186,53 @@ namespace Game.Ui.Toolkit
         }
         #endregion
 
+        #region Key Input
+        /// <summary>
+        /// Checks whether the given key is currently active
+        /// </summary>
+        public bool HasKey(Key key, KeyPressType pressType = KeyPressType.Pressed)
+        {
+            return this._hasFocus && this._input.IsKeyDown(pressType, key);
+        }
+        #endregion
+
         #region Widgets
         /// <summary>
         /// Create a label at the current position
         /// </summary>
         /// <param name="text"></param>
-        public void Label(string label)
+        public void Label(string label, bool centered = false)
         {
-            this._context.CurrentPosition = this.GetActiveTheme().DrawLabel(this, this._context.CurrentPosition, label);
+            var wparams = new WidgetDrawParams(this._context.CurrentPosition) with { Text = label };
+            this._context.CurrentPosition = this.GetActiveTheme().DrawLabel(this, wparams);
             this._context.NextLineWidget();
         }
 
         /// <summary>
         /// Create a button at the current position
         /// </summary>
-        public bool Button(string label, bool enabled = true)
+        public bool Button(string label, bool enabled = true, bool centered = false)
         {
             if (enabled)
             {
                 var id = this.RecordWidgetId(label);
+                var wparams = new WidgetDrawParams(this._context.CurrentPosition)
+                    with { Text = label, IsEnabled = enabled, IsSelected = this.IsSelected(id), Centered = centered };
 
-                this._context.CurrentPosition = this.GetActiveTheme().DrawButton(this, this._context.CurrentPosition, label, this.IsSelected(id), true);
+                this._context.CurrentPosition = this.GetActiveTheme().DrawButton(this, wparams);
 
                 this._context.NextLineWidget();
 
-                if (this.IsSelected(id) && this._input.IsKeyDown(KeyPressType.Pressed, Key.Enter))
+                if (this._hasFocus && this.IsSelected(id) && this._input.IsKeyDown(KeyPressType.Pressed, Key.Enter))
                     return true;
                 else
                     return false;
             }
             else
             {
-                this._context.CurrentPosition = this.GetActiveTheme().DrawButton(this, this._context.CurrentPosition, label, false, false);
+                var wparams = new WidgetDrawParams(this._context.CurrentPosition)
+                    with { Text = label, IsEnabled = false, Centered = centered };
+                this._context.CurrentPosition = this.GetActiveTheme().DrawButton(this, wparams);
 
                 this._context.NextLineWidget();
 
@@ -198,7 +240,7 @@ namespace Game.Ui.Toolkit
             }
         }
 
-        /// <summary>
+        /*/// <summary>
         /// Create a checkbox based on given boolean value.
         /// </summary>
         /// <returns>Returns true if the value has changed</returns>
@@ -219,18 +261,23 @@ namespace Game.Ui.Toolkit
             {
                 return false;
             }
-        }
+        }*/
 
         /// <summary>
         /// Draw a window with the given bounds and title. This will set the current position and origin
         /// to be contained within the windows bounds.
         /// </summary>
-        public void Window(string title, Rectangle bounds, Padding padding = new Padding(), bool drawBorder = true)
+        public void Window(Rectangle bounds, string title = "", Padding padding = new Padding(), bool drawBorder = true)
         {
             // Calculate actual bounds
-            this.GetActiveTheme().DrawWindow(this, bounds, title, drawBorder);
+            var wparams = new WidgetDrawParams() with { Bounds = bounds, Text = title, WithBorder = drawBorder };
+            this.GetActiveTheme().DrawWindow(this, wparams);
 
-            var actualBounds = bounds.WithPadding(new Padding(1, 1, 1, 1)).WithPadding(padding);
+            var actualBounds = bounds.WithPadding(padding);
+
+            // Add padding for the border, if we are drawing one.
+            if (drawBorder)
+                actualBounds = actualBounds.WithPadding(new Padding(1, 1, 1, 1));
 
             // Update bounds in layout context
             this._context.UpdateBounds(actualBounds);
@@ -240,7 +287,7 @@ namespace Game.Ui.Toolkit
         /// Draw a window centered on the screen, with a width and height being a percentage of the surface dimensions
         /// </summary>
         /// <param name="factors">Percent values of parent surface height and width to use for window dimensions</param>
-        public void Window(string title, SizeF factors, Padding padding = new Padding(), bool drawBorder = true)
+        public void Window(SizeF factors, string title = "", Padding padding = new Padding(), bool drawBorder = true)
         {
             // Get current bounds for dimension calculations
             var currentBounds = this._context.Bounds;
@@ -257,7 +304,7 @@ namespace Game.Ui.Toolkit
             // Now determine rectangle of window
             var windowBounds = new Rectangle(topLeft, bottomRight);
 
-            this.Window(title, windowBounds, padding, drawBorder);
+            this.Window(windowBounds, title, padding, drawBorder);
         }
         #endregion
         #endregion
@@ -267,8 +314,10 @@ namespace Game.Ui.Toolkit
         /// This method has to be called each frame/update before issuing any GUI calls.
         /// It prepares the internal state.
         /// </summary>
-        public void Begin(Surface surface, Padding padding = new Padding())
+        public void Begin(Surface surface, bool hasFocus = true, Padding padding = new Padding())
         {
+            this._hasFocus = hasFocus;
+
             // Determine initial layout bounds based on surface dimensions
             var surfaceDimensions = surface.Dimensions;
             var surfaceBounds = new Rectangle(
@@ -300,8 +349,12 @@ namespace Game.Ui.Toolkit
         /// </summary>
         public void End()
         {
-            // Adjust selection if the user pressed the up or down button.
-            this.AdjustSelection();
+            // Handle input if the UI has focus
+            if (this._hasFocus)
+            {
+                // Adjust selection if the user pressed the up or down button.
+                this.AdjustSelection();
+            }
         }
 
         /// <summary>
@@ -384,6 +437,9 @@ namespace Game.Ui.Toolkit
         /// </summary>
         protected void AdjustSelection()
         {
+            if (this._idSequence.Count == 0)
+                return;
+
             // Determine current selection index
             var selectionIdx = this._idSequence.IndexOf(this._activeId);
 
@@ -391,11 +447,19 @@ namespace Game.Ui.Toolkit
             {
                 if (selectionIdx > 0)
                     selectionIdx--;
+                else if(this.WrapSelection)
+                {
+                    selectionIdx = this._idSequence.Count - 1;
+                }
             }
             else if (this._input.IsKeyDown(KeyPressType.Down, Key.Down))
             {
                 if (selectionIdx < this._idSequence.Count - 1)
                     selectionIdx++;
+                else if (this.WrapSelection)
+                {
+                    selectionIdx = 0;
+                }
             }
 
             this._activeId = this._idSequence[selectionIdx];
