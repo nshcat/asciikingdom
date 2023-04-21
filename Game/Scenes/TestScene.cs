@@ -86,8 +86,8 @@ namespace Game.Scenes
                 this._mainSurface.Dimensions * 0.35f
             );
 
-            this._ui.Begin();
-            this._ui.Window(bounds, "Test");
+            this._ui.Begin(this._mainSurface);
+            this._ui.Window("Test", new SizeF(0.35f, 0.35f), new Padding(1, 1, 1, 1));
             this._ui.Label("Label");
             this._ui.Button("Button 1");
             this._ui.Button("Button 2");

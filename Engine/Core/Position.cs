@@ -189,6 +189,12 @@ namespace Engine.Core
         /// </summary>
         public static implicit operator Position(Size size) => new Position(size.Width, size.Height);
 
+        /// <summary>
+        /// Implicit conversion from <see cref="SizeF"/> to a position instance.
+        /// </summary>
+        public static implicit operator Position(SizeF size) => new Position((int)size.Width, (int)size.Height);
+
+
         #endregion
     }
 }

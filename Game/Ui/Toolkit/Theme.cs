@@ -24,6 +24,26 @@ namespace Game.Ui.Toolkit
         protected virtual Color InactiveTextColor => UiColors.InactiveText;
 
         /// <summary>
+        /// The main background color.
+        /// </summary>
+        protected virtual Color BackgroundColor => DefaultColors.Black;
+
+        /// <summary>
+        /// Front color for borders
+        /// </summary>
+        protected virtual Color BorderFrontColor => UiColors.BorderFront;
+
+        /// <summary>
+        /// Back color for borders
+        /// </summary>
+        protected virtual Color BorderBackColor => UiColors.BorderBack;
+
+        /// <summary>
+        /// Front color for window title text
+        /// </summary>
+        protected virtual Color WindowTitleColor => UiColors.BorderTitle;
+
+        /// <summary>
         /// Draw a label
         /// </summary>
         public virtual Position DrawLabel(RenderCommandRecorder recorder, Position position, string label)
@@ -65,15 +85,14 @@ namespace Game.Ui.Toolkit
         /// <param name="recorder"></param>
         /// <param name="bounds"></param>
         /// <param name="title"></param>
-        public virtual void DrawWindow(RenderCommandRecorder recorder, Rectangle bounds, string title)
+        public virtual void DrawWindow(RenderCommandRecorder recorder, Rectangle bounds, string title, bool withBorder)
         {
-            recorder.RecordPushFrontColor(UiColors.BorderFront);
-            recorder.RecordPushBackColor(UiColors.BorderBack);
+            // The draw window command fills the background with the currently active back color.
+            recorder.RecordPushBackColor(this.BackgroundColor);
 
-            recorder.RecordDrawWindow(bounds, title, UiColors.BorderTitle);
+            recorder.RecordDrawWindow(bounds, title, this.WindowTitleColor, this.BorderFrontColor, this.BorderBackColor, withBorder);
 
             recorder.RecordPopBackColor();
-            recorder.RecordPopFrontColor();
         }
     }
 }

@@ -105,6 +105,18 @@ namespace Engine.Graphics
         }
 
         /// <summary>
+        /// Fill given area on surface with given background color
+        /// </summary>
+        public static void FillArea(
+            this Surface surface,
+            Rectangle area,
+            Color backColor
+        )
+        {
+            surface.FillArea(area, new Tile(0, DefaultColors.Black, backColor));
+        }
+
+        /// <summary>
         /// Fill given area on surface with a tile
         /// </summary>
         public static void FillArea(

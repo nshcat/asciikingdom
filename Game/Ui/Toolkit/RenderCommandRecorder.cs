@@ -118,9 +118,10 @@ namespace Game.Ui.Toolkit
         /// <summary>
         /// Record drawing of a window
         /// </summary>
-        public void RecordDrawWindow(Rectangle bounds, string title, Color titleFrontColor)
+        public void RecordDrawWindow(Rectangle bounds, string title,
+            Color titleFrontColor, Color borderFrontColor, Color borderBackColor, bool drawBorder)
         {
-            this.Record(new DrawWindowCommand(bounds, title, titleFrontColor));
+            this.Record(new DrawWindowCommand(bounds, title, titleFrontColor, borderFrontColor, borderBackColor, drawBorder));
         }
         #endregion
     }

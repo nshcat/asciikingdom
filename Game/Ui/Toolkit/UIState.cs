@@ -46,8 +46,7 @@ namespace Game.Ui.Toolkit
         /// <summary>
         /// The layout context for the current frame.
         /// </summary>
-        protected LayoutContext _context
-            = new LayoutContext();
+        protected LayoutContext _context;
 
         /// <summary>
         /// Collection of rendering commands used to draw the GUI to a surface
@@ -226,11 +225,39 @@ namespace Game.Ui.Toolkit
         /// Draw a window with the given bounds and title. This will set the current position and origin
         /// to be contained within the windows bounds.
         /// </summary>
-        public void Window(Rectangle bounds, string title)
+        public void Window(string title, Rectangle bounds, Padding padding = new Padding(), bool drawBorder = true)
         {
-            this.GetActiveTheme().DrawWindow(this, bounds, title);
-            this._context.Origin = bounds.TopLeft + new Position(1, 1);
-            this._context.CurrentPosition = this._context.Origin;
+            // Calculate actual bounds
+            this.GetActiveTheme().DrawWindow(this, bounds, title, drawBorder);
+
+            var actualBounds = bounds.WithPadding(new Padding(1, 1, 1, 1)).WithPadding(padding);
+
+            // Update bounds in layout context
+            this._context.UpdateBounds(actualBounds);
+        }
+
+        /// <summary>
+        /// Draw a window centered on the screen, with a width and height being a percentage of the surface dimensions
+        /// </summary>
+        /// <param name="factors">Percent values of parent surface height and width to use for window dimensions</param>
+        public void Window(string title, SizeF factors, Padding padding = new Padding(), bool drawBorder = true)
+        {
+            // Get current bounds for dimension calculations
+            var currentBounds = this._context.Bounds;
+            var dimensions = currentBounds.Size * factors;
+
+            var middleOffset = currentBounds.Size * 0.5f;
+            var middle = currentBounds.TopLeft + (Position)middleOffset;
+
+            var halfSize = dimensions * 0.5f;
+
+            var topLeft = middle - (Position)halfSize;
+            var bottomRight = middle + (Position)halfSize;
+
+            // Now determine rectangle of window
+            var windowBounds = new Rectangle(topLeft, bottomRight);
+
+            this.Window(title, windowBounds, padding, drawBorder);
         }
         #endregion
         #endregion
@@ -240,10 +267,17 @@ namespace Game.Ui.Toolkit
         /// This method has to be called each frame/update before issuing any GUI calls.
         /// It prepares the internal state.
         /// </summary>
-        public void Begin()
+        public void Begin(Surface surface, Padding padding = new Padding())
         {
-            // First, setup a new, empty layout context
-            this._context = new LayoutContext();
+            // Determine initial layout bounds based on surface dimensions
+            var surfaceDimensions = surface.Dimensions;
+            var surfaceBounds = new Rectangle(
+                padding.Left, surfaceDimensions.Width - 1 + padding.Left - padding.Right,
+                padding.Top, surfaceDimensions.Height - 1 + padding.Top - padding.Bottom
+            );
+
+            // Setup a new, empty layout context based on the surface bounds
+            this._context = new LayoutContext(surfaceBounds);
 
             // Clear the rendering command buffer
             this._commandBuffer.Clear();

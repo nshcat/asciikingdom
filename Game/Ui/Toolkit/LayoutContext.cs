@@ -14,11 +14,12 @@ namespace Game.Ui.Toolkit
     {
         #region Properties
         /// <summary>
-        /// The top left corner of the accesible area for the GUI.
-        /// This is e.g. used for windows and affects new lines, indentation etc.
+        /// The current layouting bounds. These can for example be imposed by creating a window.
+        /// Initially, they are set to the surface dimensions.
+        /// The bounds are inclusive at both the top left and bottom right.
         /// </summary>
-        public Position Origin { get; set; }
-            = new Position(0, 0);
+        public Rectangle Bounds { get; protected set; }
+            = new Rectangle();
 
         /// <summary>
         /// The current position in the layout.
@@ -46,6 +47,16 @@ namespace Game.Ui.Toolkit
             = false;
         #endregion
 
+        #region Constructors
+        /// <summary>
+        /// Create a new layout context constrainted to the given bounds
+        /// </summary>
+        public LayoutContext(Rectangle bounds)
+        {
+            this.UpdateBounds(bounds);
+        }
+        #endregion
+
         #region Layout Modification Methods
         /// <summary>
         /// Move to the next line, used by widget methods and includes extra logic
@@ -54,7 +65,7 @@ namespace Game.Ui.Toolkit
         public void NextLineWidget()
         {
             // Inhibit new line if requested by user
-            if(this.InhibitNewline)
+            if (this.InhibitNewline)
             {
                 this.InhibitNewline = false;
                 return;
@@ -64,12 +75,25 @@ namespace Game.Ui.Toolkit
         }
 
         /// <summary>
+        /// Set new bounds for layouting. This can only be done when no indent is active.
+        /// Not that this will reset the position to the top left of the new bounds.
+        /// </summary>
+        public void UpdateBounds(Rectangle newBounds)
+        {
+            if (this.IndentLevel != 0)
+                throw new InvalidOperationException("Can only change layout bounds while no indentation is active");
+
+            this.Bounds = newBounds;
+            this.CurrentPosition = this.Bounds.TopLeft;
+        }
+
+        /// <summary>
         /// Move to the next line, honouring indentation.
         /// </summary>
         public void NextLine()
         {
             this.CurrentPosition = new Position(
-                this.Origin.X + this.IndentLevel * this.IndentDepth,
+                this.Bounds.TopLeft.X + this.IndentLevel * this.IndentDepth,
                 this.CurrentPosition.Y + 1);
         }
 
@@ -79,10 +103,10 @@ namespace Game.Ui.Toolkit
         /// </summary>
         public void IncreaseIndent(int value)
         {
-            if (this.CurrentPosition.X == this.Origin.X + (this.IndentLevel * this.IndentDepth))
+            if (this.CurrentPosition.X == this.Bounds.TopLeft.X + (this.IndentLevel * this.IndentDepth))
             {
                 this.CurrentPosition = new Position(
-                    this.Origin.X + ((this.IndentLevel + value) * this.IndentDepth),
+                    this.Bounds.TopLeft.X + ((this.IndentLevel + value) * this.IndentDepth),
                     this.CurrentPosition.Y
                     );
             }
@@ -96,10 +120,10 @@ namespace Game.Ui.Toolkit
         /// </summary>
         public void DecreaseIndent(int value)
         {
-            if (this.CurrentPosition.X == this.Origin.X + (this.IndentLevel * this.IndentDepth))
+            if (this.CurrentPosition.X == this.Bounds.TopLeft.X + (this.IndentLevel * this.IndentDepth))
             {
                 this.CurrentPosition = new Position(
-                    this.Origin.X + ((this.IndentLevel - value) * this.IndentDepth),
+                    this.Bounds.TopLeft.X + ((this.IndentLevel - value) * this.IndentDepth),
                     this.CurrentPosition.Y
                     );
             }
