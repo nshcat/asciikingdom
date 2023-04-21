@@ -3,7 +3,7 @@ namespace Game.WorldGen
     /// <summary>
     /// Parameters used during world generation.
     /// </summary>
-    public class WorldParameters
+    public struct WorldParameters
     {
         /// <summary>
         /// Whether the depression filling algorithm should use randomized parameters
@@ -18,7 +18,7 @@ namespace Game.WorldGen
         /// The chance that a resource will spawn on a selected tile
         /// </summary>
         public float ResourceSpawnChance { get; set; } = 0.7f;
-        
+
         /// <summary>
         /// Whether the whole height map should be multiplied with itself. Makes hills
         /// steeper.
@@ -111,5 +111,9 @@ namespace Game.WorldGen
         /// Percentage of temperatures up to warmer
         /// </summary>
         public float WarmerPercentage { get; set; } = 0.85f;
+
+        public WorldParameters()
+        {
+        }
     }
 }

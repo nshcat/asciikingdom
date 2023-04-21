@@ -54,10 +54,20 @@ namespace Engine.Core
         }
 
         /// <summary>
+        /// Create a new rectangle based on the given coordinates of the bounds
+        /// </summary>
+        public Rectangle(int left, int right, int top, int bottom)
+            : this(new Position(left, top), new Position(right, bottom))
+        {
+
+        }
+
+        /// <summary>
         /// Construct rectangle from given size. The top left corner is assumed to be at the origin.
         /// </summary>
         /// <param name="size">Width and height of the rectangle</param>
-        public Rectangle(Size size) : this(Position.Origin, size)
+        public Rectangle(Size size)
+            : this(Position.Origin, size)
         {
             
         }
@@ -85,8 +95,19 @@ namespace Engine.Core
 
             var topLeft = middle - (Position)halfSize;
             var bottomRight = middle + (Position)halfSize;
-
+     
             return new Rectangle(topLeft, bottomRight);
+        }
+
+        /// <summary>
+        /// Create new rectangle which represents this rectangle with given padding applied
+        /// </summary>
+        public Rectangle WithPadding(Padding padding)
+        {
+            return new Rectangle(
+                this.TopLeft + new Position(padding.Left, padding.Top),
+                this.BottomRight - new Position(padding.Right, padding.Bottom)
+            );
         }
         
         #region Equality Implementation
