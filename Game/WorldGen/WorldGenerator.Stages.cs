@@ -8,6 +8,7 @@ using Engine.Graphics;
 using Game.Data;
 using Game.Maths;
 using Game.Simulation;
+using Game.Utility;
 using SharpNoise;
 using SharpNoise.Builders;
 using SharpNoise.Modules;
@@ -108,33 +109,8 @@ namespace Game.WorldGen
         /// <param name="world"></param>
         private void CreateTerrainTiles(World world)
         {
-            var random = new Random(this.Seed + 166554);
-
-            var tileLayer = new TileWorldLayer(world.Dimensions, "terrain_tiles", "Terrain Tiles");
-
-            for (var ix = 0; ix < world.Dimensions.Width; ++ix)
-            {
-                for (var iy = 0; iy < world.Dimensions.Height; ++iy)
-                {
-                    var position = new Position(ix, iy);
-                    var terrainType = world.DetailedMap.GetTerrainType(position);
-
-                    if (terrainType == TerrainType.River)
-                    {
-                        var info = world.DetailedMap.RiverTileInfo[position];
-                        var tile = info.GetTile();
-                        tileLayer.Values[ix, iy] = tile;
-                    }
-                    else
-                    {
-                        var info = TerrainTypeData.GetInfo(terrainType);
-                        var tile = info.PickTile(random);
-                        tileLayer.Values[ix, iy] = tile;
-                    }
-                }
-            }
-
-            world.DetailedMap.TerrainTileLayer = tileLayer;
+            world.DetailedMap.TerrainTileLayer =
+                TerrainTileLayerGenerator.CreateTileLayer(this.Seed, world.DetailedMap.TerrainLayer, world.DetailedMap.RiverTileInfo);
         }
 
         /// <summary>

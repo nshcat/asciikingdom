@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Data;
+using Game.Utility;
 
 namespace Game.Simulation
 {
@@ -99,7 +100,7 @@ namespace Game.Simulation
         public void InitializeFromDetailed(DetailedMap map, float factor)
         {
             this.TerrainLayer = map.TerrainLayer.CreateOverview(factor).As<TerrainWorldLayer>();
-            this.TerrainTileLayer = map.TerrainTileLayer.CreateOverview(factor).As<TileWorldLayer>();
+            this.TerrainTileLayer = TerrainTileLayerGenerator.CreateTileLayer(this.Seed, this.TerrainLayer);
 
             this.Layers = new Dictionary<string, WorldLayer>();
             foreach(var kvp in map.Layers)
