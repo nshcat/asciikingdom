@@ -22,7 +22,7 @@ namespace Game.Simulation
         {
             get
             {
-                if(_instance == null)
+                if (_instance == null)
                     _instance = new WorldManager();
 
                 return _instance;
@@ -34,9 +34,9 @@ namespace Game.Simulation
         /// </summary>
         private WorldManager()
         {
-            
+
         }
-        
+
         /// <summary>
         /// List of all known worlds, specified by their index and name
         /// </summary>
@@ -45,27 +45,27 @@ namespace Game.Simulation
         /// <summary>
         /// Whether there are any saved worlds available
         /// </summary>
-        public bool HasWorlds => this.Worlds.Count > 0;
+        public bool HasWorlds => Worlds.Count > 0;
 
         /// <summary>
         /// Refresh list of known worlds
         /// </summary>
         public void RefreshWorlds()
         {
-            this.Worlds = new List<(int, string)>();
+            Worlds = new List<(int, string)>();
 
             foreach (var directory in Directory.GetDirectories(GameDirectories.SaveGames))
             {
                 var name = Path.GetFileName(directory);
-                
+
                 if (name.StartsWith("world"))
                 {
                     var index = int.Parse(name.Replace("world", ""));
 
                     var metadata = Serialization.Serialization.DeserializeFromFile<WorldMetadata>(
                         Path.Combine(directory, "metadata.json"), Serialization.Serialization.DefaultOptions);
-                    
-                    this.Worlds.Add((index, metadata.Name));
+
+                    Worlds.Add((index, metadata.Name));
                 }
             }
         }
@@ -78,9 +78,9 @@ namespace Game.Simulation
             // Check if it hasn't already been saved before and thus lacks an index
             if (state.World.Index == -1)
             {
-                state.World.Index = this.GetNextWorldIndex();
+                state.World.Index = GetNextWorldIndex();
             }
-            
+
             state.Save(this.BuildPrefix(state.World.Index));
         }
 
@@ -89,7 +89,7 @@ namespace Game.Simulation
         /// </summary>
         public SimulationState LoadWorld(int index)
         {
-            var state = SimulationState.Load(this.BuildPrefix(index));
+            var state = SimulationState.Load(BuildPrefix(index));
             state.World.Index = index;
             return state;
         }
@@ -109,7 +109,7 @@ namespace Game.Simulation
         {
             var index = 1;
 
-            while (Directory.Exists(this.BuildPrefix(index)))
+            while (Directory.Exists(BuildPrefix(index)))
             {
                 ++index;
             }

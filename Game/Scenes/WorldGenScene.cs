@@ -280,14 +280,6 @@ namespace Game.Scenes
 
             this._surface.DrawString(position, TerrainTypeData.GetInfo(this._world.DetailedMap.GetTerrainType(this._detailedView.CursorPosition)).Name,
                 DefaultColors.White, DefaultColors.Black);
-
-            if (this._detailedView.ShowResources &&
-                this._world.DetailedMap.Resources.ContainsKey(this._detailedView.CursorPosition))
-            {
-                var resourceType = this._world.DetailedMap.Resources[this._detailedView.CursorPosition];
-                this._surface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
-                    DefaultColors.White, DefaultColors.Black);
-            }
         }
 
         /// <summary>

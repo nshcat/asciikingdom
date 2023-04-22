@@ -35,14 +35,16 @@ namespace Game.Ui
                 return Optional<Tile>.Empty;
 
             // If the world is ocean or hills at this position, nothing can grow
-            var terrain = world.Terrain[worldPosition.X, worldPosition.Y];
+            var terrain = world.TerrainLayer.Values[worldPosition.X, worldPosition.Y];
 
             if (!TerrainTypeData.AcceptsCrops(terrain))
                 return Optional<Tile>.Empty;
 
-            var temperature = world.RawTemperature[worldPosition.X, worldPosition.Y];
-            var rainfall = world.RawRainfall[worldPosition.X, worldPosition.Y];
-            var drainage = world.RawDrainage[worldPosition.X, worldPosition.Y];
+            var X = worldPosition.X;
+            var Y = worldPosition.Y;
+            var temperature = world.GetLayer<RawWorldLayer>("raw_temperature").Values[X, Y];
+            var drainage = world.GetLayer<RawWorldLayer>("raw_drainage").Values[X, Y];
+            var rainfall = world.GetLayer<RawWorldLayer>("raw_rainfall").Values[X, Y];
 
             var fertility = this.Crop.FertilityFactors.CalculateFertilityFactor(
                 temperature, drainage, rainfall

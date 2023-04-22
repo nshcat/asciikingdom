@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using Engine.Core;
 using Engine.Graphics;
@@ -23,19 +24,19 @@ namespace Game.WorldGen
         {
             // Generate empty world object
             var world = new World(this.WorldDimensions, this.Seed);
-            
+
             this.SignalNextStage("Generating height map..", 0.0);
             var heightMap = new HeightMap(this.WorldDimensions, this.Seed, this.Parameters);
 
             this.SignalNextStage("Generating temperature map..", 0.25);
             var temperatureMap = new TemperatureMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
-            
+
             this.SignalNextStage("Generating drainage map..", 0.30);
             var drainageMap = new DrainageMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
-            
+
             this.SignalNextStage("Generating rainfall map..", 0.45);
             var rainfallMap = new RainfallMap(this.WorldDimensions, this.Seed, this.Parameters, heightMap);
-            
+
             // Generate rivers, readjust rainfall map and rebuild levels
             this.SignalNextStage("Generating biomes..", 0.60);
             var biomeMapper = new BiomeMapper(this.WorldDimensions, this.Seed, heightMap, rainfallMap, drainageMap, temperatureMap);
@@ -43,32 +44,106 @@ namespace Game.WorldGen
             this.SignalNextStage("Generating rivers..", 0.70);
             var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, temperatureMap, rainfallMap, biomeMapper.TerrainTypes);
             riverGenerator.GenerateRivers();
-            
+
             this.SignalNextStage("Placing resources..", 0.75);
             var resourceGenerator = new ResourceGenerator(this.WorldDimensions, this.Seed, biomeMapper.TerrainTypes, this.Parameters);
-            
-            this.SignalNextStage("Storing data..", 0.80);
-            world.DetailedMap.Temperature = temperatureMap.TemperatureTiles;
-            world.DetailedMap.Drainage = drainageMap.DrainageTiles;
-            world.DetailedMap.Rainfall = rainfallMap.RainfallTiles;
-            world.DetailedMap.Terrain = biomeMapper.TerrainTypes;
-            world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
-            world.DetailedMap.Resources = resourceGenerator.Resources;
-            world.DetailedMap.RawRainfall = rainfallMap.Values;
-            world.DetailedMap.RawDrainage = drainageMap.Values;
-            world.DetailedMap.RawTemperature = temperatureMap.Values;
 
-            this.SignalNextStage("Updating terrain tiles..", 0.85);
-            world.UpdateTiles();
-            
+            this.SignalNextStage("Storing data..", 0.80);
+            world.DetailedMap.TerrainLayer = new TerrainWorldLayer(world.Dimensions, "terrain", "Terrain", dontAllocate: true);
+            world.DetailedMap.TerrainLayer.Values = biomeMapper.TerrainTypes;
+
+            this.AddLayer(world, this.CreateTileLayer("temperature", "Temperature", temperatureMap.TemperatureTiles));
+            this.AddLayer(world, this.CreateTileLayer("drainage", "Drainage", drainageMap.DrainageTiles));
+            this.AddLayer(world, this.CreateTileLayer("rainfall", "Rainfall", rainfallMap.RainfallTiles));
+
+            this.AddLayer(world, this.CreateRawLayer("raw_rainfall", "Rainfall (raw)", rainfallMap.Values));
+            this.AddLayer(world, this.CreateRawLayer("raw_drainage", "Drainage (raw)", drainageMap.Values));
+            this.AddLayer(world, this.CreateRawLayer("raw_temperature", "Temperature (raw)", temperatureMap.Values));
+            world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
+
+            this.SignalNextStage("Creating terrain tiles..", 0.85);
+            this.CreateTerrainTiles(world);
+
             this.SignalNextStage("Finding start continent..", 0.90);
             world.DiscoverInitialContinent();
-            
+
             this.SignalNextStage("Building overview map..", 1.0);
-            world.BuildOverview();
-              
+            this.BuildOverview(world);
+
             // Signal that world generation has finished
             this.SignalFinished(world);
+        }
+
+        /// <summary>
+        /// Add layer to detailed map of given world
+        /// </summary>
+        private void AddLayer(World world, WorldLayer layer)
+        {
+            world.DetailedMap.Layers.Add(layer.Id, layer);
+        }
+
+        /// <summary>
+        /// Create map layer based on given raw float data
+        /// </summary>
+        private WorldLayer CreateRawLayer(string id, string name, float[,] data)
+        {
+            var layer = new RawWorldLayer(new Size(data.GetLength(0), data.GetLength(1)), id, name, dontAllocate: true);
+            layer.Values = data;
+            return layer;
+        }
+
+        /// <summary>
+        /// Create map layer based on given tile data
+        /// </summary>
+        private WorldLayer CreateTileLayer(string id, string name, Tile[,] data)
+        {
+            var layer = new TileWorldLayer(new Size(data.GetLength(0), data.GetLength(1)), id, name, dontAllocate: true);
+            layer.Values = data;
+            return layer;
+        }
+
+        /// <summary>
+        /// Determine detailed terrain tiles based on terrain types and rivers
+        /// </summary>
+        /// <param name="world"></param>
+        private void CreateTerrainTiles(World world)
+        {
+            var random = new Random(this.Seed + 166554);
+
+            var tileLayer = new TileWorldLayer(world.Dimensions, "terrain_tiles", "Terrain Tiles");
+
+            for (var ix = 0; ix < world.Dimensions.Width; ++ix)
+            {
+                for (var iy = 0; iy < world.Dimensions.Height; ++iy)
+                {
+                    var position = new Position(ix, iy);
+                    var terrainType = world.DetailedMap.GetTerrainType(position);
+
+                    if (terrainType == TerrainType.River)
+                    {
+                        var info = world.DetailedMap.RiverTileInfo[position];
+                        var tile = info.GetTile();
+                        tileLayer.Values[ix, iy] = tile;
+                    }
+                    else
+                    {
+                        var info = TerrainTypeData.GetInfo(terrainType);
+                        var tile = info.PickTile(random);
+                        tileLayer.Values[ix, iy] = tile;
+                    }
+                }
+            }
+
+            world.DetailedMap.TerrainTileLayer = tileLayer;
+        }
+
+        /// <summary>
+        /// Initialize overview map from detailed map
+        /// </summary>
+        /// <param name="world"></param>
+        private void BuildOverview(World world)
+        {
+            world.OverviewMap.InitializeFromDetailed(world.DetailedMap, world.OverviewScale);
         }
 
         /// <summary>
@@ -84,7 +159,7 @@ namespace Game.WorldGen
                     var temperature = temperatureMap.TemperatureLevels[ix, iy];
                     var terrainType = this.DetermineTerrain(height);
 
-                    world.DetailedMap.Terrain[ix, iy] = terrainType;
+                    world.DetailedMap.TerrainLayer.Values[ix, iy] = terrainType;
                 }
             }
         }
