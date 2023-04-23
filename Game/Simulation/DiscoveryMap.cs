@@ -53,6 +53,8 @@ namespace Game.Simulation
             {
                 for (var iy = 0; iy < overviewDimensions.Height; ++iy)
                 {
+                    entries.Clear();
+
                     var topLeft = new Position(ix * scaleFactor, iy * scaleFactor);
                     var bottomRight = new Position(topLeft.X + 4, topLeft.Y + 4);
 
@@ -77,11 +79,6 @@ namespace Game.Simulation
                         .OrderByDescending(x => x.Count)
                         .Select(x => x.Entry)
                         .First();
-
-                    if(average)
-                    {
-                        int x = 0;
-                    }
 
                     overviewMap.Values[ix, iy] = average;
                 }
