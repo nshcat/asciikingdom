@@ -72,13 +72,13 @@ namespace Game.Ui
                 switch (this.DisplayMode)
                 {
                     case MapViewMode.Terrain:
-                        return this.Map.Tiles;
+                        return this.Map.TerrainTileLayer.Values;
                     case MapViewMode.Temperature:
-                        return this.Map.Temperature;
+                        return this.Map.GetLayer<TileWorldLayer>("temperature").Values;
                     case MapViewMode.Rainfall:
-                        return this.Map.Rainfall;
+                        return this.Map.GetLayer<TileWorldLayer>("rainfall").Values;
                     case MapViewMode.Drainage:
-                        return this.Map.Drainage;
+                        return this.Map.GetLayer<TileWorldLayer>("drainage").Values;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -129,21 +129,10 @@ namespace Game.Ui
                 }
             }
 
-            if (this.DrawFogOfWar && !this.Map.Discovered[worldPosition.X, worldPosition.Y])
+            if (this.DrawFogOfWar && !this.Map.Discovered.Values[worldPosition.X, worldPosition.Y])
                 return;
             
-            if (this.Map is DetailedMap detailedMap
-                && this.DisplayMode == MapViewMode.Terrain
-                && this.ShowResources
-                && detailedMap.Resources.ContainsKey(worldPosition))
-            {
-                var tile = detailedMap.Resources[worldPosition].Tile;
-                surface.SetTile(screenPosition, tile);
-            }
-            else
-            {
-                surface.SetTile(screenPosition, this.MapData[worldPosition.X, worldPosition.Y]);
-            }
+            surface.SetTile(screenPosition, this.MapData[worldPosition.X, worldPosition.Y]);
         }
 
         /// <summary>

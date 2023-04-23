@@ -12,17 +12,17 @@ namespace Game.Simulation
         /// The dimensions of the map
         /// </summary>
         public Size Dimensions { get; set; }
-        
+
         /// <summary>
         /// The initial "spawn" location that is on the initially discovered continent
         /// </summary>
         public Position InitialLocation { get; set; }
-        
+
         /// <summary>
         /// The seed used to generate this world
         /// </summary>
         public int Seed { get; set; }
-        
+
         /// <summary>
         /// The relative scale of the overview map in relation to the detailed map
         /// </summary>
@@ -38,9 +38,9 @@ namespace Game.Simulation
         /// </summary>
         public WorldMetadata(Size dimensions, int seed, float overviewScale = 0.1250f)
         {
-            this.Dimensions = dimensions;
-            this.Seed = seed;
-            this.OverviewScale = overviewScale;
+            Dimensions = dimensions;
+            Seed = seed;
+            OverviewScale = overviewScale;
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Game.Simulation
         /// </summary>
         public WorldMetadata()
         {
-            
+
         }
     }
 }

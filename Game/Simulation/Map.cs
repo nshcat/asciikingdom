@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Engine.Core;
 using Engine.Graphics;
 using Game.Data;
+using Game.Utility;
 
 namespace Game.Simulation
 {
@@ -20,54 +22,31 @@ namespace Game.Simulation
         public Size Dimensions { get; }
 
         /// <summary>
-        /// The terrain type array
+        /// The seed used to generate this map
         /// </summary>
-        public TerrainType[,] Terrain { get; set; }
+        public int Seed { get; }
 
         /// <summary>
         /// Terrain discovery status
         /// </summary>
-        public bool[,] Discovered { get; set; }
+        public DiscoveryMap Discovered { get; set; }
 
         /// <summary>
-        /// Rendering of the map
+        /// The main terrain world layer
         /// </summary>
-        public Tile[,] Tiles { get; }
+        public TerrainWorldLayer TerrainLayer { get; set; }
 
         /// <summary>
-        /// Rendering of the rainfall map
+        /// The main terrain tile layer
         /// </summary>
-        public Tile[,] Rainfall { get; set; }
+        public TileWorldLayer TerrainTileLayer { get; set; }
 
         /// <summary>
-        /// Rendering of the temperature map
+        /// Dictionary of all additional world layers available for this map
         /// </summary>
-        public Tile[,] Temperature { get; set; }
+        public Dictionary<string, WorldLayer> Layers { get; set; }
+            = new Dictionary<string, WorldLayer>();
 
-        /// <summary>
-        /// Rendering of the drainage map
-        /// </summary>
-        public Tile[,] Drainage { get; set; }
-
-        /// <summary>
-        /// Raw temperatures values, in range [0, 1]
-        /// </summary>
-        public float[,] RawTemperature { get; set; }
-
-        /// <summary>
-        /// Raw rainfall values, in range [0, 1]
-        /// </summary>
-        public float[,] RawRainfall { get; set; }
-
-        /// <summary>
-        /// Raw drainage values, in range [0, 1]
-        /// </summary>
-        public float[,] RawDrainage { get; set; }
-
-        /// <summary>
-        /// The seed used to generate this map
-        /// </summary>
-        public int Seed { get; }
 
         /// <summary>
         /// Construct a new, empty map with pre-allocated arrays.
@@ -76,25 +55,27 @@ namespace Game.Simulation
         {
             this.Dimensions = dimensions;
             this.Seed = seed;
-            
-            // TODO are these allocations needed? Doesn't the world generator just overwrite them?
-            this.Terrain = new TerrainType[dimensions.Width, dimensions.Height];
-            this.Tiles = new Tile[dimensions.Width, dimensions.Height];
-            this.Rainfall = new Tile[dimensions.Width, dimensions.Height];
-            this.Temperature = new Tile[dimensions.Width, dimensions.Height];
-            this.Drainage = new Tile[dimensions.Width, dimensions.Height];
-            this.Discovered = new bool[dimensions.Width, dimensions.Height];
-            this.RawDrainage = new float[dimensions.Width, dimensions.Height];
-            this.RawRainfall = new float[dimensions.Width, dimensions.Height];
-            this.RawTemperature = new float[dimensions.Width, dimensions.Height];
+
+            this.Discovered = new DiscoveryMap(dimensions);
         }
-        
+
+        /// <summary>
+        /// Retrieve layer with given id, casted down to given world layer type
+        /// </summary>
+        public T GetLayer<T>(string layerid) where T : WorldLayer
+        {
+            if (!this.Layers.ContainsKey(layerid))
+                throw new ArgumentException($"Map doesnt contain layer with id {layerid}");
+
+            return this.Layers[layerid].As<T>();
+        }
+
         /// <summary>
         /// Retrieves the terrain type at given position
         /// </summary>
         public TerrainType GetTerrainType(Position position)
         {
-            return this.Terrain[position.X, position.Y];
+            return this.TerrainLayer.Values[position.X, position.Y];
         }
 
         /// <summary>
@@ -110,27 +91,24 @@ namespace Game.Simulation
         /// </summary>
         public bool IsDiscovered(Position position)
         {
-            return this.Discovered[position.X, position.Y];
+            return this.Discovered.Values[position.X, position.Y];
         }
-        
+
         /// <summary>
-        /// Build new tile array from terrain array
+        /// Create as overview map from given detailed map
         /// </summary>
-        public virtual void UpdateTiles()
+        public void InitializeFromDetailed(DetailedMap map, float factor)
         {
-            var random = new Random(this.Seed);
+            this.TerrainLayer = map.TerrainLayer.CreateOverview(factor).As<TerrainWorldLayer>();
+            this.TerrainTileLayer = TerrainTileLayerGenerator.CreateTileLayer(this.Seed, this.TerrainLayer);
 
-            for (var ix = 0; ix < Dimensions.Width; ++ix)
+            this.Layers = new Dictionary<string, WorldLayer>();
+            foreach(var kvp in map.Layers)
             {
-                for (var iy = 0; iy < Dimensions.Height; ++iy)
-                {
-                    var terrainType = this.GetTerrainType(new Position(ix, iy));
-
-                    var info = TerrainTypeData.GetInfo(terrainType);
-                    var tile = info.PickTile(random);
-                    this.Tiles[ix, iy] = tile;
-                }
+                this.Layers.Add(kvp.Key, kvp.Value.CreateOverview(factor));
             }
-        }
+
+            this.Discovered = map.Discovered.CreateOverview(factor);
+        }  
     }
 }

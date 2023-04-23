@@ -10,7 +10,6 @@ using Game.Simulation;
 using Game.Ui;
 using Game.Ui.Toolkit;
 using OpenToolkit.Windowing.Common.Input;
-using SixLabors.ImageSharp.Processing.Processors.Dithering;
 
 namespace Game.Scenes
 {

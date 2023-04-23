@@ -17,6 +17,7 @@ using OpenToolkit.Windowing.Common.Input;
 using Game.Simulation.Sites;
 using SixLabors.ImageSharp.Primitives;
 using Game.Settings;
+using Game.Simulation;
 
 namespace Game.Scenes
 {
@@ -509,11 +510,11 @@ namespace Game.Scenes
                 var X = this._terrainView.CursorPosition.X;
                 var Y = this._terrainView.CursorPosition.Y;
 
-                if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.Terrain[X, Y]))
+                if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.TerrainLayer.Values[X, Y]))
                 {
-                    var temperature = this._state.World.DetailedMap.RawTemperature[X, Y];
-                    var drainage = this._state.World.DetailedMap.RawDrainage[X, Y];
-                    var rainfall = this._state.World.DetailedMap.RawRainfall[X, Y];
+                    var temperature = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_temperature").Values[X, Y];
+                    var drainage = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_drainage").Values[X, Y];
+                    var rainfall = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_rainfall").Values[X, Y];
 
                     var fertility = this._cropType.FertilityFactors.CalculateFertilityFactor(temperature, drainage, rainfall);
 
@@ -524,16 +525,6 @@ namespace Game.Scenes
 
                     position += new Position(0, 1);
                 }
-            }
-
-            if (this._terrainView.ShowResources &&
-                this._state.World.DetailedMap.Resources.ContainsKey(this._terrainView.CursorPosition))
-            {
-                var resourceType = this._state.World.DetailedMap.Resources[this._terrainView.CursorPosition];
-                this._sideMenuSurface.DrawString(position + new Position(0, 1), resourceType.DisplayName,
-                    UiColors.ActiveText, DefaultColors.Black);
-
-                position += new Position(0, 1);
             }
         }
 
@@ -1068,7 +1059,7 @@ namespace Game.Scenes
             // Terrain
             this._cursorTerrainInfo = this._state.World.DetailedMap.GetTerrainInfo(this._siteView.CursorPosition);
             this._cursorTerrainType = this._state.World.DetailedMap
-                .Terrain[this._siteView.CursorPosition.X, this._siteView.CursorPosition.Y];
+                .TerrainLayer.Values[this._siteView.CursorPosition.X, this._siteView.CursorPosition.Y];
 
         }
 
