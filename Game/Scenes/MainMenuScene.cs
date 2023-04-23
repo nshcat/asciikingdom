@@ -218,7 +218,7 @@ namespace Game.Scenes
         protected void DoWorldSelectGui()
         {
             this._worldSelectUI.Begin(this._titleSurface);
-            this._worldSelectUI.Window(new SizeF(0.35f, 0.35f), title: "Select World", padding: new Padding(1, 1, 1, 1));
+            this._worldSelectUI.BeginWindow(new SizeF(0.35f, 0.35f), title: "Select World", padding: new Padding(1, 1, 1, 1), withScrollbar: true);
             this._worldSelectUI.PushTheme(this._worldSelectTheme);
 
             if(this._worldSelectUI.HasKey(Key.Escape))
@@ -242,6 +242,7 @@ namespace Game.Scenes
             }
 
             this._worldSelectUI.PopTheme();
+            this._worldSelectUI.EndWindow();
             this._worldSelectUI.End();
         }
 
@@ -258,7 +259,7 @@ namespace Game.Scenes
 
             this._mainMenuUI.Begin(this._titleSurface, !this._selectWorld);
             this._mainMenuUI.PushTheme(this._mainMenuTheme);
-            this._mainMenuUI.Window(_menuBounds, drawBorder: false);
+            this._mainMenuUI.BeginWindow(_menuBounds, drawBorder: false);
      
             this._mainMenuUI.HorizontalCenter();
             if (this._mainMenuUI.Button("Create new world", centered: true))
@@ -284,6 +285,7 @@ namespace Game.Scenes
                 this.Exit();
             }
 
+            this._mainMenuUI.EndWindow();
             this._mainMenuUI.PopTheme();
             this._mainMenuUI.End();
         }

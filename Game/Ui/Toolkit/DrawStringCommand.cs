@@ -36,7 +36,7 @@ namespace Game.Ui.Toolkit
             if (this._centered)
             {
                 context.Target.DrawStringCentered(
-                    context.CurrentPosition,
+                    context.GetDrawingPosition(),
                     this._stringToDraw,
                     front,
                     back
@@ -45,7 +45,7 @@ namespace Game.Ui.Toolkit
             else
             {
                 context.Target.DrawString(
-                    context.CurrentPosition,
+                    context.GetDrawingPosition(),
                     this._stringToDraw,
                     front,
                     back

@@ -61,37 +61,14 @@ namespace Game.Scenes
         /// </summary>
         public override void Update(double deltaTime)
         {
-            var log = LogManager.GetCurrentClassLogger();
-
-            /*this._ui.Begin();
-            this._ui.Label("Label 1");
-            if (this._ui.Button("Button 1"))
-                log.Info("Button 1 pressed");
-            this._ui.Checkbox("Checkbox 1", ref this._flag);
-            this._ui.PushIndent();
-                if(this._ui.Button("Button 2"))
-                    log.Info("Button 2 pressed");
-                this._ui.Label("Label 2");
-                this._ui.PushIndent();
-                    if(this._ui.Button("Button 3"))
-                        log.Info("Button 3 pressed");
-                this._ui.PopIndent();
-                if(this._ui.Button("Button 4"))
-                    log.Info("Button 4 pressed");
-            this._ui.PopIndent();
-            this._ui.Label("Label 3");
-            this._ui.End();*/
-
-            var bounds = this._mainSurface.Bounds.Centered(
-                this._mainSurface.Dimensions * 0.35f
-            );
-
             this._ui.Begin(this._mainSurface);
-            this._ui.Window(new SizeF(0.35f, 0.35f), title: "Test", new Padding(1, 1, 1, 1));
+            this._ui.BeginWindow(new SizeF(0.35f, 0.35f), title: "Test", new Padding(1, 1, 1, 1), withScrollbar: true);
             this._ui.Label("Label");
-            this._ui.HorizontalCenter(); this._ui.Button("Button 1", centered: true);
-            this._ui.HorizontalCenter(); this._ui.Button("Button 2", centered: true);
-            this._ui.HorizontalCenter(); this._ui.Button("Button 3", centered: true);
+            for (int i = 0; i < 17; ++i)
+            {
+                this._ui.HorizontalCenter(); this._ui.Button($"Button {i + 1}", centered: true);
+            }
+            this._ui.EndWindow();
             this._ui.End();
         }
 
@@ -118,7 +95,7 @@ namespace Game.Scenes
 
             this._mainSurface = Surface.New()
                 .Tileset(this.Resources,
-                    SettingsManager.Instance.Settings.General.TextTileset)
+                    SettingsManager.Instance.Settings.General.GraphicsTileset)
                 .PixelDimensions(this.ScreenDimensions)
                 .Transparent()
                 .Build();

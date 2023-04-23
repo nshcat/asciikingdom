@@ -116,6 +116,57 @@ namespace Game.Ui.Toolkit
         }
 
         /// <summary>
+        /// Record setting a clipping mask
+        /// </summary>
+        public void RecordSetClippingMask(Rectangle mask)
+        {
+            this.Record(new SetClippingMaskCommand(mask));
+        }
+
+        /// <summary>
+        /// Record clearing a clipping mask
+        /// </summary>
+        public void RecordClearClippingMask()
+        {
+            this.Record(new SetClippingMaskCommand());
+        }
+
+        /// <summary>
+        /// Record setting a y offset
+        /// </summary>
+        public SetYOffsetCommand RecordSetOffset(int y)
+        {
+            var command = new SetYOffsetCommand(y);
+            this.Record(command);
+            return command;
+        }
+
+        /// <summary>
+        /// Record clearing a y offset
+        /// </summary>
+        public void RecordClearOffset()
+        {
+            this.Record(new SetYOffsetCommand(0));
+        }
+
+        /// <summary>
+        /// Record the drawing of a tile
+        /// </summary>
+        public void RecordDrawTile(int glyph)
+        {
+            this.Record(new DrawTileCommand(glyph));
+        }
+
+        /// <summary>
+        /// Record the drawing of a tile at given position
+        /// </summary>
+        public void RecordDrawTile(Position position, int glyph)
+        {
+            this.RecordSetPosition(position);
+            this.RecordDrawTile(glyph);
+        }
+
+        /// <summary>
         /// Record drawing of a window
         /// </summary>
         public void RecordDrawWindow(Rectangle bounds, string title,
