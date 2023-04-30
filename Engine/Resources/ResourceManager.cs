@@ -2,6 +2,7 @@ using System.IO;
 using Engine.Graphics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace Engine.Resources
 {
@@ -66,9 +67,11 @@ namespace Engine.Resources
         /// <returns>Tileset instance</returns>
         public Tileset GetTileset(string name, float scaleFactor = 1.0f)
         {
+            var brush = new RecolorBrush(SixLabors.ImageSharp.Color.Magenta, SixLabors.ImageSharp.Color.Transparent, 0.0f);
             var texture = this.GetTexture(name);
             var shadows = this.GetTexture("shadows.png");
-            
+            texture.Mutate(x => x.Fill(new GraphicsOptions { AlphaCompositionMode = PixelAlphaCompositionMode.Src }, brush));
+
             return new Tileset(texture, shadows, scaleFactor);
         }
 
@@ -80,7 +83,7 @@ namespace Engine.Resources
         public Image<Rgba32> GetTexture(string name)
         {
             var path = this.BuildPath("textures", name);
-            return (Image<Rgba32>)Image.Load(Configuration.Default, path);
+            return (Image<Rgba32>)Image.Load(path);
         }
 
         /// <summary>
