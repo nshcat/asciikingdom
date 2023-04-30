@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using Game.Core;
+using Game.Maths;
 
 namespace Game.Ui.Toolkit
 {
@@ -80,6 +82,12 @@ namespace Game.Ui.Toolkit
         /// </summary>
         private Stack<Theme> _themeStack
             = new Stack<Theme>();
+
+        /// <summary>
+        /// State of the current window, if any
+        /// </summary>
+        private Optional<WindowState> _windowState
+            = Optional<WindowState>.Empty;
         #endregion
 
         #region Constructor
@@ -267,7 +275,7 @@ namespace Game.Ui.Toolkit
         /// Draw a window with the given bounds and title. This will set the current position and origin
         /// to be contained within the windows bounds.
         /// </summary>
-        public void Window(Rectangle bounds, string title = "", Padding padding = new Padding(), bool drawBorder = true)
+        public void BeginWindow(Rectangle bounds, string title = "", Padding padding = new Padding(), bool drawBorder = true, bool withScrollbar = false)
         {
             // Calculate actual bounds
             var wparams = new WidgetDrawParams() with { Bounds = bounds, Text = title, WithBorder = drawBorder };
@@ -281,13 +289,20 @@ namespace Game.Ui.Toolkit
 
             // Update bounds in layout context
             this._context.UpdateBounds(actualBounds);
+
+            this._windowState = new WindowState();
+            this._windowState.Value.HasScrollBar = withScrollbar;
+            this._windowState.Value.OffsetCommand = this.RecordSetOffset(0);
+
+            // Record clipping mask to be within border
+            this.RecordSetClippingMask(actualBounds);
         }
 
         /// <summary>
         /// Draw a window centered on the screen, with a width and height being a percentage of the surface dimensions
         /// </summary>
         /// <param name="factors">Percent values of parent surface height and width to use for window dimensions</param>
-        public void Window(SizeF factors, string title = "", Padding padding = new Padding(), bool drawBorder = true)
+        public void BeginWindow(SizeF factors, string title = "", Padding padding = new Padding(), bool drawBorder = true, bool withScrollbar = false)
         {
             // Get current bounds for dimension calculations
             var currentBounds = this._context.Bounds;
@@ -304,7 +319,52 @@ namespace Game.Ui.Toolkit
             // Now determine rectangle of window
             var windowBounds = new Rectangle(topLeft, bottomRight);
 
-            this.Window(windowBounds, title, padding, drawBorder);
+            this.BeginWindow(windowBounds, title, padding, drawBorder, withScrollbar);
+        }
+
+        /// <summary>
+        /// End the current window
+        /// </summary>
+        public void EndWindow()
+        {
+            // If the current window has a scroll bar, we have to update the offset command
+            // to always show the selection.
+            var state = this._windowState.Value;
+            if (state.HasScrollBar && state.WidgetPositions.Count > 0)
+            {
+                // Check if we have a selection. If not, assume the first window control is selected
+                // for scrollbar purposes.
+                var selectedId = !String.IsNullOrEmpty(this._activeId) ? this._activeId : state.WidgetPositions[0].Item1;
+
+                // Find height of that selected widget
+                var selectedYPosition = state.WidgetPositions.Find(x => x.Item1 == selectedId).Item2;
+                var maxYPosition = state.WidgetPositions.Select(x => x.Item2).Max();
+
+                // Dont draw scrollbar if contents arent spilling out
+                if (maxYPosition > this._context.Bounds.BottomRight.Y)
+                {
+                    var topYPosition = this._context.Bounds.TopLeft.Y;
+                    var middleYPosition = this._context.Bounds.Size.Height / 2 + this._context.Bounds.TopLeft.Y;
+
+                    // If we are in the top half, do nothing
+                    var yOffset = -Math.Max(0, (Math.Min(selectedYPosition, maxYPosition - (this._context.Bounds.Size.Height / 2)) - middleYPosition));
+
+                    state.OffsetCommand.Offset = yOffset;
+
+                    float relYPos = MathUtil.Map(
+                        Math.Abs(yOffset),
+                        new FloatRange(0, maxYPosition - (this._context.Bounds.Size.Height / 2) - middleYPosition),
+                        new FloatRange(0.0f, 1.0f));
+
+                    this.DrawScrollbar(
+                        new Position(this._context.Bounds.BottomRight.X, this._context.Bounds.TopLeft.Y - yOffset),
+                        this._context.Bounds.Size.Height, relYPos);
+                }
+            }
+
+            // Remove clipping mask and offset set by BeginWindow
+            this.RecordClearClippingMask();
+            this.RecordClearOffset();
         }
         #endregion
         #endregion
@@ -372,6 +432,31 @@ namespace Game.Ui.Toolkit
         #endregion
 
         #region Helper Methods
+        protected void DrawScrollbar(Position position, int height, float percent)
+        {
+            var top = position;
+            var bottom = new Position(position.X, position.Y + height - 1);
+
+            this.RecordPushFrontColor(UiColors.InactiveText);
+
+            // Draw ^ and v triangles (up 30 down 31)
+            this.RecordDrawTile(top, 30);
+            this.RecordDrawTile(bottom, 31);
+
+            // Draw bar background
+            this.RecordPushBackColor(UiColors.InactiveText);
+            for(int y = top.Y + 1; y <= bottom.Y - 1; ++y)
+                this.RecordDrawTile(new Position(top.X, y), 0);
+            this.RecordPopBackColor();
+
+            this.RecordPopFrontColor();
+
+            this.RecordPushBackColor(UiColors.ActiveText);
+            var scrollerYPos = top.Y + 1 + (int)Math.Round((height - 3) * percent);
+            this.RecordDrawTile(new Position(top.X, scrollerYPos), 0);
+            this.RecordPopBackColor();
+        }
+
         /// <summary>
         /// Retrieve the currently active theme, aka the top of the theme stack
         /// </summary>
@@ -405,6 +490,13 @@ namespace Game.Ui.Toolkit
 
             // Record the widget id in the widget sequence
             this._idSequence.Add(actualId);
+
+            // If we are currently in a window, record the widget and its y position.
+            // This is used for scrollbar generation
+            if(this._windowState.HasValue)
+            {
+                this._windowState.Value.WidgetPositions.Add((actualId, this._context.CurrentPosition.Y));
+            }
 
             return actualId;
         }

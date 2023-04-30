@@ -68,6 +68,8 @@ namespace Game.Simulation
                     Worlds.Add((index, metadata.Name));
                 }
             }
+
+            Worlds.Sort((x, y) => x.Item1.CompareTo(y.Item1));
         }
 
         /// <summary>

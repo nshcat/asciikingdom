@@ -34,6 +34,12 @@ namespace Game.Ui.Toolkit
             = new Position(0, 0);
 
         /// <summary>
+        /// Positional offset applied to all rendering commands
+        /// </summary>
+        public Position Offset { get; set; }
+            = new Position(0, 0);
+
+        /// <summary>
         /// Stack for front color changes
         /// </summary>
         protected Stack<Color> _frontColorStack
@@ -71,6 +77,14 @@ namespace Game.Ui.Toolkit
                 return (this._backColorStack.Peek(), this._frontColorStack.Peek());
             else
                 return (this._frontColorStack.Peek(), this._backColorStack.Peek());
+        }
+
+        /// <summary>
+        /// Get the current drawing position
+        /// </summary>
+        public Position GetDrawingPosition()
+        {
+            return this.CurrentPosition + this.Offset;
         }
 
         /// <summary>

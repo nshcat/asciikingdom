@@ -46,6 +46,12 @@ namespace Engine.Graphics
         public Rectangle AbsoluteBounds => new Rectangle(this.TopLeft, this.Dimensions);
 
         /// <summary>
+        /// Mask used for clipping drawing operations. If this is set, only tiles inside the mask will be shown.
+        /// </summary>
+        public Rectangle? ClippingMask { get; set; }
+            = null;
+
+        /// <summary>
         /// The dimensions of the surface, in pixels. Derived from the <see cref="Dimensions"/> property.
         /// </summary>
         public Size PixelDimensions => new Size(
@@ -272,6 +278,9 @@ namespace Engine.Graphics
         public void SetTile(Position position, Tile tile)
         {
             if (!position.IsInBounds(this.Bounds))
+                return;
+
+            if (this.ClippingMask != null && !position.IsInBounds((Rectangle)this.ClippingMask))
                 return;
 
             this.SetGlyph(position, tile.Glyph);
