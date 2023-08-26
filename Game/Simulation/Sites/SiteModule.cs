@@ -5,6 +5,7 @@ using System.Linq;
 using Game.Serialization;
 using System.Runtime.CompilerServices;
 using System.Reflection.Metadata;
+using Engine.Core;
 
 namespace Game.Simulation.Sites
 {
@@ -13,8 +14,6 @@ namespace Game.Simulation.Sites
     /// </summary>
     public abstract class SiteModule
     {
-        // TODO automatic init/de/serialization using attributes (like, can be inited etc etc)
-
         #region Properties
         /// <summary>
         /// The site this module is associated with
@@ -79,7 +78,7 @@ namespace Game.Simulation.Sites
         }
         #endregion
 
-        #region De/Serialization based on Attributes
+        #region Auto De/Serialization based on Attributes
         protected IEnumerable<(PropertyInfo, ModuleDataAttribute)> GetAnnotatedProperties()
         {
             var props = this.GetType().GetProperties().Where(prop => prop.IsDefined(typeof(ModuleDataAttribute), false));
@@ -114,6 +113,10 @@ namespace Game.Simulation.Sites
                 {
                     helper.WriteGuid(attribute.Key, (Guid)val);
                 }
+                else if(val is Position)
+                {
+                    helper.WritePosition(attribute.Key, (Position)val);
+                }
                 else if (val is WorldSite site)
                 {
                     // World sites are serialized as their GUID, which is resolved during post deserialization.
@@ -147,6 +150,10 @@ namespace Game.Simulation.Sites
                 else if (ty == typeof(Guid))
                 {
                     prop.SetValue(this, helper.ReadGuid(attribute.Key));
+                }
+                else if (ty == typeof(Position))
+                {
+                    prop.SetValue(this, helper.ReadPosition(attribute.Key));
                 }
                 else if (ty == typeof(WorldSite))
                 {
@@ -184,6 +191,17 @@ namespace Game.Simulation.Sites
                     var mi = helper.GetType().GetMethod("ReadValue");
                     var result = mi.MakeGenericMethod(ty).Invoke(helper, new object[] { attribute.Key, attribute.DefaultValue });
                     prop.SetValue(this, result);
+                }
+                else if (ty == typeof(Position))
+                {
+                    if(helper.HasSubkey(attribute.Key))
+                    {
+                        prop.SetValue(this, helper.ReadPosition(attribute.Key));
+                    }
+                    else
+                    {
+                        prop.SetValue(this, Position.Origin);
+                    }                  
                 }
                 else if (ty.IsEnum)
                 {

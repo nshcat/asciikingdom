@@ -23,8 +23,8 @@ namespace Game.Simulation.Sites.Modules
         /// Z level on which the tile of this site drawer will be rendered. Tiles with higher z level cover
         /// tiles with lower z level.
         /// </summary>
+        [ModuleData("zlevel", 0)]
         public int ZLevel { get; set; }
-            = 0;
         #endregion
 
         public SiteDrawer(WorldSite parentSite)
@@ -34,20 +34,6 @@ namespace Game.Simulation.Sites.Modules
         }
 
         #region De/Serialization and Initialization
-        public override void Initialize(SiteDeserializationHelper helper)
-        {
-            this.ZLevel = helper.ReadValue<int>("zlevel", 0);
-        }
-
-        public override void Serialize(SiteSerializationHelper helper)
-        {
-            helper.WriteValue("zlevel", this.ZLevel);
-        }
-
-        public override void Deserialize(SiteDeserializationHelper helper)
-        {
-            this.ZLevel = helper.ReadValue<int>("zlevel");
-        }
         #endregion
     }
 }
