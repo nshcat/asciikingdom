@@ -29,8 +29,8 @@ namespace Game.Simulation.Sites.Modules
         /// <summary>
         /// The current map label style used to render the label
         /// </summary>
+        [ModuleData("style", MapLabelStyle.Normal)]
         public MapLabelStyle LabelStyle { get; set; }
-            = MapLabelStyle.Normal;
 
         /// <summary>
         /// The map label for the associated site
@@ -65,20 +65,6 @@ namespace Game.Simulation.Sites.Modules
         #endregion
 
         #region De/Serialization Methods
-        public override void Serialize(SiteSerializationHelper helper)
-        {
-            helper.WriteEnum("style", this.LabelStyle);
-        }
-
-        public override void Deserialize(SiteDeserializationHelper helper)
-        {
-            this.LabelStyle = helper.ReadEnum<MapLabelStyle>("style");
-        }
-
-        public override void Initialize(SiteDeserializationHelper helper)
-        {
-            this.LabelStyle = helper.ReadEnum<MapLabelStyle>("style", MapLabelStyle.Normal);
-        }
         #endregion
 
         #region Protected Methods

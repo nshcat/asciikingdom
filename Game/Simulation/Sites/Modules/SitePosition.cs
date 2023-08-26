@@ -20,6 +20,7 @@ namespace Game.Simulation.Sites.Modules
         /// <summary>
         /// The position of the site on the world map
         /// </summary>
+        [ModuleData("position")]
         public Position Position { get; set; }
         #endregion
 
@@ -32,15 +33,6 @@ namespace Game.Simulation.Sites.Modules
         #endregion
 
         #region De/Serialization and Initialization
-        public override void Serialize(SiteSerializationHelper helper)
-        {
-            helper.WritePosition("position", this.Position);
-        }
-
-        public override void Deserialize(SiteDeserializationHelper helper)
-        {
-            this.Position = helper.ReadPosition("position");
-        }
         #endregion
 
         #region Game Logic Methods

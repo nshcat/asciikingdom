@@ -11,13 +11,25 @@ namespace Game.Simulation.Sites
     /// automatically registered
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class SiteModuleAttribute : Attribute
+    public class ModuleDataAttribute : Attribute
     {
+        /// <summary>
+        /// JSON key used for this module data property
+        /// </summary>
+        public string Key { get; protected set; }
+
+        /// <summary>
+        /// The default value of the module data property
+        /// </summary>
+        public object DefaultValue { get; protected set; }
+
         /// <summary>
         /// Annotate property to be automatically registered as site module
         /// </summary>
-        public SiteModuleAttribute()
+        public ModuleDataAttribute(string key, object defValue = null)
         {
+            this.Key = key;
+            this.DefaultValue = defValue;
         }
     }
 
