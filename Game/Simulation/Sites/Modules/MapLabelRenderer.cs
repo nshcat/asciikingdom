@@ -29,6 +29,7 @@ namespace Game.Simulation.Sites.Modules
         /// <summary>
         /// The current map label style used to render the label
         /// </summary>
+        [ModuleData("style")]
         public MapLabelStyle LabelStyle { get; set; }
             = MapLabelStyle.Normal;
 
