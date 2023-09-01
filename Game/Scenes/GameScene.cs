@@ -18,6 +18,7 @@ using Game.Simulation.Sites;
 using SixLabors.ImageSharp.Primitives;
 using Game.Settings;
 using Game.Simulation.Worlds;
+using Game.Ui.Toolkit;
 
 namespace Game.Scenes
 {
@@ -64,6 +65,7 @@ namespace Game.Scenes
             IncreaseGameSpeed,
             DecreaseGameSpeed,
             ShowCropFertility,
+            SelectCrop,
             ToggleFullView
         }
 
@@ -96,6 +98,11 @@ namespace Game.Scenes
             /// Show crop fertility
             /// </summary>
             CropFertility,
+
+            /// <summary>
+            /// Selecting a crop to be shown in the crop fertility mode
+            /// </summary>
+            SelectCropFertility,
         }
 
         /// <summary>
@@ -187,6 +194,11 @@ namespace Game.Scenes
         /// Window used to prompt the user for a site name after placement
         /// </summary>
         private TextInputWindow _placementNameWindow = new TextInputWindow("Enter Name", 0.25f);
+
+        /// <summary>
+        /// UI renderer used for popup windows
+        /// </summary>
+        private UIState _popupUi;
 
         /// <summary>
         /// The type of the site that is currently being placed
@@ -505,18 +517,15 @@ namespace Game.Scenes
             this._sideMenuSurface.DrawString(position, TerrainTypeData.GetInfo(this._state.World.DetailedMap.GetTerrainType(this._terrainView.CursorPosition)).Name,
                 UiColors.ActiveText, DefaultColors.Black);
 
-            if (this._uiState == GameUiState.CropFertility)
+            if (this._uiState == GameUiState.CropFertility ||
+                this._uiState == GameUiState.SelectCropFertility)
             {
                 var X = this._terrainView.CursorPosition.X;
                 var Y = this._terrainView.CursorPosition.Y;
 
                 if (TerrainTypeData.AcceptsCrops(this._state.World.DetailedMap.TerrainLayer.Values[X, Y]))
                 {
-                    var temperature = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_temperature").Values[X, Y];
-                    var drainage = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_drainage").Values[X, Y];
-                    var rainfall = this._state.World.DetailedMap.GetLayer<RawWorldLayer>("raw_rainfall").Values[X, Y];
-
-                    var fertility = this._cropType.FertilityFactors.CalculateFertilityFactor(temperature, drainage, rainfall);
+                    var fertility = this._state.World.DetailedMap.GetLayer<RawWorldLayer>($"fertility_{this._cropType.Identifier}").Values[X, Y];
 
                     this._sideMenuSurface.DrawString(
                         position + new Position(0, 1),
@@ -561,12 +570,46 @@ namespace Game.Scenes
 
         #region Drawing - Popups
         /// <summary>
-        /// Render the window used to name newly placed sites, if needed
+        /// Create and update the crop selection GUI
         /// </summary>
-        private void DrawNameSiteWindow()
+        private void DoCropSelectGui()
+        {
+            this._popupUi.Begin(this._popupSurface);
+            this._popupUi.BeginWindow(new SizeF(0.35f, 0.35f), title: "Select Crop Type", padding: new Padding(1, 1, 1, 1), withScrollbar: true);
+
+            foreach(var cropTypeKvp in CropTypeManager.Instance.AllTypes)
+            {
+                if(this._popupUi.Button(cropTypeKvp.Value.Name))
+                {
+                    this._cropType = cropTypeKvp.Value;
+                    (this._terrainView.CurrentOverlay.Value as FertilityOverlay).Crop = this._cropType;
+                    this._uiState = GameUiState.CropFertility;
+                }
+            }
+
+            this._popupUi.EndWindow();
+            this._popupUi.End();
+        }
+
+        /// <summary>
+        /// Create and update popup GUIs
+        /// </summary>
+        private void DoPopups()
+        {
+            if (this._uiState == GameUiState.SelectCropFertility)
+                this.DoCropSelectGui();
+        }
+
+        /// <summary>
+        /// Draw any active popups on the popup layer
+        /// </summary>
+        private void DrawPopups()
         {
             if (this._uiState == GameUiState.NamePlacement)
                 this._placementNameWindow.Render(this._popupSurface);
+
+            if (this._uiState == GameUiState.SelectCropFertility)
+                this._popupUi.Draw(this._popupSurface);
         }
         #endregion
 
@@ -592,6 +635,7 @@ namespace Game.Scenes
                 new InputAction<GameAction>(GameAction.PlaceVillage, KeyPressType.Down, Key.V, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.ToggleNewProvince, KeyPressType.Down, Key.P),
                 new InputAction<GameAction>(GameAction.ShowCropFertility, KeyPressType.Down, Key.F),
+                new InputAction<GameAction>(GameAction.SelectCrop, KeyPressType.Down, Key.C, Key.ShiftLeft),
                 new InputAction<GameAction>(GameAction.Return, KeyPressType.Down, Key.Escape),
                 new InputAction<GameAction>(GameAction.Select, KeyPressType.Down, Key.Enter),
                 new InputAction<GameAction>(GameAction.GenerateTestData, KeyPressType.Down, Key.T, Key.ShiftLeft),
@@ -687,6 +731,15 @@ namespace Game.Scenes
                         }
                         break;
                     }
+                case GameAction.SelectCrop:
+                    {
+                        if (this._uiState == GameUiState.CropFertility)
+                        {
+                            this._uiState = GameUiState.SelectCropFertility;
+                            this._popupUi = new UIState(this.Input);
+                        }
+                        break;
+                    }
                 case GameAction.PlaceCity:
                     {
                         if (this._uiState == GameUiState.Main)
@@ -749,6 +802,11 @@ namespace Game.Scenes
                             this._terrainView.CursorMode = CursorMode.Normal;
                             this._uiState = GameUiState.Main;
                             this._terrainView.CurrentOverlay = Optional<MapOverlay>.Empty;
+                        }
+                        else if(this._uiState == GameUiState.SelectCropFertility)
+                        {
+                            this._popupUi = null;
+                            this._uiState = GameUiState.CropFertility;
                         }
 
                         break;
@@ -1091,10 +1149,12 @@ namespace Game.Scenes
         {
             this._actionMapper.Update();
             
-            if (this._actionMapper.HasTriggeredAction)
+            foreach (var action in this._actionMapper.TriggeredActions)
             {
-                this.HandleInput(this._actionMapper.TriggeredAction);
+                this.HandleInput(action);
             }
+
+            this.DoPopups();
 
             this.UpdateTextInputWindow();
             this._terrainView.Update(deltaTime);
@@ -1154,7 +1214,7 @@ namespace Game.Scenes
 
             this.DrawSideMenu();
 
-            this.DrawNameSiteWindow();
+            this.DrawPopups();
             this.DrawBorders();
 
             this._mainSurface.Render(rp);

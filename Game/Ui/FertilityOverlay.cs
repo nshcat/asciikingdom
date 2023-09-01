@@ -42,15 +42,11 @@ namespace Game.Ui
 
             var X = worldPosition.X;
             var Y = worldPosition.Y;
-            var temperature = world.GetLayer<RawWorldLayer>("raw_temperature").Values[X, Y];
-            var drainage = world.GetLayer<RawWorldLayer>("raw_drainage").Values[X, Y];
-            var rainfall = world.GetLayer<RawWorldLayer>("raw_rainfall").Values[X, Y];
+            var cropLayerName = $"fertility_{this.Crop.Identifier}";
+            var cropLayer = world.GetLayer<RawWorldLayer>(cropLayerName);
 
-            var fertility = this.Crop.FertilityFactors.CalculateFertilityFactor(
-                temperature, drainage, rainfall
-            );
 
-            return Optional<Tile>.Of(this.MakeTile(fertility));
+            return Optional<Tile>.Of(this.MakeTile(cropLayer[X, Y]));
         }
 
         /// <summary>

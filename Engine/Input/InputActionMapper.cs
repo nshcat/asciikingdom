@@ -20,16 +20,17 @@ namespace Engine.Input
         /// All actions registered with this action mapper
         /// </summary>
         public List<InputAction<TActionEnum>> Actions { get; protected set; }
-        
+
         /// <summary>
         /// The currently triggered action. Might be null if no such action exists.
         /// </summary>
-        public TActionEnum TriggeredAction { get; protected set; }
+        public List<TActionEnum> TriggeredActions { get; protected set; }
+            = new List<TActionEnum>();
 
         /// <summary>
         /// Check whether there currently is a triggered action.
         /// </summary>
-        public bool HasTriggeredAction => !this.TriggeredAction.Equals(default(TActionEnum));
+        public bool HasTriggeredActions => this.TriggeredActions.Count > 0;
 
         /// <summary>
         /// Create a new input action mapper with given actions.
@@ -50,15 +51,14 @@ namespace Engine.Input
         public void Update()
         {
             // Remove previous triggered action, if any
-            this.TriggeredAction = default(TActionEnum);
+            this.TriggeredActions.Clear();
             
             // Check each action for triggering
             foreach (var action in this.Actions)
             {
                 if (action.IsTriggered(this.InputManager))
                 {
-                    this.TriggeredAction = action.ActionValue;
-                    break;
+                    this.TriggeredActions.Add(action.ActionValue);
                 }
             }
         }

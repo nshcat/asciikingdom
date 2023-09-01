@@ -32,6 +32,15 @@ namespace Game.Simulation.Worlds
         }
 
         /// <summary>
+        /// Direct index access to layer values
+        /// </summary>
+        public float this[int x, int y]
+        {
+            get => this.Values[x, y];
+            set => this.Values[x, y] = value;
+        }
+
+        /// <summary>
         /// Determine average float value in given area
         /// </summary>
         protected override void ApplyOverviewValue(WorldLayer overviewLayer, Position overviewPosition, Rectangle sourceArea)

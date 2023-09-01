@@ -487,12 +487,12 @@ namespace Game.Scenes
             this._worldGen?.ProcessEvents();
             
             this._actionMapper.Update();
-            
-            if (this._actionMapper.HasTriggeredAction)
+
+            foreach (var action in this._actionMapper.TriggeredActions)
             {
-                this.HandleInput(this._actionMapper.TriggeredAction);
+                this.HandleInput(action);
             }
-            
+
             this._overviewView.Update(deltaTime);
             this._detailedView.Update(deltaTime);
         }

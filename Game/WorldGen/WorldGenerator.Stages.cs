@@ -47,10 +47,7 @@ namespace Game.WorldGen
             var riverGenerator = new RiverGenerator(this.WorldDimensions, this.Seed, heightMap, temperatureMap, rainfallMap, biomeMapper.TerrainTypes);
             riverGenerator.GenerateRivers();
 
-            this.SignalNextStage("Placing resources..", 0.75);
-            var resourceGenerator = new ResourceGenerator(this.WorldDimensions, this.Seed, biomeMapper.TerrainTypes, this.Parameters);
-
-            this.SignalNextStage("Storing data..", 0.80);
+            this.SignalNextStage("Storing data..", 0.75);
             world.DetailedMap.TerrainLayer = new TerrainWorldLayer(world.Dimensions, "terrain", "Terrain", dontAllocate: true);
             world.DetailedMap.TerrainLayer.Values = biomeMapper.TerrainTypes;
 
@@ -62,6 +59,11 @@ namespace Game.WorldGen
             this.AddLayer(world, this.CreateRawLayer("raw_drainage", "Drainage (raw)", drainageMap.Values));
             this.AddLayer(world, this.CreateRawLayer("raw_temperature", "Temperature (raw)", temperatureMap.Values));
             world.DetailedMap.RiverTileInfo = riverGenerator.RiverTileInfo;
+
+            this.SignalNextStage("Calculating crop fertility..", 0.80);
+            var fertilityGenerator = new CropFertilityCalculator(world.DetailedMap);
+            fertilityGenerator.Generate();
+            fertilityGenerator.StoreLayers();
 
             this.SignalNextStage("Creating terrain tiles..", 0.85);
             this.CreateTerrainTiles(world);
