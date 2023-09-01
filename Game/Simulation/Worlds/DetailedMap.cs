@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Engine.Core;
 using Game.Data;
 using Game.Maths;
 using Game.Serialization;
+using SixLabors.Shapes;
 
 namespace Game.Simulation.Worlds
 {
@@ -36,7 +39,7 @@ namespace Game.Simulation.Worlds
         public void Save(string prefix)
         {
             // Write all layers to json
-            var worldDataPath = Path.Combine(prefix, "worlddata.json");
+            var worldDataPath = System.IO.Path.Combine(prefix, "worlddata.json.gz");
 
             var root = new JsonObject();
 
@@ -76,7 +79,14 @@ namespace Game.Simulation.Worlds
             // Save discovery data
             root.Add("discovered", Discovered.Serialize());
 
-            File.WriteAllText(worldDataPath, root.ToJsonString(Serialization.Serialization.DefaultOptions));
+            // Compress JSON text to save disk space
+            using(var outFile = File.Create(worldDataPath, 1024))
+            {
+                using(var compressStream = new GZipStream(outFile, CompressionLevel.Optimal))
+                {
+                    compressStream.Write(Encoding.UTF8.GetBytes(root.ToJsonString(Serialization.Serialization.DefaultOptions)));
+                }
+            }
         }
 
         /// <summary>
@@ -85,8 +95,24 @@ namespace Game.Simulation.Worlds
         /// <param name="prefix"></param>
         public void Load(string prefix)
         {
-            var worldDataPath = Path.Combine(prefix, "worlddata.json");
-            var root = JsonNode.Parse(File.ReadAllText(worldDataPath)).AsObject();
+            var worldDataPath = System.IO.Path.Combine(prefix, "worlddata.json.gz");
+
+            var worldDataContent = "";
+
+            // Open compressed world data JSON file and decompress JSON text
+            using (var worldDataFile = File.OpenRead(worldDataPath))
+            {
+                using (var uncompressStream = new GZipStream(worldDataFile, CompressionMode.Decompress))
+                {
+                    using (var bufferStream = new MemoryStream())
+                    {
+                        uncompressStream.CopyTo(bufferStream);
+                        worldDataContent = Encoding.UTF8.GetString(bufferStream.ToArray());
+                    }
+                }
+            }
+
+            var root = JsonNode.Parse(worldDataContent).AsObject();
             var helper = new DeserializationHelper(root);
 
             // Read the two main layers
