@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Map recording discovery information
@@ -28,8 +28,8 @@ namespace Game.Simulation
 
         public DiscoveryMap(Size dimensions, bool dontAllocate = false)
         {
-            this.Dimensions = dimensions;
-            this.Values = new bool[dimensions.Width, dimensions.Height];
+            Dimensions = dimensions;
+            Values = new bool[dimensions.Width, dimensions.Height];
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Game.Simulation
                 throw new ArgumentException("Invalid overview layer factor");
 
             // Calculate the size of the overview version of this layer
-            var overviewDimensions = this.Dimensions * factor;
+            var overviewDimensions = Dimensions * factor;
 
             var overviewMap = new DiscoveryMap(overviewDimensions);
 
@@ -64,7 +64,7 @@ namespace Game.Simulation
                     {
                         for (var iiy = sourceArea.TopLeft.Y; iiy <= sourceArea.BottomRight.Y; ++iiy)
                         {
-                            var element = this.Values[iix, iiy];
+                            var element = Values[iix, iiy];
                             entries.Add(element);
                         }
                     }
@@ -94,15 +94,15 @@ namespace Game.Simulation
         {
             var obj = new SerializationHelper();
 
-            using(var memoryStream = new MemoryStream())
+            using (var memoryStream = new MemoryStream())
             {
-                using(var writer = new BinaryWriter(memoryStream))
+                using (var writer = new BinaryWriter(memoryStream))
                 {
                     for (var ix = 0; ix < Dimensions.Width; ++ix)
                     {
                         for (var iy = 0; iy < Dimensions.Height; ++iy)
                         {
-                            writer.Write(this.Values[ix, iy] ? (byte)1 : (byte)0);
+                            writer.Write(Values[ix, iy] ? (byte)1 : (byte)0);
                         }
                     }
                 }
@@ -131,7 +131,7 @@ namespace Game.Simulation
                     {
                         for (var iy = 0; iy < Dimensions.Height; ++iy)
                         {
-                            this.Values[ix, iy] = (reader.ReadByte() == 1);
+                            Values[ix, iy] = reader.ReadByte() == 1;
                         }
                     }
                 }

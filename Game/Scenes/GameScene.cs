@@ -17,7 +17,7 @@ using OpenToolkit.Windowing.Common.Input;
 using Game.Simulation.Sites;
 using SixLabors.ImageSharp.Primitives;
 using Game.Settings;
-using Game.Simulation;
+using Game.Simulation.Worlds;
 
 namespace Game.Scenes
 {

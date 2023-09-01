@@ -1,7 +1,7 @@
 using Engine.Core;
 using SixLabors.ImageSharp.Formats.Gif;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Represents a collection of metadata that belongs to a world

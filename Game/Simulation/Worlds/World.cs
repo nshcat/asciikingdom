@@ -11,7 +11,7 @@ using Game.Utility;
 using OpenToolkit.Graphics.OpenGL;
 using Game.Serialization;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Represents the game world.
@@ -88,7 +88,7 @@ namespace Game.Simulation
             Serialization.Serialization.SerializeToFile(Metadata, metadataPath, Serialization.Serialization.DefaultOptions);
 
             // Write detailed map data
-            this.DetailedMap.Save(prefix);
+            DetailedMap.Save(prefix);
         }
 
         /// <summary>

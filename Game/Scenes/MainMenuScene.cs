@@ -6,7 +6,7 @@ using Engine.Rendering;
 using Engine.Resources;
 using Game.Core;
 using Game.Scenes.Common;
-using Game.Simulation;
+using Game.Simulation.Worlds;
 using Game.Ui;
 using Game.Ui.Toolkit;
 using OpenToolkit.Windowing.Common.Input;

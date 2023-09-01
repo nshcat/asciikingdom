@@ -8,7 +8,7 @@ using Game.Data;
 using Game.Maths;
 using Game.Serialization;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Represents the detailed game world map. This is derived from the general <see cref="Map"/> class in order to
@@ -21,7 +21,7 @@ namespace Game.Simulation
         /// </summary>
         public Dictionary<Position, RiverTileInfo> RiverTileInfo { get; set; }
             = new Dictionary<Position, RiverTileInfo>();
-        
+
         /// <summary>
         /// Construct a new detailed map instance
         /// </summary>
@@ -41,16 +41,16 @@ namespace Game.Simulation
             var root = new JsonObject();
 
             // First, the two main layers
-            var terrainLayerNode = this.TerrainLayer.Serialize();
+            var terrainLayerNode = TerrainLayer.Serialize();
             root.Add("terrain_layer", terrainLayerNode);
 
-            var terrainTileLayerNode = this.TerrainTileLayer.Serialize();
+            var terrainTileLayerNode = TerrainTileLayer.Serialize();
             root.Add("terrain_tile_layer", terrainTileLayerNode);
 
             // Then the rest of the layers
             var layers = new JsonArray();
 
-            foreach(var kvp in this.Layers)
+            foreach (var kvp in Layers)
             {
                 var layerNode = kvp.Value.Serialize();
                 layers.Add(layerNode);
@@ -61,20 +61,20 @@ namespace Game.Simulation
             // Save river data
             var riverData = new JsonArray();
 
-            foreach(var kvp in this.RiverTileInfo)
+            foreach (var kvp in RiverTileInfo)
             {
                 var riverDataNode = new SerializationHelper();
-                riverDataNode.WriteValue<int>("x", kvp.Key.X);
-                riverDataNode.WriteValue<int>("y", kvp.Key.Y);
-                riverDataNode.WriteValue<int>("size", kvp.Value.Size);
+                riverDataNode.WriteValue("x", kvp.Key.X);
+                riverDataNode.WriteValue("y", kvp.Key.Y);
+                riverDataNode.WriteValue("size", kvp.Value.Size);
                 riverDataNode.WriteEnum("type", kvp.Value.Type);
-                riverData.Add(riverDataNode.Node);        
+                riverData.Add(riverDataNode.Node);
             }
 
             root.Add("river_data", riverData);
 
             // Save discovery data
-            root.Add("discovered", this.Discovered.Serialize());
+            root.Add("discovered", Discovered.Serialize());
 
             File.WriteAllText(worldDataPath, root.ToJsonString(Serialization.Serialization.DefaultOptions));
         }
@@ -90,34 +90,34 @@ namespace Game.Simulation
             var helper = new DeserializationHelper(root);
 
             // Read the two main layers
-            this.TerrainLayer = WorldLayer.Deserialize(helper.GetObject("terrain_layer").Node, this.Dimensions).As<TerrainWorldLayer>();
-            this.TerrainTileLayer = WorldLayer.Deserialize(helper.GetObject("terrain_tile_layer").Node, this.Dimensions).As<TileWorldLayer>();
+            TerrainLayer = WorldLayer.Deserialize(helper.GetObject("terrain_layer").Node, Dimensions).As<TerrainWorldLayer>();
+            TerrainTileLayer = WorldLayer.Deserialize(helper.GetObject("terrain_tile_layer").Node, Dimensions).As<TileWorldLayer>();
 
             // Read all other layers
             var layers = helper.GetArray("layers");
 
-            foreach(var layerNode in layers)
+            foreach (var layerNode in layers)
             {
-                var layer = WorldLayer.Deserialize(layerNode, this.Dimensions);
-                this.Layers.Add(layer.Id, layer);
+                var layer = WorldLayer.Deserialize(layerNode, Dimensions);
+                Layers.Add(layer.Id, layer);
             }
 
             // Load river data
             var rivers = helper.GetArray("river_data");
 
-            foreach(var riverNode in rivers)
+            foreach (var riverNode in rivers)
             {
                 var riverObj = new DeserializationHelper(riverNode.AsObject());
                 var x = riverObj.ReadValue<int>("x");
                 var y = riverObj.ReadValue<int>("y");
                 var size = riverObj.ReadValue<int>("size");
                 var type = riverObj.ReadEnum<RiverTileType>("type");
-                this.RiverTileInfo.Add(new Position(x, y), new Data.RiverTileInfo(type, size));
+                RiverTileInfo.Add(new Position(x, y), new RiverTileInfo(type, size));
             }
 
             // Load discovered data
             var discovered = helper.GetObject("discovered");
-            this.Discovered.Deserialize(discovered.Node);
+            Discovered.Deserialize(discovered.Node);
         }
     }
 }

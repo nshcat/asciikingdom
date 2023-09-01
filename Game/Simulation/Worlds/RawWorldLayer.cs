@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// World layer composed of raw float values
@@ -22,12 +22,12 @@ namespace Game.Simulation
         /// <summary>
         /// Construct empty raw world layer.
         /// </summary>
-        public RawWorldLayer(Size dimensions, string id, string name = "", bool dontAllocate=false)
+        public RawWorldLayer(Size dimensions, string id, string name = "", bool dontAllocate = false)
             : base(WorldLayerType.RawFloat, dimensions, id, name)
         {
-            if(!dontAllocate)
+            if (!dontAllocate)
             {
-                this.Values = new float[dimensions.Width, dimensions.Height];
+                Values = new float[dimensions.Width, dimensions.Height];
             }
         }
 
@@ -46,7 +46,7 @@ namespace Game.Simulation
             {
                 for (var iiy = sourceArea.TopLeft.Y; iiy <= sourceArea.BottomRight.Y; ++iiy)
                 {
-                    var element = this.Values[iix, iiy];
+                    var element = Values[iix, iiy];
                     entries.Add(element);
                 }
             }
@@ -74,7 +74,7 @@ namespace Game.Simulation
             {
                 for (var iy = 0; iy < Dimensions.Height; ++iy)
                 {
-                    writer.Write(this.Values[ix, iy]);
+                    writer.Write(Values[ix, iy]);
                 }
             }
         }
@@ -88,7 +88,7 @@ namespace Game.Simulation
             {
                 for (var iy = 0; iy < Dimensions.Height; ++iy)
                 {
-                    this.Values[ix, iy] = reader.ReadSingle();
+                    Values[ix, iy] = reader.ReadSingle();
                 }
             }
         }

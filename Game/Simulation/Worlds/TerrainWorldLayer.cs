@@ -1,5 +1,4 @@
 ﻿using Engine.Core;
-using Engine.Graphics;
 using Game.Data;
 using System;
 using System.Collections.Generic;
@@ -8,48 +7,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
-    /// World layer consisting of tiles
+    /// Terain type world layer
     /// </summary>
-    public class TileWorldLayer
+    public class TerrainWorldLayer
         : WorldLayer
     {
         /// <summary>
-        /// Array of tile data
+        /// Array of terrain type values
         /// </summary>
-        public Tile[,] Values { get; set; }
+        public TerrainType[,] Values { get; set; }
 
         /// <summary>
         /// Construct new terrain world layer
         /// </summary>
-        public TileWorldLayer(Size dimensions, string id, string name = "", bool dontAllocate = false)
-            : base(WorldLayerType.Tiles, dimensions, id, name)
+        public TerrainWorldLayer(Size dimensions, string id, string name = "", bool dontAllocate = false)
+            : base(WorldLayerType.Terrain, dimensions, id, name)
         {
             if (!dontAllocate)
             {
-                this.Values = new Tile[dimensions.Width, dimensions.Height];
+                Values = new TerrainType[dimensions.Width, dimensions.Height];
             }
         }
 
         /// <summary>
-        /// Determine average tile value in given area
+        /// Determine average terrain type in given area
         /// </summary>
         protected override void ApplyOverviewValue(WorldLayer overviewLayer, Position overviewPosition, Rectangle sourceArea)
         {
             // This will only work if the overview layer has the same type as us.
-            if (overviewLayer.Type != WorldLayerType.Tiles)
+            if (overviewLayer.Type != WorldLayerType.Terrain)
                 throw new ArgumentException("Given overview layer has wrong type");
 
-            var entries = new List<Tile>();
+            var entries = new List<TerrainType>();
 
             for (var iix = sourceArea.TopLeft.X; iix <= sourceArea.BottomRight.X; ++iix)
             {
                 for (var iiy = sourceArea.TopLeft.Y; iiy <= sourceArea.BottomRight.Y; ++iiy)
                 {
-                    var element = this.Values[iix, iiy];
-                    entries.Add(element);
+                    var element = Values[iix, iiy];
+
+                    // Ignore rivers
+                    if (element != TerrainType.River)
+                        entries.Add(element);
                 }
             }
 
@@ -64,11 +66,11 @@ namespace Game.Simulation
                 .Select(x => x.Entry)
                 .First();
 
-            (overviewLayer as TileWorldLayer).Values[overviewPosition.X, overviewPosition.Y] = average;
+            (overviewLayer as TerrainWorldLayer).Values[overviewPosition.X, overviewPosition.Y] = average;
         }
 
         /// <summary>
-        /// Write tile data to given binary writer
+        /// Write terrain data to given binary writer
         /// </summary>
         protected override void Serialize(BinaryWriter writer)
         {
@@ -76,20 +78,13 @@ namespace Game.Simulation
             {
                 for (var iy = 0; iy < Dimensions.Height; ++iy)
                 {
-                    var tile = this.Values[ix, iy];
-                    writer.Write(tile.Glyph);
-                    writer.Write((byte)tile.Front.R);
-                    writer.Write((byte)tile.Front.G);
-                    writer.Write((byte)tile.Front.B);
-                    writer.Write((byte)tile.Back.R);
-                    writer.Write((byte)tile.Back.G);
-                    writer.Write((byte)tile.Back.B);
+                    writer.Write((byte)Values[ix, iy]);
                 }
             }
         }
 
         /// <summary>
-        /// Read tile data from given binary reader
+        /// Read terrain data from given binary reader
         /// </summary>
         protected override void Deserialize(BinaryReader reader)
         {
@@ -97,19 +92,7 @@ namespace Game.Simulation
             {
                 for (var iy = 0; iy < Dimensions.Height; ++iy)
                 {
-                    var glyph = reader.ReadInt32();
-                    var front = new Color(
-                        reader.ReadByte(),
-                        reader.ReadByte(),
-                        reader.ReadByte()
-                    );
-                    var back = new Color(
-                        reader.ReadByte(),
-                        reader.ReadByte(),
-                        reader.ReadByte()
-                    );
-
-                    this.Values[ix, iy] = new Tile(glyph, front, back);
+                    Values[ix, iy] = (TerrainType)reader.ReadByte();
                 }
             }
         }

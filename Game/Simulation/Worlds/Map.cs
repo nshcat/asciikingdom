@@ -5,7 +5,7 @@ using Engine.Graphics;
 using Game.Data;
 using Game.Utility;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Represents a two-dimensional array of terrain type instances, which make up a world map.
@@ -53,10 +53,10 @@ namespace Game.Simulation
         /// </summary>
         public Map(Size dimensions, int seed)
         {
-            this.Dimensions = dimensions;
-            this.Seed = seed;
+            Dimensions = dimensions;
+            Seed = seed;
 
-            this.Discovered = new DiscoveryMap(dimensions);
+            Discovered = new DiscoveryMap(dimensions);
         }
 
         /// <summary>
@@ -64,10 +64,10 @@ namespace Game.Simulation
         /// </summary>
         public T GetLayer<T>(string layerid) where T : WorldLayer
         {
-            if (!this.Layers.ContainsKey(layerid))
+            if (!Layers.ContainsKey(layerid))
                 throw new ArgumentException($"Map doesnt contain layer with id {layerid}");
 
-            return this.Layers[layerid].As<T>();
+            return Layers[layerid].As<T>();
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Game.Simulation
         /// </summary>
         public TerrainType GetTerrainType(Position position)
         {
-            return this.TerrainLayer.Values[position.X, position.Y];
+            return TerrainLayer.Values[position.X, position.Y];
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace Game.Simulation
         /// </summary>
         public TerrainTypeInfo GetTerrainInfo(Position position)
         {
-            return TerrainTypeData.GetInfo(this.GetTerrainType(position));
+            return TerrainTypeData.GetInfo(GetTerrainType(position));
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace Game.Simulation
         /// </summary>
         public bool IsDiscovered(Position position)
         {
-            return this.Discovered.Values[position.X, position.Y];
+            return Discovered.Values[position.X, position.Y];
         }
 
         /// <summary>
@@ -99,16 +99,16 @@ namespace Game.Simulation
         /// </summary>
         public void InitializeFromDetailed(DetailedMap map, float factor)
         {
-            this.TerrainLayer = map.TerrainLayer.CreateOverview(factor).As<TerrainWorldLayer>();
-            this.TerrainTileLayer = TerrainTileLayerGenerator.CreateTileLayer(this.Seed, this.TerrainLayer);
+            TerrainLayer = map.TerrainLayer.CreateOverview(factor).As<TerrainWorldLayer>();
+            TerrainTileLayer = TerrainTileLayerGenerator.CreateTileLayer(Seed, TerrainLayer);
 
-            this.Layers = new Dictionary<string, WorldLayer>();
-            foreach(var kvp in map.Layers)
+            Layers = new Dictionary<string, WorldLayer>();
+            foreach (var kvp in map.Layers)
             {
-                this.Layers.Add(kvp.Key, kvp.Value.CreateOverview(factor));
+                Layers.Add(kvp.Key, kvp.Value.CreateOverview(factor));
             }
 
-            this.Discovered = map.Discovered.CreateOverview(factor);
-        }  
+            Discovered = map.Discovered.CreateOverview(factor);
+        }
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 using Game.Core;
 using Game.Serialization;
 
-namespace Game.Simulation
+namespace Game.Simulation.Worlds
 {
     /// <summary>
     /// Class managing the loading and saving of worlds.
@@ -83,7 +83,7 @@ namespace Game.Simulation
                 state.World.Index = GetNextWorldIndex();
             }
 
-            state.Save(this.BuildPrefix(state.World.Index));
+            state.Save(BuildPrefix(state.World.Index));
         }
 
         /// <summary>

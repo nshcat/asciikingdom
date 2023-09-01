@@ -14,6 +14,7 @@ using Game.Ui;
 using Game.WorldGen;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Windowing.Common.Input;
+using Game.Simulation.Worlds;
 
 namespace Game.Scenes
 {

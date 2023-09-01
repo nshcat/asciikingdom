@@ -6,7 +6,7 @@ using Engine.Core;
 using Engine.Graphics;
 using Game.Core;
 using Game.Maths;
-using Game.Simulation;
+using Game.Simulation.Worlds;
 
 namespace Game.Ui
 {

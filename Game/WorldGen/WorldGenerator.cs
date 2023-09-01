@@ -1,7 +1,7 @@
 using System;
 using Engine.Core;
 using Game.Core;
-using Game.Simulation;
+using Game.Simulation.Worlds;
 
 namespace Game.WorldGen
 {

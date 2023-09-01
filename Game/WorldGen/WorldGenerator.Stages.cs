@@ -8,6 +8,7 @@ using Engine.Graphics;
 using Game.Data;
 using Game.Maths;
 using Game.Simulation;
+using Game.Simulation.Worlds;
 using Game.Utility;
 using SharpNoise;
 using SharpNoise.Builders;
