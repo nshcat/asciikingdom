@@ -648,7 +648,7 @@ namespace Game.Scenes
         /// <summary>
         /// Handle user input actions
         /// </summary>
-        private void HandleInput(GameAction action)
+        private bool HandleInput(GameAction action)
         {
             switch (action)
             {
@@ -889,7 +889,13 @@ namespace Game.Scenes
                             this.SwitchMapViewState(MapViewState.Normal);
                         break;
                     }
+                default:
+                    {
+                        return false;
+                    }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -1151,7 +1157,8 @@ namespace Game.Scenes
             
             foreach (var action in this._actionMapper.TriggeredActions)
             {
-                this.HandleInput(action);
+                if (this.HandleInput(action))
+                    break;
             }
 
             this.DoPopups();

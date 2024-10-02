@@ -213,8 +213,10 @@ namespace Game.Scenes
         /// </summary>
         private void InitializeWorld()
         {
-            this._seed = 1770780010;
-            this.RegenerateWorld(1770780010);
+            //var defaultSeed = 1770780010;
+            var defaultSeed = 97395747;
+            this._seed = defaultSeed;
+            this.RegenerateWorld(defaultSeed);
         }
 
         /// <summary>
@@ -297,10 +299,10 @@ namespace Game.Scenes
         /// <summary>
         /// Handle input actions
         /// </summary>
-        private void HandleInput(WorldGenAction action)
+        private bool HandleInput(WorldGenAction action)
         {
             if (this._isGeneratingMap)
-                return;
+                return false;
             
             switch (action)
             {
@@ -403,7 +405,13 @@ namespace Game.Scenes
                     this.SceneStack.NextOperation = new SceneStackOperation.PopScene();
                     break;
                 }
+                default:
+                {
+                    return false;
+                }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -490,7 +498,8 @@ namespace Game.Scenes
 
             foreach (var action in this._actionMapper.TriggeredActions)
             {
-                this.HandleInput(action);
+                if (this.HandleInput(action))
+                    break;
             }
 
             this._overviewView.Update(deltaTime);

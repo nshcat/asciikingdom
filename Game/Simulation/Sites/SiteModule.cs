@@ -138,13 +138,13 @@ namespace Game.Simulation.Sites
                     || ty == typeof(string) || ty == typeof(bool))
                 {
                     var mi = helper.GetType().GetMethod("ReadValue");
-                    var result = mi.MakeGenericMethod(ty).Invoke(helper, new object[] { attribute.Key });
+                    var result = mi.MakeGenericMethod(ty).Invoke(helper, new object[] { attribute.Key, attribute.DefaultValue });
                     prop.SetValue(this, result);
                 }
                 else if (ty.IsEnum)
                 {
                     var mi = helper.GetType().GetMethod("ReadEnum");
-                    var result = mi.MakeGenericMethod(ty).Invoke(helper, new object[] { attribute.Key });
+                    var result = mi.MakeGenericMethod(ty).Invoke(helper, new object[] { attribute.Key, attribute.DefaultValue });
                     prop.SetValue(this, result);
                 }
                 else if (ty == typeof(Guid))

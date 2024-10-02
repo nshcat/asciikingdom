@@ -40,22 +40,26 @@ namespace Game.WorldGen
         /// Percentage longitude limit after which no coldest and colder zones may appear
         /// </summary>
         public float ColdZoneLongitudeLimit { get; set; } = 0.17f;//0.15f;
-        
+
         /// <summary>
         /// The percentage amount of terrain that is supposed to be underwater, in percent
         /// </summary>
         /// <remarks>
         /// This is used to determine the ocean water level
+        /// 0.65f for big land masses
+        /// 0.85f for lots of small islands
         /// </remarks>
-        public float UnderWaterPercentage { get; set; } = 0.65f;//0.55f;
+        public float UnderWaterPercentage { get; set; } = 0.85f;//0.65f;//0.55f;
 
         /// <summary>
         /// The percentage amount of terrain that is supposed to be under the tree line
         /// </summary>
         /// <remarks>
         /// The tree line is the border between normal land and mountains
+        /// 0.945f for big land masses
+        /// 0.98f for lots of small islands
         /// </remarks>
-        public float TreeLinePercentage { get; set; } = 0.945f; // 0.935f;
+        public float TreeLinePercentage { get; set; } = 0.98f; //0.945f; // 0.935f;
 
         /// <summary>
         /// Percentage of drainage values that are in the range [0, 0.32]
